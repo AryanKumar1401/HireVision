@@ -139,7 +139,7 @@ export default function Recruiters() {
   const analyzeVideo = async (videoUrl: string) => {
     try {
       setIsAnalyzing(true);
-      
+
       // Check if we already have analysis for this video
       if (selectedVideo && analysisResults[selectedVideo.id]) {
         setAnalysis(analysisResults[selectedVideo.id]);
@@ -216,77 +216,109 @@ export default function Recruiters() {
             </button>
           </div>
 
-          {/* Main content grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Video player section */}
-            <div className="bg-gray-700 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-white mb-3">Video Interview</h3>
-              <video
-                src={selectedVideo.url}
-                controls
-                className="w-full rounded-lg shadow-lg"
-              />
-            </div>
-
-            {/* Feedback summary section */}
-            <div className="bg-gray-700 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-white mb-3">Interview Summary</h3>
-              <div className="space-y-4">
-                {isAnalyzing ? (
-                  <div className="text-white">Analyzing video...</div>
-                ) : analysis ? (
-                  <div className="bg-gray-600 rounded-lg p-4">
-                    <h4 className="text-white font-medium mb-2">Key Points</h4>
-                    <div className="text-gray-300 whitespace-pre-line">
-                      {analysis.summary}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-white">No analysis available</div>
-                )}
+          {/* Main content grid - Now with 3 columns */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Column 1: Video and Key Metrics */}
+            <div className="space-y-6">
+              <div className="bg-gray-700 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-white mb-3">Video Interview</h3>
+                <video
+                  src={selectedVideo.url}
+                  controls
+                  className="w-full rounded-lg shadow-lg"
+                />
               </div>
-            </div>
 
-            {/* Sentiment Analysis */}
-            <div className="bg-gray-700 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-white mb-3">Sentiment Analysis</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-600 rounded-lg p-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-400">85%                   </div>
-                  <div className="text-sm text-gray-300">Positive Sentiment</div>
+              <div className="bg-gray-700 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-white mb-3">Key Performance Indicators</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-gray-600 p-3 rounded-lg text-center">
+                    <div className="text-2xl font-bold text-green-400">92%</div>
+                    <div className="text-sm text-gray-300">Overall Score</div>
+                  </div>
+                  <div className="bg-gray-600 p-3 rounded-lg text-center">
+                    <div className="text-2xl font-bold text-blue-400">4.8/5</div>
+                    <div className="text-sm text-gray-300">Interview Rating</div>
+                  </div>
                 </div>
               </div>
-              <div className="bg-gray-600 rounded-lg p-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-400">92%                    </div>
-                <div className="text-sm text-gray-300">Confidence Score</div>
-              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Metrics Dashboard */}
-        <div className="bg-gray-700 rounded-lg p-4">
-          <h3 className="text-lg font-semibold text-white mb-3">Interview Metrics</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gray-600 rounded-lg p-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-400">8.5/10</div>
-                <div className="text-sm text-gray-300">Technical Score</div>
+            {/* Column 2: Feedback Summary (unchanged) and Technical Assessment */}
+            <div className="space-y-6">
+              {/* Existing Feedback Summary */}
+              <div className="bg-gray-700 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-white mb-3">Interview Summary</h3>
+                <div className="space-y-4">
+                  {isAnalyzing ? (
+                    <div className="text-white">Analyzing video...</div>
+                  ) : analysis ? (
+                    <div className="bg-gray-600 rounded-lg p-4">
+                      <h4 className="text-white font-medium mb-2">Key Points</h4>
+                      <div className="text-gray-300 whitespace-pre-line">
+                        {analysis.summary}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-white">No analysis available</div>
+                  )}
+                </div>
               </div>
+
+
             </div>
-            <div className="bg-gray-600 rounded-lg p-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-400">9/10</div>
-                <div className="text-sm text-gray-300">Communication</div>
+
+            {/* Column 3: Behavioral Analysis and Communication Skills */}
+            <div className="space-y-6">
+              <div className="bg-gray-700 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-white mb-3">Behavioral Analysis</h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-gray-600 p-3 rounded-lg text-center">
+                      <div className="text-xl font-bold text-yellow-400">95%</div>
+                      <div className="text-sm text-gray-300">Confidence</div>
+                    </div>
+                    <div className="bg-gray-600 p-3 rounded-lg text-center">
+                      <div className="text-xl font-bold text-pink-400">88%</div>
+                      <div className="text-sm text-gray-300">Enthusiasm</div>
+                    </div>
+                    <div className="bg-gray-600 p-3 rounded-lg text-center">
+                      <div className="text-xl font-bold text-cyan-400">92%</div>
+                      <div className="text-sm text-gray-300">Clarity</div>
+                    </div>
+                    <div className="bg-gray-600 p-3 rounded-lg text-center">
+                      <div className="text-xl font-bold text-orange-400">85%</div>
+                      <div className="text-sm text-gray-300">Leadership</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-700 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-white mb-3">Communication Assessment</h3>
+                <div className="space-y-3">
+                  <div className="bg-gray-600 p-4 rounded-lg">
+                    <h4 className="text-white font-medium mb-2">Key Strengths</h4>
+                    <ul className="list-disc list-inside text-gray-300 space-y-1">
+                      <li>Clear articulation of ideas</li>
+                      <li>Excellent active listening</li>
+                      <li>Professional demeanor</li>
+                      <li>Structured responses</li>
+                    </ul>
+                  </div>
+                  <div className="bg-gray-600 p-4 rounded-lg">
+                    <h4 className="text-white font-medium mb-2">Areas for Improvement</h4>
+                    <ul className="list-disc list-inside text-gray-300 space-y-1">
+                      <li>Technical terminology usage</li>
+                      <li>Conciseness in responses</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-        </div >
-      </main >
+      </main>
     );
   }
 
@@ -352,32 +384,6 @@ export default function Recruiters() {
           </div>
 
           {/* Monthly Applicants Trend */}
-          <div className="bg-gray-800/80 rounded-xl p-4 backdrop-blur-sm">
-            <h3 className="text-lg font-semibold text-white mb-4">Monthly Applicants</h3>
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={monthlyApplicants}>
-                <defs>
-                  <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                <XAxis dataKey="month" stroke="#fff" />
-                <YAxis stroke="#fff" />
-                <Tooltip contentStyle={{ background: '#1f2937' }} />
-                <Area 
-                  type="monotone" 
-                  dataKey="count" 
-                  stroke="#8884d8" 
-                  fillOpacity={1} 
-                  fill="url(#colorCount)"
-                  animationDuration={1000}
-                  animationEasing="ease-in-out"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
 
           {/* Score Trends */}
           <div className="bg-gray-800/80 rounded-xl p-4 backdrop-blur-sm">
@@ -389,19 +395,19 @@ export default function Recruiters() {
                 <YAxis stroke="#fff" domain={[0, 10]} />
                 <Tooltip contentStyle={{ background: '#1f2937' }} />
                 <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="technical" 
-                  stroke="#8884d8" 
+                <Line
+                  type="monotone"
+                  dataKey="technical"
+                  stroke="#8884d8"
                   strokeWidth={2}
                   dot={{ r: 4 }}
                   animationDuration={1000}
                   animationEasing="ease-in-out"
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="communication" 
-                  stroke="#82ca9d" 
+                <Line
+                  type="monotone"
+                  dataKey="communication"
+                  stroke="#82ca9d"
                   strokeWidth={2}
                   dot={{ r: 4 }}
                   animationDuration={1000}
@@ -459,7 +465,7 @@ export default function Recruiters() {
       {/* Left-aligned "Your Applications" title with underline effect */}
       <div className="w-full max-w-2xl mb-8">
         <h2 className="text-3xl font-bold text-white relative inline-block after:absolute after:content-[''] after:w-full after:h-1 after:bg-gradient-to-r from-purple-500 to-blue-500 after:bottom-0 after:left-0 after:rounded-full">
-          Applications 
+          Applications
         </h2>
       </div>
 
@@ -472,11 +478,10 @@ export default function Recruiters() {
               console.log('Button clicked:', video);
               setSelectedVideo(video);
             }}
-            className={`${
-              topApplicants.includes(video.title)
+            className={`${topApplicants.includes(video.title)
                 ? 'bg-gradient-to-br from-green-500 to-blue-500'
                 : 'bg-gradient-to-br from-blue-500 to-purple-500'
-            } text-white font-medium px-6 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95`}
+              } text-white font-medium px-6 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95`}
           >
             <span>{video.title}</span>
             {topApplicants.includes(video.title) && (
