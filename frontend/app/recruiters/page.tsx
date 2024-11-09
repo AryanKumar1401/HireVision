@@ -308,10 +308,9 @@ export default function Recruiters() {
       {/* Enhanced Grid Layout */}
       <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-3 gap-4 mb-10">
         {/* Job Description - Takes full width on small screens, 1/3 on large */}
-        <div className="lg:col-span-1 bg-gray-800/80 rounded-xl p-6 backdrop-blur-sm h-fit">
+        <div className="lg:col-span-1 bg-gray-800/80 rounded-xl p-6 backdrop-blur-sm flex h-full flex-col justify-between">
           <h2 className="text-2xl font-bold text-white mb-4">{jobDescription.title}</h2>
-          <h3 className="text-xl text-blue-400 mb-4">{jobDescription.company}</h3>
-          
+          <h3 className="text-3xl text-blue-600 mb-4 text-center">{jobDescription.company}</h3>
           <div className="grid grid-cols-2 gap-6">
             <div>
               <h4 className="text-lg font-semibold text-white mb-2">Requirements</h4>
