@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Candidate {
+  id          Int           @id @default(autoincrement())  // Unique ID for the candidate
+  applications Application[] // List of applications the candidate has submitted
+  video       Video? @relation(fields: [videoid], references: [id])
+  videoid Int?
+}
+
+model Recruiter {
+  id             Int             @id @default(autoincrement())  // Unique ID for the recruiter
+  jobDescriptions JobDescription[] // List of job descriptions created by the recruiter
+  videos         Video[]         @relation("RecruiterVideos")  // New relation to videos through applications
+}
+
+model JobDescription {
+  id            Int            @id @default(autoincrement())  // Unique ID for the job description
+  title         String         // Job title (e.g., Software Engineer)
+  description   String         // Full job description text
+  recruiterId   Int            // Foreign key to Recruiter
+  recruiter     Recruiter      @relation(fields: [recruiterId], references: [id]) // Link to recruiter
+  prompt        Prompt?         // The prompt provided for candidates to respond to (optional)
+  applications  Application[]  // List of applications for this job description
+}
+
+model Application {
+  id             Int           @id @default(autoincrement())  // Unique ID for the application
+  candidateId    Int           // Foreign key to Candidate
+  jobDescriptionId Int         // Foreign key to JobDescription
+  videoUrl       String        // URL of the candidate's video response
+  candidate      Candidate     @relation(fields: [candidateId], references: [id]) // Link to candidate
+  jobDescription JobDescription @relation(fields: [jobDescriptionId], references: [id]) // Link to job description
+  Video Video[]  // Each application can have multiple videos
+}
+
+model Video {
+  id          Int       @id @default(autoincrement()) // Unique ID for the video
+  url         String    // URL of the video uploaded by the candidate
+  applicationId Int     // Foreign key to Application
+  application Application @relation(fields: [applicationId], references: [id]) // Link to application
+  Candidate Candidate[]  // Link to candidates, as each video can be associated with one or more candidates
+  Recruiter Recruiter[] @relation("RecruiterVideos")
+}
+
+model Prompt {
+  id              Int            @id @default(autoincrement()) // Unique ID for the prompt
+  content         String         // Content of the prompt that the candidate will respond to
+  jobDescriptionId Int            @unique
+  jobDescription  JobDescription? @relation(fields: [jobDescriptionId], references: [id]) // Optional relation to JobDescription
+}
+
+
