@@ -13,8 +13,7 @@ aai.settings.api_key = ASSEMBLYAI_API_KEY
 transcriber = aai.Transcriber()
 
 # Set up OpenAI client
-client = OpenAI()
-client.api_key = OPEN_AI_API_KEY
+client = OpenAI(api_key = OPEN_AI_API_KEY)
 
 # Transcribe the video file (replace with a valid file URL)
 transcript = transcriber.transcribe("https://assembly.ai/news.mp4")
@@ -23,7 +22,8 @@ def summarize_text(text):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "Provide a concise summary of the following text as the user itself."},
+            {"role": "system", "content": "Provide a concise summary of the following text as the user itself. Don't start the summary with the text;" +
+             "start the summary by saying the video discusses"},
             {"role": "user", "content": text}
         ],
         max_tokens=150
