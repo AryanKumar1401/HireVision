@@ -28,7 +28,9 @@ export default function Candidates() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+
   const recordedChunksRef = useRef<Blob[]>([]);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
 
   const initializeWebcam = async () => {
     try {
@@ -89,7 +91,7 @@ export default function Candidates() {
     }
   };
 
-  const uploadToSupabase = async (videoBlob: Blob) => {
+  const uploadToSupabase = async (videoBlob: Blob): Promise<string | null> => {
     try {
       setIsUploading(true);
       setUploadProgress(0);
@@ -130,6 +132,25 @@ export default function Candidates() {
     }
   };
 
+  const getSignedUrl = async (filePath: string) => {
+    try {
+      const { data, error } = await supabase
+        .storage
+        .from('videos') // replace with your bucket name
+        .createSignedUrl(filePath, 3600); // 1 hour expiry
+
+      if (error) {
+        console.error('Error getting signed URL:', error);
+        return null;
+      }
+
+      return data.signedUrl;
+    } catch (err) {
+      console.error('Error in getSignedUrl:', err);
+      return null;
+    }
+  };
+
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
@@ -149,12 +170,31 @@ export default function Candidates() {
           });
 
           const videoPreviewUrl = URL.createObjectURL(videoBlob);
+
           setVideoUrl(videoPreviewUrl);
 
           // Upload to Supabase
           const publicUrl = await uploadToSupabase(videoBlob);
           console.log('Video successfully uploaded to Supabase:', publicUrl);
-
+          
+          // Extract filename from publicUrl
+          const filename = publicUrl ? publicUrl.split('/').pop() : '';
+          var signedVideoUrl = null;
+          if (filename) {
+            // Get signed URL
+            const signedVideoUrl = await getSignedUrl(filename);
+            if (signedVideoUrl) {
+              setSignedUrl(signedVideoUrl);
+              console.log('Signed URL generated:', signedVideoUrl);
+            }
+          } else {
+            console.error('Filename could not be determined from publicUrl');
+          }
+          if (signedVideoUrl) {
+            setSignedUrl(signedVideoUrl);
+            console.log('Signed URL generated:', signedVideoUrl);
+          }
+          
         } catch (err) {
           console.error('Error processing/uploading video:', err);
         }
@@ -214,8 +254,8 @@ export default function Candidates() {
         {isUploading && (
           <div className="mt-4">
             <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div 
-                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+              <div
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
               ></div>
             </div>
