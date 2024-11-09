@@ -8,6 +8,35 @@ type MediaRecorderRef = MediaRecorder & {
   resume: () => void;
 };
 
+export async function getPresignedUrl(): Promise<{ url: string; signedUrl: string }> {
+  const fileName = `video-${Date.now()}.webm`; // Unique file name
+  const fileType = 'video/webm';
+
+  const response = await fetch('/api/upload', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fileName, fileType }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to get presigned URL');
+  }
+
+  return await response.json();
+}
+
+export async function uploadToS3(signedUrl: string, videoBlob: Blob) {
+  const response = await fetch(signedUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'video/webm' },
+    body: videoBlob,
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to upload video to S3');
+  }
+}
+
 export default function Candidates() {
   const router = useRouter();
   const [isRecording, setIsRecording] = useState(false);
@@ -19,6 +48,7 @@ export default function Candidates() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null); // New state for video preview URL
+  const recordedChunksRef = useRef<Blob[]>([]);
 
   const initializeWebcam = async () => {
     try {
@@ -66,34 +96,29 @@ export default function Candidates() {
       setIsRecording(true);
       startTimer(); // Start the timer when recording starts
 
-      mediaRecorder.ondataavailable = (event) => {
+      mediaRecorder.ondataavailable = async (event) => {
         if (event.data.size > 0) {
-          // Handle the recorded video data here
-          const videoUrl = URL.createObjectURL(event.data);
-          console.log('Recording finished:', videoUrl);
-          setVideoUrl(videoUrl);
-        }
-      };
+          recordedChunksRef.current.push(event.data);
+
+          const videoBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+          const videoPreviewUrl = URL.createObjectURL(videoBlob);
+          setVideoUrl(videoPreviewUrl);
+
+          // Step 3: Upload to S3
+          try {
+            const { signedUrl } = await getPresignedUrl();
+            await uploadToS3(signedUrl, videoBlob);
+            console.log('Video successfully uploaded to S3');
+          } catch (err) {
+            console.error('Error uploading video to S3:', err);
+          }
+            }
+          };
     } catch (err) {
       console.error('Error starting recording:', err);
     }
   };
 
-  const pauseRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.pause();
-      setIsPaused(true);
-      if (timerRef.current) clearInterval(timerRef.current);
-    }
-  };
-
-  const resumeRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
-      mediaRecorderRef.current.resume();
-      setIsPaused(false);
-      startTimer();
-    }
-  };
 
   const stopRecording = () => {
     if (mediaRecorderRef.current) {
@@ -103,6 +128,7 @@ export default function Candidates() {
       }
       setIsRecording(false);
       if (timerRef.current) clearInterval(timerRef.current);
+
     }
   };
 
