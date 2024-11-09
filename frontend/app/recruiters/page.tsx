@@ -52,26 +52,86 @@ export default function Recruiters() {
 
   if (selectedVideo) {
     return (
-      <main className="flex flex-col items-center justify-center min-h-screen bg-black p-8 relative overflow-hidden">
-        <div className="relative bg-gray-800 rounded-lg p-4 w-full max-w-4xl">
-          <button
-            onClick={() => setSelectedVideo(null)}
-            className="absolute top-2 right-2 text-white"
-          >
-            Close
-          </button>
-          <video
-            src={selectedVideo.url}
-            controls
-            className="w-full h-auto rounded-lg"
-          />
+      <main className="flex flex-col items-center justify-between min-h-screen bg-gray-900 p-8 relative overflow-hidden">
+        <div className="relative bg-gray-800 rounded-xl p-6 w-full max-w-7xl">
+          {/* Header with close button */}
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-white">{selectedVideo.title} Analysis</h2>
+            <button
+              onClick={() => setSelectedVideo(null)}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+            >
+              Close Dashboard
+            </button>
+          </div>
+
+          {/* Main content grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Video player section */}
+            <div className="bg-gray-700 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-white mb-3">Video Interview</h3>
+              <video
+                src={selectedVideo.url}
+                controls
+                className="w-full rounded-lg shadow-lg"
+              />
+            </div>
+
+            {/* Feedback summary section */}
+            <div className="bg-gray-700 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-white mb-3">Interview Summary</h3>
+              <div className="space-y-4">
+                <div className="bg-gray-600 rounded-lg p-4">
+                  <h4 className="text-white font-medium mb-2">Key Points</                  h4>
+                  <ul className="list-disc list-inside text-gray-300 space-y-2">
+                    <li>Strong communication skills demonstrated</li>
+                    <li>Technical expertise in required areas</li>
+                    <li>Shows enthusiasm and cultural fit</li>
+                    <li>Previous experience aligns with role</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Sentiment Analysis */}
+            <div className="bg-gray-700 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-white mb-3">Sentiment Analysis</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-600 rounded-lg p-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-400">85%</div>
+                    <div className="text-sm text-gray-300">Positive Sentiment</div>
+                  </div>
+                </div>
+                <div className="bg-gray-600 rounded-lg p-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-400">92%</div>
+                    <div className="text-sm text-gray-300">Confidence Score</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Metrics Dashboard */}
+            <div className="bg-gray-700 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-white mb-3">Interview Metrics</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-600 rounded-lg p-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-400">8.5/10</div>
+                    <div className="text-sm text-gray-300">Technical Score</div>
+                  </div>
+                </div>
+                <div className="bg-gray-600 rounded-lg p-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-yellow-400">9/10</div>
+                    <div className="text-sm text-gray-300">Communication</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <button
-          onClick={() => setSelectedVideo(null)}
-          className="mt-4 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 font-semibold text-lg"
-        >
-          Go Back
-        </button>
       </main>
     );
   }
