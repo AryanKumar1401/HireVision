@@ -2,63 +2,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { createClient } from '@supabase/supabase-js';
+
+// Supabase client configuration
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 type MediaRecorderRef = MediaRecorder & {
   pause: () => void;
   resume: () => void;
 };
-
-export async function getPresignedUrl(): Promise<{ url: string; signedUrl: string }> {
-  const fileName = `video-${Date.now()}.webm`; // Unique file name
-  const fileType = 'video/webm';
-
-  const response = await fetch('/api/upload', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fileName, fileType }),
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to get presigned URL');
-  }
-
-  return await response.json();
-}
-
-export async function uploadToS3(signedUrl: string, videoBlob: Blob) {
-  console.log("uploadToS3 starts", { contentType: videoBlob.type });
-
-  // Validate inputs
-  if (!signedUrl || !videoBlob) {
-    throw new Error('Invalid upload parameters');
-  }
-
-  try {
-    const response = await fetch(signedUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': videoBlob.type || 'video/webm'
-      },
-      body: videoBlob,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Upload failed:', {
-        status: response.status,
-        statusText: response.statusText,
-        errorText
-      });
-      throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
-    }
-
-    console.log("Upload successful");
-    return response;
-  } catch (error) {
-    console.error("Error in uploadToS3:", error);
-    throw new Error(`Upload failed: ${error.message}`);
-  }
-}
 
 export default function Candidates() {
   const router = useRouter();
@@ -66,11 +21,13 @@ export default function Candidates() {
   const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorderRef | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null); // New state for video preview URL
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
 
   const initializeWebcam = async () => {
@@ -108,20 +65,22 @@ export default function Candidates() {
 
   const startRecording = async () => {
     try {
-      recordedChunksRef.current = []; // Clear previous recording chunks
+      recordedChunksRef.current = [];
       setRecordingTime(0);
       if (!streamRef.current) {
         await initializeWebcam();
       }
-      const mediaRecorder = new MediaRecorder(streamRef.current!);
+      const mediaRecorder = new MediaRecorder(streamRef.current!, {
+        mimeType: 'video/webm'
+      });
       mediaRecorderRef.current = mediaRecorder;
 
-      mediaRecorder.start();
+      mediaRecorder.start(1000);
       setIsRecording(true);
       startTimer();
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data && event.data.size > 0) {
           recordedChunksRef.current.push(event.data);
         }
       };
@@ -130,22 +89,72 @@ export default function Candidates() {
     }
   };
 
-  const stopRecording = async () => {
+  const uploadToSupabase = async (videoBlob: Blob) => {
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+
+      // Generate a unique filename
+      const timestamp = new Date().getTime();
+      const filename = `video_${timestamp}.webm`;
+
+      // Convert blob to File object
+      const videoFile = new File([videoBlob], filename, { type: 'video/webm' });
+
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('videos') // Make sure this bucket exists in your Supabase project
+        .upload(filename, videoFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      // Get the public URL of the uploaded video
+      const { data: { publicUrl } } = supabase
+        .storage
+        .from('videos')
+        .getPublicUrl(filename);
+
+      setUploadProgress(100);
+      return publicUrl;
+
+    } catch (error) {
+      console.error('Error uploading to Supabase:', error);
+      throw error;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       if (timerRef.current) clearInterval(timerRef.current);
 
-      // Handle the final recording after stopping
       mediaRecorderRef.current.onstop = async () => {
         try {
-          const videoBlob = new Blob(recordedChunksRef.current, { type: 'video/webm; codecs=vp8,opus' });
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+          const videoBlob = new Blob(recordedChunksRef.current, {
+            type: 'video/webm'
+          });
+          console.log('Created video blob:', {
+            size: videoBlob.size,
+            type: videoBlob.type
+          });
+
           const videoPreviewUrl = URL.createObjectURL(videoBlob);
           setVideoUrl(videoPreviewUrl);
 
-          const { signedUrl } = await getPresignedUrl();
-          await uploadToS3(signedUrl, videoBlob);
-          console.log('Video successfully uploaded to S3');
+          // Upload to Supabase
+          const publicUrl = await uploadToSupabase(videoBlob);
+          console.log('Video successfully uploaded to Supabase:', publicUrl);
+
         } catch (err) {
           console.error('Error processing/uploading video:', err);
         }
@@ -202,6 +211,17 @@ export default function Candidates() {
             Go Back
           </motion.button>
         </div>
+        {isUploading && (
+          <div className="mt-4">
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div 
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+            <p className="text-white text-center mt-2">Uploading: {uploadProgress}%</p>
+          </div>
+        )}
         {videoUrl && (
           <div className="mt-8">
             <h2 className="text-white text-2xl mb-4">Recording Preview</h2>
