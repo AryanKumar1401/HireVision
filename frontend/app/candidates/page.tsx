@@ -262,11 +262,11 @@ export default function Candidates() {
             <p className="text-white text-center mt-2">Uploading: {uploadProgress}%</p>
           </div>
         )}
-        {videoUrl && (
+        {signedUrl && (
           <div className="mt-8">
-            <h2 className="text-white text-2xl mb-4">Recording Preview</h2>
+            <h2 className="text-white text-2xl mb-4">Recording Preview from Supabase</h2>
             <video
-              src={videoUrl}
+              src={signedUrl}
               controls
               className="w-full max-w-[1400px] aspect-video bg-gray-800 rounded-lg"
             />
