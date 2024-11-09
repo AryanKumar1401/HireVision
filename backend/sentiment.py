@@ -40,7 +40,7 @@ def summarize_text(text):
         model="gpt-3.5-turbo",
         messages=[
 
-            {"role": "system", "content": "Read the provided transcript of an interview. Write a summary of the interview, and then provide a pros and cons list based on what you think are relevant points for an interview."},
+            {"role": "system", "content": "Read the provided transcript of an interview. Write a summary of the interview, and then provide a pros and cons list based on what you think are relevant points for an interview. the tokens for pros should be maximum 50 and for cons 50 and summary 50"},
 
             {"role": "user", "content": text}
         ],

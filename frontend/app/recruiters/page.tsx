@@ -8,6 +8,13 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+interface JobDescription {
+  title: string;
+  company: string;
+  requirements: string[];
+  responsibilities: string[];
+}
+
 export default function Recruiters() {
   const router = useRouter();
   interface Video {
@@ -18,12 +25,40 @@ export default function Recruiters() {
 
   const [videos, setVideos] = useState<Video[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [topApplicants] = useState<string[]>(['Application 1', 'Application 3', 'Application 4']);
   interface Analysis {
     summary: string;
   }
 
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState<{ [key: string]: Analysis }>({});
+
+  const jobDescription: JobDescription = {
+    title: "Senior Full Stack Developer",
+    company: "TechCorp Inc.",
+    requirements: [
+      "5+ years experience with React/Next.js",
+      "Strong knowledge of TypeScript",
+      "Experience with cloud platforms (AWS/GCP)",
+      "Computer Science degree or equivalent"
+    ],
+    responsibilities: [
+      "Lead development of core platform features",
+      "Mentor junior developers",
+      "Architect scalable solutions",
+      "Collaborate with product teams"
+    ]
+  };
+
+  const aggregateMetrics = {
+    totalApplicants: videos.length,
+    averageTechnicalScore: 7.8,
+    averageCommunicationScore: 8.2,
+    highestTechnicalScore: 9.5,
+    averageYearsExperience: 4.5,
+    applicantsInProgress: Math.floor(videos.length * 0.6)
+  };
 
   useEffect(() => {
     // Fetch videos from Supabase Storage bucket
@@ -53,7 +88,13 @@ export default function Recruiters() {
   const analyzeVideo = async (videoUrl: string) => {
     try {
       setIsAnalyzing(true);
-      console.log('Analyzing video URL:', videoUrl);
+      
+      // Check if we already have analysis for this video
+      if (selectedVideo && analysisResults[selectedVideo.id]) {
+        setAnalysis(analysisResults[selectedVideo.id]);
+        setIsAnalyzing(false);
+        return;
+      }
 
       const response = await fetch('http://localhost:8000/analyze-video', {
         method: 'POST',
@@ -65,12 +106,25 @@ export default function Recruiters() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        if (errorData.error === 'Duplicate' && selectedVideo) {
+          // If duplicate error, use existing analysis
+          const existingAnalysis = analysisResults[selectedVideo.id];
+          if (existingAnalysis) {
+            setAnalysis(existingAnalysis);
+            return;
+          }
+        }
         throw new Error(errorData.detail || 'Analysis failed');
       }
 
       const data = await response.json();
-      console.log('Analysis response:', data);
-      setAnalysis(data);
+      if (selectedVideo) {
+        setAnalysisResults(prev => ({
+          ...prev,
+          [selectedVideo.id]: data
+        }));
+        setAnalysis(data);
+      }
     } catch (error) {
       console.error('Error analyzing video:', error);
       // Show error to user
@@ -186,7 +240,7 @@ export default function Recruiters() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-bl from-gray-900 via-black to-gray-800 p-8 relative overflow-hidden">
+    <main className="flex flex-col items-center justify-between min-h-screen bg-gradient-to-bl from-gray-900 via-black to-gray-800 p-8 relative overflow-hidden">
       {/* Background accents */}
       <div
         className="absolute top-0 left-1/3 w-[600px] h-[600px] bg-blue-500 opacity-20 blur-3xl rounded-full animate-pulse"
@@ -200,10 +254,51 @@ export default function Recruiters() {
         Recruiters Page
       </h1>
 
+      {/* Job Description Card */}
+      <div className="w-full max-w-4xl mb-10 bg-gray-800/80 rounded-xl p-6 backdrop-blur-sm">
+        <h2 className="text-2xl font-bold text-white mb-4">{jobDescription.title}</h2>
+        <h3 className="text-xl text-blue-400 mb-4">{jobDescription.company}</h3>
+        
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <h4 className="text-lg font-semibold text-white mb-2">Requirements</h4>
+            <ul className="list-disc list-inside text-gray-300">
+              {jobDescription.requirements.map((req, i) => (
+                <li key={i}>{req}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-lg font-semibold text-white mb-2">Responsibilities</h4>
+            <ul className="list-disc list-inside text-gray-300">
+              {jobDescription.responsibilities.map((resp, i) => (
+                <li key={i}>{resp}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Aggregate Metrics Dashboard */}
+      <div className="w-full max-w-4xl mb-10 grid grid-cols-3 gap-4">
+        <div className="bg-gray-800/80 rounded-xl p-4 text-center">
+          <div className="text-3xl font-bold text-blue-400">{aggregateMetrics.totalApplicants}</div>
+          <div className="text-gray-300">Total Applicants</div>
+        </div>
+        <div className="bg-gray-800/80 rounded-xl p-4 text-center">
+          <div className="text-3xl font-bold text-green-400">{aggregateMetrics.averageTechnicalScore}</div>
+          <div className="text-gray-300">Avg Technical Score</div>
+        </div>
+        <div className="bg-gray-800/80 rounded-xl p-4 text-center">
+          <div className="text-3xl font-bold text-purple-400">{aggregateMetrics.averageCommunicationScore}</div>
+          <div className="text-gray-300">Avg Communication Score</div>
+        </div>
+      </div>
+
       {/* Left-aligned "Your Applications" title with underline effect */}
       <div className="w-full max-w-2xl mb-8">
         <h2 className="text-3xl font-bold text-white relative inline-block after:absolute after:content-[''] after:w-full after:h-1 after:bg-gradient-to-r from-purple-500 to-blue-500 after:bottom-0 after:left-0 after:rounded-full">
-          Your Applications
+          Applications 
         </h2>
       </div>
 
@@ -216,9 +311,16 @@ export default function Recruiters() {
               console.log('Button clicked:', video);
               setSelectedVideo(video);
             }}
-            className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-medium px-6 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110 active:scale-95"
+            className={`${
+              topApplicants.includes(video.title)
+                ? 'bg-gradient-to-br from-green-500 to-blue-500'
+                : 'bg-gradient-to-br from-blue-500 to-purple-500'
+            } text-white font-medium px-6 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95`}
           >
-            {video.title}
+            <span>{video.title}</span>
+            {topApplicants.includes(video.title) && (
+              <span className="block text-xs mt-1 text-green-200">Top Candidate</span>
+            )}
           </button>
         ))}
       </div>
