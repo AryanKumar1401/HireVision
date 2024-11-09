@@ -210,10 +210,10 @@ const Home: React.FC = () => {
             <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
             </button></Link>
 
-          <button className="group px-8 py-3 text-sm font-medium text-white border border-white/20 rounded-full hover:border-white/40 transition-all duration-300 relative overflow-hidden">
+          <Link href="/recruiters"><button className="group px-8 py-3 text-sm font-medium text-white border border-white/20 rounded-full hover:border-white/40 transition-all duration-300 relative overflow-hidden">
             <span className="relative z-10">recruiters</span>
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-          </button>
+          </button></Link>
         </motion.div>
       </main>
     </div>
