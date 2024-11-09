@@ -1,219 +1,121 @@
 'use client';
-import { motion, Variants } from 'framer-motion';
+import { motion } from 'framer-motion';
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
-const Home: React.FC = () => {
-  const floatingAnimation: Variants = {
-    animate: {
-      x: [0, 10, -10, 0],
-      y: [0, -10, 10, 0],
-      transition: {
-        duration: 20,
-        repeat: Infinity,
-        repeatType: "reverse",
-        ease: "easeInOut",
-        times: [0, 0.33, 0.66, 1]
-      }
-    }
-  };
-
-  const slowFloat: Variants = {
-    animate: {
-      x: [0, 15, -15, 0],
-      y: [0, -15, 15, 0],
-      transition: {
-        duration: 30,
-        repeat: Infinity,
-        repeatType: "reverse",
-        ease: "easeInOut",
-        times: [0, 0.33, 0.66, 1]
-      }
-    }
-  };
-
-  const fastFloat: Variants = {
-    animate: {
-      x: [0, 5, -5, 0],
-      y: [0, -5, 5, 0],
-      transition: {
-        duration: 10,
-        repeat: Infinity,
-        repeatType: "reverse",
-        ease: "easeInOut",
-        times: [0, 0.33, 0.66, 1]
-      }
-    }
-  };
-
-  const asteroidFloat: Variants = {
-    animate: {
-      rotate: [-3, 3, -3],
-      x: [0, 4, -4, 0],
-      y: [0, -4, 4, 0],
-      transition: {
-        duration: 15,
-        repeat: Infinity,
-        repeatType: "reverse",
-        ease: "easeInOut",
-        times: [0, 0.33, 0.66, 1]
-      }
-    }
-  };
-
+const Home = () => {
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4 overflow-hidden">
-      {/* Enhanced Asteroid Logo */}
-      <motion.div
-        variants={asteroidFloat}
-        animate="animate"
-        className="absolute top-8 left-8 z-20"
-      >
-        <div className="relative">
-          {/* Enhanced outer glow */}
-          <div className="absolute inset-0 bg-purple-500/20 blur-xl rounded-full transform scale-150" />
-          <div className="absolute inset-0 bg-blue-500/20 blur-lg rounded-full transform scale-125 rotate-45" />
+      {/* Logo */}
+      <div className="absolute top-4 left-4 z-20 flex items-center gap-0">
+        <Image
+          src="/logo.png"
+          alt="HireVision Logo"
+          width={200}
+          height={100}
+          className="rounded-lg"
+        />
+       
+      </div>
 
-          {/* More detailed asteroid shape */}
-          <motion.div
-            className="relative bg-gradient-to-br from-gray-800 to-gray-900 p-5 rounded-[42px]"
-            style={{
-              clipPath: "polygon(20% 0%, 65% 3%, 90% 15%, 98% 40%, 95% 70%, 85% 90%, 60% 98%, 30% 95%, 10% 85%, 2% 60%, 5% 30%, 15% 10%)"
-            }}
-          >
-            {/* Multiple layer effects */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-3xl" />
-            <div className="absolute inset-0 bg-gradient-to-tr from-gray-800/50 to-transparent rounded-3xl" />
-
-            {/* Enhanced crater details */}
-            <div className="absolute top-3 right-4 w-2 h-2 rounded-full bg-gray-700 shadow-inner" />
-            <div className="absolute bottom-4 left-3 w-3 h-3 rounded-full bg-gray-800 shadow-inner" />
-            <div className="absolute top-1/2 right-1/3 w-1.5 h-1.5 rounded-full bg-gray-700 shadow-inner" />
-            <div className="absolute top-1/3 left-1/4 w-2 h-2 rounded-full bg-gray-800 shadow-inner" />
-
-            {/* Surface texture details */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-50" />
-
-            {/* Logo text with enhanced styling */}
-            <div className="relative z-10 flex flex-col">
-              <span className="text-white/90 font-light text-lg tracking-wide">
-                Hire
-              </span>
-              <span className="text-white/90 font-light text-lg tracking-wide -mt-1">
-                Vision
-              </span>
-
-              {/* Subtle text glow */}
-              <div className="absolute inset-0 bg-white/5 blur-sm" />
-            </div>
-
-            {/* Additional surface details */}
-            <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20 mix-blend-overlay" />
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent mix-blend-overlay" />
-          </motion.div>
-        </div>
-      </motion.div>
-
+      {/* Background Effects */}
       <div className="fixed inset-0 overflow-hidden">
-        {/* Star field */}
-        {[...Array(50)].map((_, i) => {
-          // Use index-based values instead of random
-          const size = i % 2 === 0 ? '1' : '0.5';
-          const opacity = i % 2 === 0 ? '50' : '30';
-          const left = ((i * 17) % 100);
-          const top = (i * 23) % 100;
-          return (
-        <motion.div
-          key={i}
-          className={`absolute w-${size} h-${size} bg-white rounded-full opacity-${opacity}`}
-          style={{
-            left: `${left}%`,
-            top: `${top}%`,
-          }}
-          animate={{
-            opacity: [0.3, 0.8, 0.3],
-          }}
-          transition={{
-            duration: 2 + Math.random() * 3,
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-        />
-          );
-        })}
-
-        {/* Nebula-like gradients */}
-        <motion.div
-          variants={slowFloat}
-          animate="animate"
-          className="absolute top-1/4 -left-1/4 w-full h-full bg-gradient-to-br from-purple-500/10 to-transparent rounded-full blur-3xl"
-        />
-        <motion.div
-          variants={slowFloat}
-          animate="animate"
-          className="absolute -bottom-1/4 -right-1/4 w-full h-full bg-gradient-to-tl from-blue-500/10 to-transparent rounded-full blur-3xl"
-        />
-
-        {/* Floating geometric elements */}
-        <motion.div
-          variants={floatingAnimation}
-          animate="animate"
-          className="absolute top-1/4 right-1/4 w-32 h-32 border border-white/10 rounded-full"
-        />
-        <motion.div
-          variants={fastFloat}
-          animate="animate"
-          className="absolute bottom-1/4 left-1/4 w-16 h-16 border border-white/10 rounded-full"
-        />
-        <motion.div
-          variants={floatingAnimation}
-          animate="animate"
-          className="absolute top-1/3 left-1/3 w-24 h-24 border border-white/5 rotate-45"
-        />
+        {/* Animated stars */}
+        {[...Array(50)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-white rounded-full"
+            style={{
+              left: `${(i * 17) % 100}%`,
+              top: `${(i * 23) % 100}%`,
+              opacity: i % 2 === 0 ? 0.5 : 0.3,
+            }}
+            animate={{
+              opacity: [0.3, 0.8, 0.3],
+            }}
+            transition={{
+              duration: 2 + (i % 3),
+              repeat: Infinity,
+              repeatType: "reverse"
+            }}
+          />
+        ))}
       </div>
 
       {/* Main content */}
-      <main className="relative z-10 flex flex-col items-center gap-12">
-        {/* Title */}
+      <main className="relative z-10 flex flex-col items-center gap-16 max-w-4xl mx-auto text-center">
+        {/* Title Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="relative"
+          className="space-y-4"
         >
-          <h1 className="text-6xl font-light tracking-tight text-white relative">
-            <span className="relative">
-              Connect
+          <h1 className="text-5xl md:text-6xl font-bold text-purple-900 leading-tight">
+            <div className="text-white mb-2">Transform</div>
+            <div className="text-white mb-2 flex items-center justify-center gap-3">
+              the job
               <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: "100%" }}
-                transition={{ duration: 1, delay: 0.5 }}
-                className="absolute -bottom-2 left-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent"
-              />
-            </span>
+                animate={{ rotate: 360 }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                className="inline-block"
+              >
+                <svg className="w-8 h-8 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </motion.div>
+            </div>
+            <div className="text-white mb-4">recruitment process</div>
+            <div className="flex items-center justify-center gap-2 text-white">
+              <motion.span
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="text-purple-400"
+              >
+                ✨
+              </motion.span>
+              with HIREVISION
+            </div>
           </h1>
         </motion.div>
 
-        {/* Buttons */}
+        {/* Buttons Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="flex flex-col sm:flex-row gap-6 relative"
+          className="flex flex-col md:flex-row gap-8 w-full max-w-2xl justify-center px-4"
         >
-          {/* Connecting element */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-px h-4 bg-white/20 sm:w-4 sm:h-px" />
+          {/* Applicant Button */}
+          <Link href="/candidates" className="w-full md:w-64">
+            <motion.div
+              whileHover={{ scale: 1.03 }}
+              className="bg-white rounded-xl p-6 flex flex-col items-center gap-4 shadow-lg hover:shadow-xl transition-all"
+            >
+              <div className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <span className="text-xl font-medium text-gray-800">APPLICANT</span>
+            </motion.div>
+          </Link>
 
-          {/* Enhanced buttons with cosmic hover effects */}
-            <Link href="/candidates"><button className="group px-8 py-3 text-sm font-medium text-gray-900 bg-white rounded-full hover:bg-white/90 transition-all duration-300 relative overflow-hidden">
-            <span className="relative z-10">candidates</span>
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-            </button></Link>
-
-          <Link href="/recruiters"><button className="group px-8 py-3 text-sm font-medium text-white border border-white/20 rounded-full hover:border-white/40 transition-all duration-300 relative overflow-hidden">
-            <span className="relative z-10">recruiters</span>
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-          </button></Link>
+          {/* Recruiter Button */}
+          <Link href="/recruiters" className="w-full md:w-64">
+            <motion.div
+              whileHover={{ scale: 1.03 }}
+              className="bg-white rounded-xl p-6 flex flex-col items-center gap-4 shadow-lg hover:shadow-xl transition-all"
+            >
+              <div className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <span className="text-xl font-medium text-gray-800">RECRUITER</span>
+            </motion.div>
+          </Link>
         </motion.div>
       </main>
     </div>
