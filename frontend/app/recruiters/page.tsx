@@ -2,11 +2,62 @@
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer, AreaChart, Area
+} from 'recharts';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+const skillsData = [
+  { name: 'React', score: 85 },
+  { name: 'TypeScript', score: 78 },
+  { name: 'Node.js', score: 72 },
+  { name: 'AWS', score: 65 },
+  { name: 'System Design', score: 80 },
+];
+
+const experienceData = [
+  { name: '0-2 years', value: 30 },
+  { name: '3-5 years', value: 45 },
+  { name: '5+ years', value: 25 },
+];
+
+const performanceData = [
+  { date: 'Week 1', applications: 12 },
+  { date: 'Week 2', applications: 19 },
+  { date: 'Week 3', applications: 25 },
+  { date: 'Week 4', applications: 31 },
+];
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
+
+const monthlyApplicants = [
+  { month: 'Jan', count: 45 },
+  { month: 'Feb', count: 52 },
+  { month: 'Mar', count: 61 },
+  { month: 'Apr', count: 58 },
+  { month: 'May', count: 71 },
+  { month: 'Jun', count: 68 },
+];
+
+const scoresTrend = [
+  { month: 'Jan', technical: 7.2, communication: 7.8 },
+  { month: 'Feb', technical: 7.5, communication: 8.0 },
+  { month: 'Mar', technical: 7.8, communication: 8.1 },
+  { month: 'Apr', technical: 7.9, communication: 8.3 },
+  { month: 'May', technical: 8.2, communication: 8.4 },
+  { month: 'Jun', technical: 8.4, communication: 8.6 },
+];
+
+const animationConfig = {
+  animate: true,
+  duration: 800,
+  easing: "ease-in-out",
+};
 
 interface JobDescription {
   title: string;
@@ -35,10 +86,10 @@ export default function Recruiters() {
   const [analysisResults, setAnalysisResults] = useState<{ [key: string]: Analysis }>({});
 
   const jobDescription: JobDescription = {
-    title: "Senior Full Stack Developer",
+    title: "Junior Full Stack Developer",
     company: "TechCorp Inc.",
     requirements: [
-      "5+ years experience with React/Next.js",
+      "20+ years experience with React/Next.js",
       "Strong knowledge of TypeScript",
       "Experience with cloud platforms (AWS/GCP)",
       "Computer Science degree or equivalent"
@@ -240,7 +291,7 @@ export default function Recruiters() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-between min-h-screen bg-gradient-to-bl from-gray-900 via-black to-gray-800 p-8 relative overflow-hidden">
+    <div className="flex flex-col items-center justify-between min-h-screen bg-gradient-to-bl from-gray-900 via-black to-gray-800 p-8 relative overflow-hidden">
       {/* Background accents */}
       <div
         className="absolute top-0 left-1/3 w-[600px] h-[600px] bg-blue-500 opacity-20 blur-3xl rounded-full animate-pulse"
@@ -254,27 +305,138 @@ export default function Recruiters() {
         Recruiters Page
       </h1>
 
-      {/* Job Description Card */}
-      <div className="w-full max-w-4xl mb-10 bg-gray-800/80 rounded-xl p-6 backdrop-blur-sm">
-        <h2 className="text-2xl font-bold text-white mb-4">{jobDescription.title}</h2>
-        <h3 className="text-xl text-blue-400 mb-4">{jobDescription.company}</h3>
-        
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <h4 className="text-lg font-semibold text-white mb-2">Requirements</h4>
-            <ul className="list-disc list-inside text-gray-300">
-              {jobDescription.requirements.map((req, i) => (
-                <li key={i}>{req}</li>
-              ))}
-            </ul>
+      {/* Enhanced Grid Layout */}
+      <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-3 gap-4 mb-10">
+        {/* Job Description - Takes full width on small screens, 1/3 on large */}
+        <div className="lg:col-span-1 bg-gray-800/80 rounded-xl p-6 backdrop-blur-sm h-fit">
+          <h2 className="text-2xl font-bold text-white mb-4">{jobDescription.title}</h2>
+          <h3 className="text-xl text-blue-400 mb-4">{jobDescription.company}</h3>
+          
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <h4 className="text-lg font-semibold text-white mb-2">Requirements</h4>
+              <ul className="list-disc list-inside text-gray-300">
+                {jobDescription.requirements.map((req, i) => (
+                  <li key={i}>{req}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold text-white mb-2">Responsibilities</h4>
+              <ul className="list-disc list-inside text-gray-300">
+                {jobDescription.responsibilities.map((resp, i) => (
+                  <li key={i}>{resp}</li>
+                ))}
+              </ul>
+            </div>
           </div>
-          <div>
-            <h4 className="text-lg font-semibold text-white mb-2">Responsibilities</h4>
-            <ul className="list-disc list-inside text-gray-300">
-              {jobDescription.responsibilities.map((resp, i) => (
-                <li key={i}>{resp}</li>
-              ))}
-            </ul>
+        </div>
+
+        {/* Charts Container - Takes full width on small screens, 2/3 on large */}
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Technical Skills Distribution */}
+          <div className="bg-gray-800/80 rounded-xl p-4 backdrop-blur-sm">
+            <h3 className="text-lg font-semibold text-white mb-4">Skills Distribution</h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={skillsData}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                <XAxis dataKey="name" stroke="#fff" />
+                <YAxis stroke="#fff" />
+                <Tooltip contentStyle={{ background: '#1f2937' }} />
+                <Bar dataKey="score" fill="#8884d8">
+                  {skillsData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Monthly Applicants Trend */}
+          <div className="bg-gray-800/80 rounded-xl p-4 backdrop-blur-sm">
+            <h3 className="text-lg font-semibold text-white mb-4">Monthly Applicants</h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={monthlyApplicants}>
+                <defs>
+                  <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                <XAxis dataKey="month" stroke="#fff" />
+                <YAxis stroke="#fff" />
+                <Tooltip contentStyle={{ background: '#1f2937' }} />
+                <Area 
+                  type="monotone" 
+                  dataKey="count" 
+                  stroke="#8884d8" 
+                  fillOpacity={1} 
+                  fill="url(#colorCount)"
+                  animationDuration={1000}
+                  animationEasing="ease-in-out"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Score Trends */}
+          <div className="bg-gray-800/80 rounded-xl p-4 backdrop-blur-sm">
+            <h3 className="text-lg font-semibold text-white mb-4">Score Trends</h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={scoresTrend}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                <XAxis dataKey="month" stroke="#fff" />
+                <YAxis stroke="#fff" domain={[0, 10]} />
+                <Tooltip contentStyle={{ background: '#1f2937' }} />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="technical" 
+                  stroke="#8884d8" 
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  animationDuration={1000}
+                  animationEasing="ease-in-out"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="communication" 
+                  stroke="#82ca9d" 
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  animationDuration={1000}
+                  animationEasing="ease-in-out"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Experience Distribution */}
+          <div className="bg-gray-800/80 rounded-xl p-4 backdrop-blur-sm">
+            <h3 className="text-lg font-semibold text-white mb-4">Experience Distribution</h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie
+                  data={experienceData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  animationBegin={0}
+                  animationDuration={1500}
+                  animationEasing="ease-out"
+                >
+                  {experienceData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ background: '#ffffff' }} />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
@@ -333,6 +495,6 @@ export default function Recruiters() {
         Go Back
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg blur-lg opacity-50 group-hover:opacity-75 transition-opacity duration-300" />
       </button>
-    </main>
+    </div>
   );
 }
