@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const command = new PutObjectCommand(s3Params);
 
     // Generate the signed URL
-    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 36000 });
 
     return NextResponse.json({
       signedUrl,

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase client configuration
@@ -28,7 +28,9 @@ export default function Candidates() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+
   const recordedChunksRef = useRef<Blob[]>([]);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
 
   const initializeWebcam = async () => {
     try {
@@ -89,7 +91,7 @@ export default function Candidates() {
     }
   };
 
-  const uploadToSupabase = async (videoBlob: Blob) => {
+  const uploadToSupabase = async (videoBlob: Blob): Promise<string | null> => {
     try {
       setIsUploading(true);
       setUploadProgress(0);
@@ -130,6 +132,25 @@ export default function Candidates() {
     }
   };
 
+  const getSignedUrl = async (filePath: string) => {
+    try {
+      const { data, error } = await supabase
+        .storage
+        .from('videos') // replace with your bucket name
+        .createSignedUrl(filePath, 36000); // 1 hour expiry
+
+      if (error) {
+        console.error('Error getting signed URL:', error);
+        return null;
+      }
+
+      return data.signedUrl;
+    } catch (err) {
+      console.error('Error in getSignedUrl:', err);
+      return null;
+    }
+  };
+
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
@@ -149,12 +170,31 @@ export default function Candidates() {
           });
 
           const videoPreviewUrl = URL.createObjectURL(videoBlob);
+
           setVideoUrl(videoPreviewUrl);
 
           // Upload to Supabase
           const publicUrl = await uploadToSupabase(videoBlob);
           console.log('Video successfully uploaded to Supabase:', publicUrl);
-
+          
+          // Extract filename from publicUrl
+          const filename = publicUrl ? publicUrl.split('/').pop() : '';
+          var signedVideoUrl = null;
+          if (filename) {
+            // Get signed URL
+            const signedVideoUrl = await getSignedUrl(filename);
+            if (signedVideoUrl) {
+              setSignedUrl(signedVideoUrl);
+              console.log('Signed URL generated:', signedVideoUrl);
+            }
+          } else {
+            console.error('Filename could not be determined from publicUrl');
+          }
+          if (signedVideoUrl) {
+            setSignedUrl(signedVideoUrl);
+            console.log('Signed URL generated:', signedVideoUrl);
+          }
+          
         } catch (err) {
           console.error('Error processing/uploading video:', err);
         }
@@ -173,64 +213,112 @@ export default function Candidates() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-black">
-      <h1 className="text-4xl font-bold mb-8 text-white">Candidates Page</h1>
-      {isLoading ? (
-        <div className="w-full max-w-[1400px] aspect-video bg-gray-800 rounded-lg mb-4 flex items-center justify-center">
-          <p className="text-white text-xl">Initializing webcam and mic...</p>
-        </div>
-      ) : (
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="w-full max-w-[1400px] aspect-video bg-gray-800 rounded-lg mb-4"
-        />
-      )}
-      <div className="space-y-4">
-        <div className="text-white text-2xl mb-4">
-          {formatTime(recordingTime)}
-        </div>
-        <div className="flex space-x-4">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={isRecording ? stopRecording : startRecording}
-            className="px-8 py-4 bg-red-500 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-semibold text-lg"
-          >
-            {isRecording ? 'Stop Recording' : 'Start Recording'}
-          </motion.button>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black relative overflow-hidden">
+      {/* Background blur effect */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent blur-3xl" />
+      
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-8">
+        <motion.h1 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-4xl font-bold mb-12 text-white/90 tracking-tight"
+        >
+          Record Your Interview
+        </motion.h1>
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => router.push('/')}
-            className="px-8 py-4 bg-blue-500 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-semibold text-lg"
-          >
-            Go Back
-          </motion.button>
-        </div>
-        {isUploading && (
-          <div className="mt-4">
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div 
-                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
-                style={{ width: `${uploadProgress}%` }}
-              ></div>
+        <div className="w-full max-w-[1400px] rounded-2xl overflow-hidden shadow-2xl bg-gray-900/50 backdrop-blur-sm p-6">
+          {isLoading ? (
+            <div className="aspect-video rounded-xl bg-gray-800/50 flex items-center justify-center">
+              <div className="flex flex-col items-center space-y-4">
+                <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+                <p className="text-white/70 text-lg">Initializing...</p>
+              </div>
             </div>
-            <p className="text-white text-center mt-2">Uploading: {uploadProgress}%</p>
-          </div>
-        )}
-        {videoUrl && (
-          <div className="mt-8">
-            <h2 className="text-white text-2xl mb-4">Recording Preview</h2>
+          ) : (
             <video
-              src={videoUrl}
-              controls
-              className="w-full max-w-[1400px] aspect-video bg-gray-800 rounded-lg"
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full aspect-video rounded-xl bg-gray-800/50 object-cover"
             />
+          )}
+
+          <div className="mt-8 flex flex-col items-center space-y-6">
+            <AnimatePresence>
+              {isRecording && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="flex items-center space-x-3"
+                >
+                  <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-white/90 text-xl font-medium">
+                    {formatTime(recordingTime)}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="flex space-x-4">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={isRecording ? stopRecording : startRecording}
+                className={`px-8 py-3 rounded-lg font-medium text-lg transition-all duration-200 ${
+                  isRecording 
+                    ? 'bg-red-500/20 text-red-500 border-2 border-red-500/50 hover:bg-red-500/30'
+                    : 'bg-blue-500/20 text-blue-500 border-2 border-blue-500/50 hover:bg-blue-500/30'
+                }`}
+              >
+                {isRecording ? 'Stop Recording' : 'Start Recording'}
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => router.push('/')}
+                className="px-8 py-3 rounded-lg font-medium text-lg bg-white/5 text-white/70 border-2 border-white/10 hover:bg-white/10 transition-all duration-200"
+              >
+                Go Back
+              </motion.button>
+            </div>
+
+            {isUploading && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="w-full max-w-md"
+              >
+                <div className="h-1 w-full bg-gray-800 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${uploadProgress}%` }}
+                    className="h-full bg-blue-500/50 rounded-full"
+                  />
+                </div>
+                <p className="text-white/50 text-sm text-center mt-2">
+                  Uploading: {uploadProgress}%
+                </p>
+              </motion.div>
+            )}
           </div>
+        </div>
+
+        {signedUrl && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8 w-full max-w-[1400px] rounded-2xl overflow-hidden shadow-2xl bg-gray-900/50 backdrop-blur-sm p-6"
+          >
+            <h2 className="text-xl font-medium text-white/90 mb-4">Recording Preview</h2>
+            <video
+              src={signedUrl}
+              controls
+              className="w-full aspect-video rounded-xl bg-gray-800/50"
+            />
+          </motion.div>
         )}
       </div>
     </div>
