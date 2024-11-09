@@ -137,7 +137,7 @@ export default function Candidates() {
       const { data, error } = await supabase
         .storage
         .from('videos') // replace with your bucket name
-        .createSignedUrl(filePath, 3600); // 1 hour expiry
+        .createSignedUrl(filePath, 36000); // 1 hour expiry
 
       if (error) {
         console.error('Error getting signed URL:', error);
