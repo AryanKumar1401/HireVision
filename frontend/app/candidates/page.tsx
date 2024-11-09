@@ -139,16 +139,7 @@ export default function Candidates() {
           >
             {isRecording ? 'Stop Recording' : 'Start Recording'}
           </motion.button>
-          {isRecording && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={isPaused ? resumeRecording : pauseRecording}
-              className="px-8 py-4 bg-yellow-500 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-semibold text-lg"
-            >
-              {isPaused ? 'Resume' : 'Pause'}
-            </motion.button>
-          )}
+   
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
