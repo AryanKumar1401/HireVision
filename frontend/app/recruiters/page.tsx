@@ -18,6 +18,12 @@ export default function Recruiters() {
 
   const [videos, setVideos] = useState<Video[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  interface Analysis {
+    summary: string;
+  }
+
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     // Fetch videos from Supabase Storage bucket
@@ -43,6 +49,46 @@ export default function Recruiters() {
     };
     fetchVideos();
   }, []);
+
+  const analyzeVideo = async (videoUrl: string) => {
+    try {
+      setIsAnalyzing(true);
+      console.log('Analyzing video URL:', videoUrl);
+
+      const response = await fetch('http://localhost:8000/analyze-video', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ video_url: videoUrl }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Analysis failed');
+      }
+
+      const data = await response.json();
+      console.log('Analysis response:', data);
+      setAnalysis(data);
+    } catch (error) {
+      console.error('Error analyzing video:', error);
+      // Show error to user
+      if (error instanceof Error) {
+        setAnalysis({ summary: `Error: ${error.message}` });
+      } else {
+        setAnalysis({ summary: 'An unknown error occurred' });
+      }
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedVideo) {
+      analyzeVideo(selectedVideo.url);
+    }
+  }, [selectedVideo]);
 
   useEffect(() => {
     if (selectedVideo) {
@@ -81,15 +127,18 @@ export default function Recruiters() {
             <div className="bg-gray-700 rounded-lg p-4">
               <h3 className="text-lg font-semibold text-white mb-3">Interview Summary</h3>
               <div className="space-y-4">
-                <div className="bg-gray-600 rounded-lg p-4">
-                  <h4 className="text-white font-medium mb-2">Key Points</                  h4>
-                  <ul className="list-disc list-inside text-gray-300 space-y-2">
-                    <li>Strong communication skills demonstrated</li>
-                    <li>Technical expertise in required areas</li>
-                    <li>Shows enthusiasm and cultural fit</li>
-                    <li>Previous experience aligns with role</li>
-                  </ul>
-                </div>
+                {isAnalyzing ? (
+                  <div className="text-white">Analyzing video...</div>
+                ) : analysis ? (
+                  <div className="bg-gray-600 rounded-lg p-4">
+                    <h4 className="text-white font-medium mb-2">Key Points</h4>
+                    <div className="text-gray-300 whitespace-pre-line">
+                      {analysis.summary}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-white">No analysis available</div>
+                )}
               </div>
             </div>
 
@@ -99,40 +148,40 @@ export default function Recruiters() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-600 rounded-lg p-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-400">85%</div>
-                    <div className="text-sm text-gray-300">Positive Sentiment</div>
-                  </div>
-                </div>
-                <div className="bg-gray-600 rounded-lg p-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-400">92%</div>
-                    <div className="text-sm text-gray-300">Confidence Score</div>
-                  </div>
+                    <div className="text-2xl font-bold text-green-400">85%                   </div>
+                  <div className="text-sm text-gray-300">Positive Sentiment</div>
                 </div>
               </div>
-            </div>
-
-            {/* Metrics Dashboard */}
-            <div className="bg-gray-700 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-white mb-3">Interview Metrics</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-600 rounded-lg p-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-400">8.5/10</div>
-                    <div className="text-sm text-gray-300">Technical Score</div>
-                  </div>
-                </div>
-                <div className="bg-gray-600 rounded-lg p-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-yellow-400">9/10</div>
-                    <div className="text-sm text-gray-300">Communication</div>
-                  </div>
-                </div>
+              <div className="bg-gray-600 rounded-lg p-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-400">92%                    </div>
+                <div className="text-sm text-gray-300">Confidence Score</div>
               </div>
             </div>
           </div>
         </div>
-      </main>
+
+        {/* Metrics Dashboard */}
+        <div className="bg-gray-700 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-white mb-3">Interview Metrics</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-600 rounded-lg p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-400">8.5/10</div>
+                <div className="text-sm text-gray-300">Technical Score</div>
+              </div>
+            </div>
+            <div className="bg-gray-600 rounded-lg p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-400">9/10</div>
+                <div className="text-sm text-gray-300">Communication</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+        </div >
+      </main >
     );
   }
 
