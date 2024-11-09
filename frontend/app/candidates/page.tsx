@@ -18,11 +18,12 @@ export default function Candidates() {
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null); // New state for video preview URL
 
   const initializeWebcam = async () => {
     try {
       setIsLoading(true);
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       streamRef.current = stream;
     } catch (err) {
       console.error('Error accessing webcam:', err);
@@ -60,7 +61,7 @@ export default function Candidates() {
       }
       const mediaRecorder = new MediaRecorder(streamRef.current!);
       mediaRecorderRef.current = mediaRecorder;
-      
+
       mediaRecorder.start();
       setIsRecording(true);
       startTimer(); // Start the timer when recording starts
@@ -70,6 +71,7 @@ export default function Candidates() {
           // Handle the recorded video data here
           const videoUrl = URL.createObjectURL(event.data);
           console.log('Recording finished:', videoUrl);
+          setVideoUrl(videoUrl);
         }
       };
     } catch (err) {
@@ -115,7 +117,7 @@ export default function Candidates() {
       <h1 className="text-4xl font-bold mb-8 text-white">Candidates Page</h1>
       {isLoading ? (
         <div className="w-full max-w-[1400px] aspect-video bg-gray-800 rounded-lg mb-4 flex items-center justify-center">
-          <p className="text-white text-xl">Initializing webcam...</p>
+          <p className="text-white text-xl">Initializing webcam and mic...</p>
         </div>
       ) : (
         <video
@@ -139,7 +141,7 @@ export default function Candidates() {
           >
             {isRecording ? 'Stop Recording' : 'Start Recording'}
           </motion.button>
-   
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -149,6 +151,16 @@ export default function Candidates() {
             Go Back
           </motion.button>
         </div>
+        {videoUrl && (
+          <div className="mt-8">
+            <h2 className="text-white text-2xl mb-4">Recording Preview</h2>
+            <video
+              src={videoUrl}
+              controls
+              className="w-full max-w-[1400px] aspect-video bg-gray-800 rounded-lg"
+            />
+          </div>
+        )}
       </div>
     </div>
   );
