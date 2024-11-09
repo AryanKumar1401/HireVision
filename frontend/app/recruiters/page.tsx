@@ -418,7 +418,7 @@ export default function Recruiters() {
           </div>
 
           {/* Experience Distribution */}
-          <div className="bg-gray-800/80 rounded-xl p-4 backdrop-blur-sm">
+            <div className="bg-gray-800/80 rounded-xl p-10 backdrop-blur-sm lg:col-start-1 lg:col-end-3">
             <h3 className="text-lg font-semibold text-white mb-4">Experience Distribution</h3>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
