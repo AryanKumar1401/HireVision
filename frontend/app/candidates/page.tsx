@@ -26,14 +26,37 @@ export async function getPresignedUrl(): Promise<{ url: string; signedUrl: strin
 }
 
 export async function uploadToS3(signedUrl: string, videoBlob: Blob) {
-  const response = await fetch(signedUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'video/webm' },
-    body: videoBlob,
-  });
+  console.log("uploadToS3 starts", { contentType: videoBlob.type });
 
-  if (!response.ok) {
-    throw new Error('Failed to upload video to S3');
+  // Validate inputs
+  if (!signedUrl || !videoBlob) {
+    throw new Error('Invalid upload parameters');
+  }
+
+  try {
+    const response = await fetch(signedUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': videoBlob.type || 'video/webm'
+      },
+      body: videoBlob,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Upload failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText
+      });
+      throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+    }
+
+    console.log("Upload successful");
+    return response;
+  } catch (error) {
+    console.error("Error in uploadToS3:", error);
+    throw new Error(`Upload failed: ${error.message}`);
   }
 }
 
@@ -85,7 +108,8 @@ export default function Candidates() {
 
   const startRecording = async () => {
     try {
-      setRecordingTime(0); // Reset timer when starting new recording
+      recordedChunksRef.current = []; // Clear previous recording chunks
+      setRecordingTime(0);
       if (!streamRef.current) {
         await initializeWebcam();
       }
@@ -94,41 +118,42 @@ export default function Candidates() {
 
       mediaRecorder.start();
       setIsRecording(true);
-      startTimer(); // Start the timer when recording starts
+      startTimer();
 
-      mediaRecorder.ondataavailable = async (event) => {
+      mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           recordedChunksRef.current.push(event.data);
-
-          const videoBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
-          const videoPreviewUrl = URL.createObjectURL(videoBlob);
-          setVideoUrl(videoPreviewUrl);
-
-          // Step 3: Upload to S3
-          try {
-            const { signedUrl } = await getPresignedUrl();
-            await uploadToS3(signedUrl, videoBlob);
-            console.log('Video successfully uploaded to S3');
-          } catch (err) {
-            console.error('Error uploading video to S3:', err);
-          }
-            }
-          };
+        }
+      };
     } catch (err) {
       console.error('Error starting recording:', err);
     }
   };
 
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current) {
+  const stopRecording = async () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
       setIsRecording(false);
       if (timerRef.current) clearInterval(timerRef.current);
 
+      // Handle the final recording after stopping
+      mediaRecorderRef.current.onstop = async () => {
+        try {
+          const videoBlob = new Blob(recordedChunksRef.current, { type: 'video/webm; codecs=vp8,opus' });
+          const videoPreviewUrl = URL.createObjectURL(videoBlob);
+          setVideoUrl(videoPreviewUrl);
+
+          const { signedUrl } = await getPresignedUrl();
+          await uploadToS3(signedUrl, videoBlob);
+          console.log('Video successfully uploaded to S3');
+        } catch (err) {
+          console.error('Error processing/uploading video:', err);
+        }
+      };
+
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
     }
   };
 
