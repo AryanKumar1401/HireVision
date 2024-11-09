@@ -22,11 +22,19 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # Transcribe the video file (replace with a valid file URL)
 transcript = transcriber.transcribe("https://assembly.ai/news.mp4")
 
+
 def summarize_text(text):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "Please provide a concise summary of the following text."},
+
+            {"role": "system", "content": "Provide a balanced analysis of an applicant's job application video, where they discuss their qualifications, skills, and experiences. Summarize the applicant’s responses in a way that presents a neutral overview of their key qualities and achievements. Additionally, break down the applicant's strengths and areas for improvement:" +
+"Pros: Highlight the applicant's strongest qualities, focusing on positive attributes in their responses. These could include effective communication, relevant experiences, strong examples, or clear explanations that showcase their strengths for the role." + 
+
+"Cons: Identify aspects of the applicant's responses that could be improved. These may include areas where they lack detail, appear unprepared, show signs of nervousness, or miss opportunities to connect their experience with the job requirements." +
+
+"Summarize the video and provide the pros and cons in bullet points for easy reference."},
+
             {"role": "user", "content": text}
         ],
         max_tokens=150
@@ -57,3 +65,4 @@ bucket_name = "textfiles"
 supa_file_path = f"{filename}"
 with open(file_path, "rb") as f:
     response = supabase.storage.from_(bucket_name).upload(supa_file_path, f)
+
