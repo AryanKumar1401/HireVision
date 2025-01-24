@@ -79,6 +79,16 @@ export default function Recruiters() {
   const [topApplicants] = useState<string[]>(['Application 1', 'Application 3', 'Application 4']);
   interface Analysis {
     summary: string;
+    behavioral_scores?: {
+      confidence: { score: number; explanation: string };
+      clarity: { score: number; explanation: string };
+      enthusiasm: { score: number; explanation: string };
+      leadership: { score: number; explanation: string };
+    };
+    communication_analysis?: {
+      strengths: string[];
+      improvements: string[];
+    };
   }
 
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -169,6 +179,7 @@ export default function Recruiters() {
       }
 
       const data = await response.json();
+
       if (selectedVideo) {
         setAnalysisResults(prev => ({
           ...prev,
@@ -264,8 +275,6 @@ export default function Recruiters() {
                   )}
                 </div>
               </div>
-
-
             </div>
 
             {/* Column 3: Behavioral Analysis and Communication Skills */}
@@ -275,19 +284,27 @@ export default function Recruiters() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-gray-600 p-3 rounded-lg text-center">
-                      <div className="text-xl font-bold text-yellow-400">95%</div>
+                      <div className="text-xl font-bold text-yellow-400">
+                        {analysis?.behavioral_scores?.confidence.score}%
+                      </div>
                       <div className="text-sm text-gray-300">Confidence</div>
                     </div>
                     <div className="bg-gray-600 p-3 rounded-lg text-center">
-                      <div className="text-xl font-bold text-pink-400">88%</div>
+                      <div className="text-xl font-bold text-pink-400">
+                        {analysis?.behavioral_scores?.enthusiasm.score}%
+                      </div>
                       <div className="text-sm text-gray-300">Enthusiasm</div>
                     </div>
                     <div className="bg-gray-600 p-3 rounded-lg text-center">
-                      <div className="text-xl font-bold text-cyan-400">92%</div>
+                      <div className="text-xl font-bold text-cyan-400">
+                        {analysis?.behavioral_scores?.clarity.score}%
+                      </div>
                       <div className="text-sm text-gray-300">Clarity</div>
                     </div>
                     <div className="bg-gray-600 p-3 rounded-lg text-center">
-                      <div className="text-xl font-bold text-orange-400">85%</div>
+                      <div className="text-xl font-bold text-orange-400">
+                        {analysis?.behavioral_scores?.leadership.score}%
+                      </div>
                       <div className="text-sm text-gray-300">Leadership</div>
                     </div>
                   </div>
@@ -299,19 +316,27 @@ export default function Recruiters() {
                 <div className="space-y-3">
                   <div className="bg-gray-600 p-4 rounded-lg">
                     <h4 className="text-white font-medium mb-2">Key Strengths</h4>
-                    <ul className="list-disc list-inside text-gray-300 space-y-1">
-                      <li>Clear articulation of ideas</li>
-                      <li>Excellent active listening</li>
-                      <li>Professional demeanor</li>
-                      <li>Structured responses</li>
-                    </ul>
+                    {isAnalyzing ? (
+                      <div className="animate-pulse h-20 bg-gray-500 rounded" />
+                    ) : (
+                      <ul className="list-disc list-inside text-gray-300 space-y-1">
+                        {analysis?.communication_analysis?.strengths.map((strength, idx) => (
+                          <li key={idx}>{strength}</li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                   <div className="bg-gray-600 p-4 rounded-lg">
                     <h4 className="text-white font-medium mb-2">Areas for Improvement</h4>
-                    <ul className="list-disc list-inside text-gray-300 space-y-1">
-                      <li>Technical terminology usage</li>
-                      <li>Conciseness in responses</li>
-                    </ul>
+                    {isAnalyzing ? (
+                      <div className="animate-pulse h-12 bg-gray-500 rounded" />
+                    ) : (
+                      <ul className="list-disc list-inside text-gray-300 space-y-1">
+                        {analysis?.communication_analysis?.improvements.map((improvement, idx) => (
+                          <li key={idx}>{improvement}</li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 </div>
               </div>
@@ -418,7 +443,7 @@ export default function Recruiters() {
           </div>
 
           {/* Experience Distribution */}
-            <div className="bg-gray-800/80 rounded-xl p-10 backdrop-blur-sm lg:col-start-1 lg:col-end-3">
+          <div className="bg-gray-800/80 rounded-xl p-10 backdrop-blur-sm lg:col-start-1 lg:col-end-3">
             <h3 className="text-lg font-semibold text-white mb-4">Experience Distribution</h3>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
@@ -479,8 +504,8 @@ export default function Recruiters() {
               setSelectedVideo(video);
             }}
             className={`${topApplicants.includes(video.title)
-                ? 'bg-gradient-to-br from-green-500 to-blue-500'
-                : 'bg-gradient-to-br from-blue-500 to-purple-500'
+              ? 'bg-gradient-to-br from-green-500 to-blue-500'
+              : 'bg-gradient-to-br from-blue-500 to-purple-500'
               } text-white font-medium px-6 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95`}
           >
             <span>{video.title}</span>

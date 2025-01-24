@@ -6,6 +6,10 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import spacy
+import json
+
+nlp = spacy.load("en_core_web_sm")
 
 # Directly setting the API keys (not recommended for production)
 load_dotenv()
@@ -47,7 +51,53 @@ def summarize_text(text):
         max_tokens=150
     )
     return response.choices[0].message.content
+    
+def generate_behavioral_scores(summary):
+    prompt = (
+        "You are an advanced behavioral analyst. Based on the following interview summary, "
+        "rate the candidate's performance on a scale of 0 to 100% for the following traits: "
+        "1. Confidence: How assertive and decisive they sound. "
+        "2. Clarity: How well-structured and unambiguous their responses are. "
+        "3. Enthusiasm: How energetic and positive they appear. "
+        "4. Leadership: How well they demonstrate initiative and teamwork. "
+        "Here is the summary: \n\n"
+        f"{summary}\n\n"
+        "Provide the scores as a JSON object with explanations, e.g., "
+        '{"confidence": {"score": 85, "explanation": "Strong and assertive responses."}, ...}.'
+    )
+    
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=300,
+        temperature=0.7
+    )
+    
+    return json.loads(response.choices[0].message.content)
 
+def analyze_communication(summary):
+    prompt = (
+        "As a communication skills analyst, evaluate the following interview summary and provide: "
+        "1. 4 key strengths in communication "
+        "2. 2 areas for improvement "
+        "Format as JSON: {'strengths': [...], 'improvements': [...]}\n\n"
+        f"Summary: {summary}"
+    )
+    
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a communication skills analyst."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=200
+    )
+    
+    return json.loads(response.choices[0].message.content)
+ 
 def analyze_video(video_url: str):
     try:
         print(f"Attempting to transcribe video from URL: {video_url}")
@@ -63,9 +113,11 @@ def analyze_video(video_url: str):
             
         print(f"Transcription successful. Length: {len(transcript.text)}")
         
-        # Get the summary
+        # Get the summary and behavioral analysis
         transcript_text = transcript.text
         summary = summarize_text(transcript_text)
+        behavioral_scores = generate_behavioral_scores(summary)
+        communication_analysis = analyze_communication(summary)
         
         # Create txt_files directory if it doesn't exist
         os.makedirs("txt_files", exist_ok=True)
@@ -77,11 +129,19 @@ def analyze_video(video_url: str):
         # Write the summary to a file
         with open(file_path, "w") as file:
             file.write(summary)
-        
+        print("Result of the analysis is ", {
+            "summary": summary,
+            "filename": filename,
+            "transcript": transcript_text,
+            "behavioral_scores": behavioral_scores,
+            "communication_analysis": communication_analysis
+        })
         return {
             "summary": summary,
             "filename": filename,
-            "transcript": transcript_text
+            "transcript": transcript_text,
+            "behavioral_scores": behavioral_scores,
+            "communication_analysis": communication_analysis
         }
     except Exception as e:
         print(f"Error in analyze_video: {str(e)}")
