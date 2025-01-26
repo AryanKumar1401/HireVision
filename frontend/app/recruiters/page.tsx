@@ -68,10 +68,22 @@ interface JobDescription {
 
 export default function Recruiters() {
   const router = useRouter();
+
+  interface CandidateDetails {
+    id: string;
+    full_name: string;
+    email: string;
+    phone: string;
+    experience: string;
+    linkedin: string;
+    video_url?: string;
+  }
+
   interface Video {
     id: string;
     title: string;
     url: string;
+    candidate_details?: CandidateDetails;
   }
 
   const [videos, setVideos] = useState<Video[]>([]);
@@ -124,24 +136,44 @@ export default function Recruiters() {
   useEffect(() => {
     // Fetch videos from Supabase Storage bucket
     const fetchVideos = async () => {
-      const { data, error } = await supabase.storage.from('videos').list('');
-      if (error) {
-        console.error('Error fetching videos:', error.message);
-      } else {
-        const videoData = await Promise.all(data.map(async (file, index) => {
-          const { data: signedData, error: signedError } = await supabase.storage.from('videos').createSignedUrl(file.name, 3600);
-          if (signedError || !signedData) {
-            console.error('Error creating signed URL:', signedError ? signedError.message : 'No data returned');
-            return null;
-          }
-          return {
-            id: file.id,
-            title: `Application ${index + 1}`,
-            url: signedData.signedUrl
-          };
-        }));
-        setVideos(videoData.filter(video => video !== null));
+      console.log('Fetching videos...');
+      
+      // Get all profiles that have video URLs
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*');
+      console.log('Profiles:', profiles, 'Error:', profilesError);
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError.message);
+        return;
       }
+  
+      // Get signed URLs for each video
+      const videoData = await Promise.all(profiles.map(async (profile, index) => {
+        if (!profile.video_url) return null;
+  
+        const { data: signedData } = await supabase.storage
+          .from('videos')
+          .createSignedUrl(profile.video_url, 3600);
+  
+        if (!signedData?.signedUrl) return null;
+  
+        return {
+          id: profile.id,
+          title: `Application ${index + 1}`,
+          url: signedData.signedUrl,
+          candidate_details: {
+            id: profile.id,
+            full_name: profile.full_name,
+            email: profile.email,
+            phone: profile.phone,
+            experience: profile.experience,
+            linkedin: profile.linkedin
+          }
+        };
+      }));
+  
+      setVideos(videoData.filter(video => video !== null));
     };
     fetchVideos();
   }, []);
@@ -238,6 +270,42 @@ export default function Recruiters() {
                   controls
                   className="w-full rounded-lg shadow-lg"
                 />
+              </div>
+
+              {/* Add new Candidate Information section */}
+              <div className="bg-gray-700 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-white mb-3">Candidate Information</h3>
+                {selectedVideo.candidate_details ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="text-gray-400">Full Name:</div>
+                      <div className="text-white">{selectedVideo.candidate_details.full_name}</div>
+                      
+                      <div className="text-gray-400">Email:</div>
+                      <div className="text-white">{selectedVideo.candidate_details.email}</div>
+                      
+                      <div className="text-gray-400">Phone:</div>
+                      <div className="text-white">{selectedVideo.candidate_details.phone}</div>
+                      
+                      <div className="text-gray-400">Experience:</div>
+                      <div className="text-white">{selectedVideo.candidate_details.experience}</div>
+                      
+                      <div className="text-gray-400">LinkedIn:</div>
+                      <div className="text-white">
+                        <a 
+                          href={selectedVideo.candidate_details.linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:underline"
+                        >
+                          View Profile
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-gray-400">No candidate information available</div>
+                )}
               </div>
 
               <div className="bg-gray-700 rounded-lg p-4">
@@ -509,6 +577,12 @@ export default function Recruiters() {
               } text-white font-medium px-6 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95`}
           >
             <span>{video.title}</span>
+            {video.candidate_details && (
+              <div className="text-xs mt-2 space-y-1">
+                <p>{video.candidate_details.full_name}</p>
+                <p>{video.candidate_details.experience} years exp.</p>
+              </div>
+            )}
             {topApplicants.includes(video.title) && (
               <span className="block text-xs mt-1 text-green-200">Top Candidate</span>
             )}

@@ -16,6 +16,15 @@ type MediaRecorderRef = MediaRecorder & {
   resume: () => void;
 };
 
+interface ProfileFormData {
+  full_name: string;
+  phone: string;
+  experience: string;
+  linkedin: string;
+  email: string;
+  video_url?: string;
+}
+
 export default function Candidates() {
   const router = useRouter();
   const [isRecording, setIsRecording] = useState(false);
@@ -33,6 +42,8 @@ export default function Candidates() {
 
   const recordedChunksRef = useRef<Blob[]>([]);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [showProfileForm, setShowProfileForm] = useState(true);
+  const [profileData, setProfileData] = useState<ProfileFormData | null>(null);
 
   useEffect(() => {
     const getSession = async () => {
@@ -41,6 +52,25 @@ export default function Candidates() {
     }
     getSession()
   }, [])
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile) {
+          setProfileData(profile);
+          setShowProfileForm(false);
+        }
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -108,12 +138,15 @@ export default function Candidates() {
 
   const uploadToSupabase = async (videoBlob: Blob): Promise<string | null> => {
     try {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) return;
+      const fileName = `${userId}_${Date.now()}.mp4`;
       setIsUploading(true);
       setUploadProgress(0);
 
       // Generate a unique filename
       const timestamp = new Date().getTime();
-      const filename = `video_${timestamp}.webm`;
+      const filename = `${userId}_${Date.now()}.mp4`;
 
       // Convert blob to File object
       const videoFile = new File([videoBlob], filename, { type: 'video/webm' });
@@ -201,6 +234,19 @@ export default function Candidates() {
             if (signedVideoUrl) {
               setSignedUrl(signedVideoUrl);
               console.log('Signed URL generated:', signedVideoUrl);
+              
+              // Update the user's profile with the video URL
+              const { data: { user } } = await supabase.auth.getUser();
+              console.log('Current user:', user);
+              if (user) {
+                await supabase
+                  .from('profiles')
+                  .update({ 
+                    video_url: filename,
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', user.id);
+              }
             }
           } else {
             console.error('Filename could not be determined from publicUrl');
@@ -221,11 +267,107 @@ export default function Candidates() {
     }
   };
 
+  const handleProfileSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (user) {
+      const profileData = {
+        full_name: formData.get('full_name') as string,
+        phone: formData.get('phone') as string,
+        experience: formData.get('experience') as string,
+        linkedin: formData.get('linkedin') as string,
+        email: user.email, // Add email from auth user
+      };
+  
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({ 
+          id: user.id,
+          ...profileData,
+          updated_at: new Date().toISOString(),
+        });
+  
+      if (!error) {
+        setProfileData(profileData);
+        setShowProfileForm(false);
+      }
+    }
+  };
+
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
+
+  if (showProfileForm) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
+          <h2 className="text-2xl font-bold mb-6">Complete Your Profile</h2>
+          <form onSubmit={handleProfileSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Full Name</label>
+              <input
+                name="full_name"
+                type="text"
+                required
+                defaultValue={profileData?.full_name}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+              <input
+                name="phone"
+                type="tel"
+                required
+                defaultValue={profileData?.phone}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Experience Level</label>
+              <select
+                name="experience"
+                required
+                defaultValue={profileData?.experience}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              >
+                <option value="">Select experience</option>
+                <option value="0-2">0-2 years</option>
+                <option value="2-5">2-5 years</option>
+                <option value="5-8">5-8 years</option>
+                <option value="8+">8+ years</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">LinkedIn URL</label>
+              <input
+                name="linkedin"
+                type="url"
+                required
+                defaultValue={profileData?.linkedin}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+            >
+              Save Profile
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black relative overflow-hidden">
