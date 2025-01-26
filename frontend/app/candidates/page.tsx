@@ -2,13 +2,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/utils/auth';
 
 // Supabase client configuration
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// const supabase = createClient(
+//   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+//   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// );
+const supabase = createClient();
 
 type MediaRecorderRef = MediaRecorder & {
   pause: () => void;
@@ -18,7 +19,7 @@ type MediaRecorderRef = MediaRecorder & {
 export default function Candidates() {
   const router = useRouter();
   const [isRecording, setIsRecording] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+  // const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -28,9 +29,23 @@ export default function Candidates() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null)
 
   const recordedChunksRef = useRef<Blob[]>([]);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setUserEmail(session?.user?.email ?? null)
+    }
+    getSession()
+  }, [])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   const initializeWebcam = async () => {
     try {
@@ -218,6 +233,17 @@ export default function Candidates() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent blur-3xl" />
       
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-8">
+      {userEmail && (
+          <div className="absolute top-4 right-4 flex items-center gap-4">
+            <span className="text-white/70">Logged in as {userEmail}</span>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        )}
         <motion.h1 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
