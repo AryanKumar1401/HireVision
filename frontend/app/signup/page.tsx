@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { createClient } from '@/utils/auth'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function SignUpPage() {
   const supabase = createClient()

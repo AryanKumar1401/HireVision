@@ -416,26 +416,18 @@ export default function Recruiters() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-between min-h-screen bg-gradient-to-bl from-gray-900 via-black to-gray-800 p-8 relative overflow-hidden">
-      {/* Background accents */}
-      <div
-        className="absolute top-0 left-1/3 w-[600px] h-[600px] bg-blue-500 opacity-20 blur-3xl rounded-full animate-pulse"
-      />
-      <div
-        className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-500 opacity-20 blur-3xl rounded-full animate-pulse"
-      />
-
+    <div className="min-h-screen bg-gray-900 p-8">
       {/* Title */}
-      <h1 className="text-5xl font-extrabold text-white mb-10 drop-shadow-lg tracking-tight">
-        Recruiters Page
+      <h1 className="text-4xl font-bold text-white mb-8">
+        Recruitment Dashboard
       </h1>
 
       {/* Enhanced Grid Layout */}
-      <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-3 gap-4 mb-10">
-        {/* Job Description - Takes full width on small screens, 1/3 on large */}
-        <div className="lg:col-span-1 bg-gray-800/80 rounded-xl p-6 backdrop-blur-sm flex h-full flex-col justify-between">
+      <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* Job Description Card */}
+        <div className="lg:col-span-1 bg-gray-800 rounded-lg p-6 border border-gray-700">
           <h2 className="text-2xl font-bold text-white mb-4">{jobDescription.title}</h2>
-          <h3 className="text-3xl text-blue-600 mb-4 text-center">{jobDescription.company}</h3>
+          <h3 className="text-xl text-gray-300 mb-4">{jobDescription.company}</h3>
           <div className="grid grid-cols-2 gap-6">
             <div>
               <h4 className="text-lg font-semibold text-white mb-2">Requirements</h4>
@@ -456,10 +448,10 @@ export default function Recruiters() {
           </div>
         </div>
 
-        {/* Charts Container - Takes full width on small screens, 2/3 on large */}
-        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Charts Container */}
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Technical Skills Distribution */}
-          <div className="bg-gray-800/80 rounded-xl p-4 backdrop-blur-sm">
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <h3 className="text-lg font-semibold text-white mb-4">Skills Distribution</h3>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={skillsData}>
@@ -479,7 +471,7 @@ export default function Recruiters() {
           {/* Monthly Applicants Trend */}
 
           {/* Score Trends */}
-          <div className="bg-gray-800/80 rounded-xl p-4 backdrop-blur-sm">
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <h3 className="text-lg font-semibold text-white mb-4">Score Trends</h3>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={scoresTrend}>
@@ -511,7 +503,7 @@ export default function Recruiters() {
           </div>
 
           {/* Experience Distribution */}
-          <div className="bg-gray-800/80 rounded-xl p-10 backdrop-blur-sm lg:col-start-1 lg:col-end-3">
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 lg:col-start-1 lg:col-end-3">
             <h3 className="text-lg font-semibold text-white mb-4">Experience Distribution</h3>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
@@ -540,64 +532,61 @@ export default function Recruiters() {
       </div>
 
       {/* Aggregate Metrics Dashboard */}
-      <div className="w-full max-w-4xl mb-10 grid grid-cols-3 gap-4">
-        <div className="bg-gray-800/80 rounded-xl p-4 text-center">
+      <div className="w-full max-w-4xl mx-auto mb-8 grid grid-cols-3 gap-6">
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 text-center">
           <div className="text-3xl font-bold text-blue-400">{aggregateMetrics.totalApplicants}</div>
           <div className="text-gray-300">Total Applicants</div>
         </div>
-        <div className="bg-gray-800/80 rounded-xl p-4 text-center">
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 text-center">
           <div className="text-3xl font-bold text-green-400">{aggregateMetrics.averageTechnicalScore}</div>
           <div className="text-gray-300">Avg Technical Score</div>
         </div>
-        <div className="bg-gray-800/80 rounded-xl p-4 text-center">
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 text-center">
           <div className="text-3xl font-bold text-purple-400">{aggregateMetrics.averageCommunicationScore}</div>
           <div className="text-gray-300">Avg Communication Score</div>
         </div>
       </div>
 
-      {/* Left-aligned "Your Applications" title with underline effect */}
-      <div className="w-full max-w-2xl mb-8">
-        <h2 className="text-3xl font-bold text-white relative inline-block after:absolute after:content-[''] after:w-full after:h-1 after:bg-gradient-to-r from-purple-500 to-blue-500 after:bottom-0 after:left-0 after:rounded-full">
+      {/* Applications Section */}
+      <div className="w-full max-w-4xl mx-auto">
+        <h2 className="text-2xl font-bold text-white mb-6 pb-2 border-b border-gray-700">
           Applications
         </h2>
-      </div>
 
-      {/* Application Links Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 max-w-2xl w-full">
-        {videos.map((video) => (
-          <button
-            key={video.id}
-            onClick={() => {
-              console.log('Button clicked:', video);
-              setSelectedVideo(video);
-            }}
-            className={`${topApplicants.includes(video.title)
-              ? 'bg-gradient-to-br from-green-500 to-blue-500'
-              : 'bg-gradient-to-br from-blue-500 to-purple-500'
-              } text-white font-medium px-6 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95`}
-          >
-            <span>{video.title}</span>
-            {video.candidate_details && (
-              <div className="text-xs mt-2 space-y-1">
-                <p>{video.candidate_details.full_name}</p>
-                <p>{video.candidate_details.experience} years exp.</p>
-              </div>
-            )}
-            {topApplicants.includes(video.title) && (
-              <span className="block text-xs mt-1 text-green-200">Top Candidate</span>
-            )}
-          </button>
-        ))}
-      </div>
+        {/* Application Links Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 mb-8">
+          {videos.map((video) => (
+            <button
+              key={video.id}
+              onClick={() => setSelectedVideo(video)}
+              className={`${
+                topApplicants.includes(video.title)
+                  ? 'bg-blue-600'
+                  : 'bg-gray-700'
+              } text-white font-medium px-6 py-4 rounded-lg border border-gray-600 hover:bg-opacity-90 transition-colors`}
+            >
+              <span>{video.title}</span>
+              {video.candidate_details && (
+                <div className="text-xs mt-2 space-y-1">
+                  <p>{video.candidate_details.full_name}</p>
+                  <p>{video.candidate_details.experience} years exp.</p>
+                </div>
+              )}
+              {topApplicants.includes(video.title) && (
+                <span className="block text-xs mt-1 text-green-200">Top Candidate</span>
+              )}
+            </button>
+          ))}
+        </div>
 
-      {/* "Go Back" button with glowing effect */}
-      <button
-        onClick={() => router.push('/')}
-        className="mt-16 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 font-semibold text-lg relative hover:scale-105 active:scale-95"
-      >
-        Go Back
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg blur-lg opacity-50 group-hover:opacity-75 transition-opacity duration-300" />
-      </button>
+        {/* Back Button */}
+        <button
+          onClick={() => router.push('/')}
+          className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium"
+        >
+          Back to Home
+        </button>
+      </div>
     </div>
   );
 }

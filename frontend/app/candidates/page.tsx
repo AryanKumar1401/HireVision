@@ -3,7 +3,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/utils/auth';
-
+import {ProfileForm} from '@/components/ProfileForm';
+import {VideoPreview} from '@/components/VideoPreview';
 // Supabase client configuration
 // const supabase = createClient(
 //   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,6 +40,7 @@ export default function Candidates() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [cameraError, setCameraError] = useState<string | null>(null);
 
   const recordedChunksRef = useRef<Blob[]>([]);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
@@ -63,7 +65,8 @@ export default function Candidates() {
           .eq('id', user.id)
           .single();
         
-        if (profile) {
+        if (profile.full_name) {
+          console.log('Profile already exists:', profile.full_name);
           setProfileData(profile);
           setShowProfileForm(false);
         }
@@ -80,10 +83,12 @@ export default function Candidates() {
   const initializeWebcam = async () => {
     try {
       setIsLoading(true);
+      setCameraError(null);
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       streamRef.current = stream;
     } catch (err) {
       console.error('Error accessing webcam:', err);
+      setCameraError(err instanceof Error ? err.message : 'Failed to access camera');
     } finally {
       setIsLoading(false);
     }
@@ -139,7 +144,6 @@ export default function Candidates() {
   const uploadToSupabase = async (videoBlob: Blob): Promise<string | null> => {
     try {
       const userId = (await supabase.auth.getUser()).data.user?.id;
-      if (!userId) return;
       const fileName = `${userId}_${Date.now()}.mp4`;
       setIsUploading(true);
       setUploadProgress(0);
@@ -303,70 +307,7 @@ export default function Candidates() {
   };
 
   if (showProfileForm) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
-          <h2 className="text-2xl font-bold mb-6">Complete Your Profile</h2>
-          <form onSubmit={handleProfileSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Full Name</label>
-              <input
-                name="full_name"
-                type="text"
-                required
-                defaultValue={profileData?.full_name}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-              <input
-                name="phone"
-                type="tel"
-                required
-                defaultValue={profileData?.phone}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Experience Level</label>
-              <select
-                name="experience"
-                required
-                defaultValue={profileData?.experience}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-              >
-                <option value="">Select experience</option>
-                <option value="0-2">0-2 years</option>
-                <option value="2-5">2-5 years</option>
-                <option value="5-8">5-8 years</option>
-                <option value="8+">8+ years</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">LinkedIn URL</label>
-              <input
-                name="linkedin"
-                type="url"
-                required
-                defaultValue={profileData?.linkedin}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-            >
-              Save Profile
-            </button>
-          </form>
-        </div>
-      </div>
-    );
+    return <ProfileForm onSubmit={handleProfileSubmit} profileData={profileData} />;
   }
 
   return (
@@ -395,23 +336,13 @@ export default function Candidates() {
         </motion.h1>
 
         <div className="w-full max-w-[1400px] rounded-2xl overflow-hidden shadow-2xl bg-gray-900/50 backdrop-blur-sm p-6">
-          {isLoading ? (
-            <div className="aspect-video rounded-xl bg-gray-800/50 flex items-center justify-center">
-              <div className="flex flex-col items-center space-y-4">
-                <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-                <p className="text-white/70 text-lg">Initializing...</p>
-              </div>
-            </div>
-          ) : (
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full aspect-video rounded-xl bg-gray-800/50 object-cover"
-            />
-          )}
-
+          <VideoPreview
+            stream={streamRef.current}
+            recordedUrl={signedUrl}
+            isLoading={isLoading}
+            error={cameraError}
+          />
+          
           <div className="mt-8 flex flex-col items-center space-y-6">
             <AnimatePresence>
               {isRecording && (

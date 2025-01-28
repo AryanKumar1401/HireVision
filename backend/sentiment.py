@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import spacy
 import json
+from test_main import analyze_emotions_from_url
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -78,6 +79,30 @@ def generate_behavioral_scores(summary):
     
     return json.loads(response.choices[0].message.content)
 
+def generate_behavioral_scores_rule_based(summary):
+    doc = nlp(summary)
+    
+    scores = {
+        "confidence": {
+            "score": len([token for token in doc if token.pos_ in ["NOUN", "VERB"]]) / len(doc) * 100,
+            "explanation": "Based on the frequency of assertive nouns and verbs."
+        },
+        "clarity": {
+            "score": len([sent for sent in doc.sents if len(sent) < 20]) / len(list(doc.sents)) * 100,
+            "explanation": "Short and clear sentences detected."
+        },
+        "enthusiasm": {
+            "score": sum(token.sentiment for token in doc) / len(doc) * 100,
+            "explanation": "Detected positive sentiment."
+        },
+        "leadership": {
+            "score": len([ent for ent in doc.ents if ent.label_ == "ORG"]) / len(doc) * 100,
+            "explanation": "Mentions of organizational context."
+        }
+    }
+    
+    return json.dumps(scores, indent=4)
+
 def analyze_communication(summary):
     prompt = (
         "As a communication skills analyst, evaluate the following interview summary and provide: "
@@ -118,6 +143,7 @@ def analyze_video(video_url: str):
         summary = summarize_text(transcript_text)
         behavioral_scores = generate_behavioral_scores(summary)
         communication_analysis = analyze_communication(summary)
+        print("Transcript: ", transcript_text)
         
         # Create txt_files directory if it doesn't exist
         os.makedirs("txt_files", exist_ok=True)

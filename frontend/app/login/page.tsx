@@ -35,7 +35,7 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full p-8 bg-white rounded-xl shadow-lg">
-        <h2 className="text-2xl font-bold text-center mb-8">Sign In</h2>
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">Sign In</h2>
         
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-600 rounded">{error}</div>
@@ -48,7 +48,7 @@ export default function SignInPage() {
               name="email"
               type="email"
               required
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-gray-300 text-gray-800 px-3 py-2"
             />
           </div>
 
