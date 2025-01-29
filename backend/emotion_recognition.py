@@ -1,12 +1,9 @@
 import cv2
-import numpy as np
 from fer import FER
 import requests
-from datetime import datetime
 import tempfile
 import os
-import matplotlib.pyplot as plt
-import seaborn as sns
+
 
 class VideoEmotionAnalyzer:
     def __init__(self):
@@ -153,6 +150,7 @@ class VideoEmotionAnalyzer:
         plt.savefig(summary_path, bbox_inches='tight')
         plt.close()
         return summary_path
+        
 def analyze_emotions_from_url(presigned_url, sample_rate=1):
     """Main function to analyze emotions from a Supabase presigned URL"""
     analyzer = VideoEmotionAnalyzer()
@@ -171,9 +169,3 @@ def analyze_emotions_from_url(presigned_url, sample_rate=1):
         return results
     except Exception as e:
         return {'error': str(e)}
-
-# Example usage
-if __name__ == "__main__":
-    presigned_url = "https://usbvchfamioprsvxhazt.supabase.co/storage/v1/object/sign/videos/video_1731167072469.webm?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJ2aWRlb3MvdmlkZW9fMTczMTE2NzA3MjQ2OS53ZWJtIiwiaWF0IjoxNzM4MDMwODcyLCJleHAiOjE3Mzg2MzU2NzJ9.EB-o43r-Nmjbh_pdlCKnroEaE4OGYo3DWBAkq3cumis"
-    results = analyze_emotions_from_url(presigned_url)
-    print(results)

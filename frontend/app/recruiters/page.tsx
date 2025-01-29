@@ -101,6 +101,54 @@ export default function Recruiters() {
       strengths: string[];
       improvements: string[];
     };
+    emotional_analysis?: {
+      summary: {
+        total_frames_analyzed: number;
+        dominant_emotion: string;
+        dominant_emotion_confidence: number;
+        average_emotions: {
+          angry: number;
+          disgust: number;
+          fear: number;
+          happy: number;
+          sad: number;
+          surprise: number;
+          neutral: number;
+        };
+      };
+    };
+    emotion_results?: {
+      summary: {
+        total_frames_analyzed: number;
+        dominant_emotion: string;
+        dominant_emotion_confidence: number;
+        average_emotions: {
+          angry: number;
+          disgust: number;
+          fear: number;
+          happy: number;
+          sad: number;
+          surprise: number;
+          neutral: number;
+        };
+      };
+      detailed_results: EmotionFrame[];
+    };
+  }
+
+  interface EmotionFrame {
+    frame: number;
+    timestamp: number;
+    emotions: {
+      angry: number;
+      disgust: number;
+      fear: number;
+      happy: number;
+      sad: number;
+      surprise: number;
+      neutral: number;
+    };
+    box: number[];
   }
 
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -243,6 +291,34 @@ export default function Recruiters() {
       console.log('Selected video:', selectedVideo);
     }
   }, [selectedVideo]);
+
+  const EmotionTimeline: React.FC<{ frames: EmotionFrame[] }> = ({ frames }) => {
+    // Process frames into a format suitable for Recharts
+    const timelineData = frames.map(frame => ({
+      timestamp: frame.timestamp.toFixed(1),
+      ...frame.emotions
+    }));
+  
+    return (
+      <ResponsiveContainer width="100%" height={200}>
+        <LineChart data={timelineData}>
+          <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+          <XAxis dataKey="timestamp" stroke="#fff" label={{ value: 'Time (s)', position: 'insideBottom', fill: '#fff' }} />
+          <YAxis stroke="#fff" domain={[0, 1]} />
+          <Tooltip
+            contentStyle={{ backgroundColor: '#1f2937', border: 'none' }}
+            labelStyle={{ color: '#fff' }}
+          />
+          <Legend />
+          <Line type="monotone" dataKey="happy" stroke="#10B981" dot={false} />
+          <Line type="monotone" dataKey="sad" stroke="#6366F1" dot={false} />
+          <Line type="monotone" dataKey="angry" stroke="#EF4444" dot={false} />
+          <Line type="monotone" dataKey="neutral" stroke="#9CA3AF" dot={false} />
+          <Line type="monotone" dataKey="surprise" stroke="#F59E0B" dot={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    );
+  };
 
   if (selectedVideo) {
     return (
@@ -407,6 +483,62 @@ export default function Recruiters() {
                     )}
                   </div>
                 </div>
+              </div>
+
+              <div className="bg-gray-700 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-white mb-3">Emotional Analysis</h3>
+                {isAnalyzing ? (
+                  <div className="animate-pulse h-20 bg-gray-500 rounded" />
+                ) : analysis?.emotion_results ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-gray-600 p-3 rounded-lg">
+                        <div className="text-gray-300">Dominant Emotion</div>
+                        <div className="text-xl font-bold text-white capitalize">
+                          {analysis.emotion_results.summary.dominant_emotion}
+                        </div>
+                        <div className="text-sm text-gray-400">
+                          {(analysis.emotion_results.summary.dominant_emotion_confidence * 100).toFixed(1)}% confidence
+                        </div>
+                      </div>
+                      <div className="bg-gray-600 p-3 rounded-lg">
+                        <div className="text-gray-300">Frames Analyzed</div>
+                        <div className="text-xl font-bold text-white">
+                          {analysis.emotion_results.summary.total_frames_analyzed}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-600 p-4 rounded-lg">
+                      <h4 className="text-white font-medium mb-3">Emotion Timeline</h4>
+                      <EmotionTimeline frames={analysis.emotion_results.detailed_results} />
+                    </div>
+
+                    <div className="bg-gray-600 p-4 rounded-lg">
+                      <h4 className="text-white font-medium mb-3">Emotion Distribution</h4>
+                      <div className="space-y-2">
+                        {Object.entries(analysis.emotion_results.summary.average_emotions).map(([emotion, value]) => (
+                          <div key={emotion} className="flex items-center">
+                            <div className="w-24 text-gray-300 capitalize">{emotion}</div>
+                            <div className="flex-1">
+                              <div className="h-2 bg-gray-700 rounded-full">
+                                <div
+                                  className="h-full bg-blue-500 rounded-full"
+                                  style={{ width: `${value * 100}%` }}
+                                />
+                              </div>
+                            </div>
+                            <div className="w-16 text-right text-gray-300">
+                              {(value * 100).toFixed(1)}%
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-gray-400">No emotional analysis available</div>
+                )}
               </div>
             </div>
           </div>

@@ -157,7 +157,7 @@ export default function Candidates() {
 
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
-        .from('videos') // Make sure this bucket exists in your Supabase project
+        .from('videos') 
         .upload(filename, videoFile, {
           cacheControl: '3600',
           upsert: false
