@@ -5,11 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/utils/auth';
 import {ProfileForm} from '@/components/ProfileForm';
 import {VideoPreview} from '@/components/VideoPreview';
-// Supabase client configuration
-// const supabase = createClient(
-//   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-//   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-// );
+
 const supabase = createClient();
 
 type MediaRecorderRef = MediaRecorder & {
@@ -282,7 +278,7 @@ export default function Candidates() {
         phone: formData.get('phone') as string,
         experience: formData.get('experience') as string,
         linkedin: formData.get('linkedin') as string,
-        email: user.email, // Add email from auth user
+        email: user.email, 
       };
   
       const { error } = await supabase

@@ -143,8 +143,7 @@ class VideoEmotionAnalyzer:
         plt.xticks(rotation=45)
         plt.xlabel('Emotions')
         plt.ylabel('Average Intensity')
-        plt.title('Summary of Emotions Detected')
-        
+        plt.title('Summary of Emotions Detected')       
         # Save plot
         summary_path = 'emotion_summary.png'
         plt.savefig(summary_path, bbox_inches='tight')

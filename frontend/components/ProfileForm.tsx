@@ -22,7 +22,7 @@ export const ProfileForm = ({ onSubmit, initialData }: ProfileFormProps) => {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
-        <h2 className="text-2xl font-bold mb-6">Complete Your Profile</h2>
+        <h2 className="text-2xl font-bold text-black mb-6">Complete Your Profile</h2>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Full Name</label>
@@ -31,7 +31,7 @@ export const ProfileForm = ({ onSubmit, initialData }: ProfileFormProps) => {
               type="text"
               required
               defaultValue={initialData?.full_name}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              className="mt-1 block w-full text-black rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
 
@@ -42,7 +42,7 @@ export const ProfileForm = ({ onSubmit, initialData }: ProfileFormProps) => {
               type="tel"
               required
               defaultValue={initialData?.phone}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              className="mt-1 block w-full text-black rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
 
@@ -52,7 +52,7 @@ export const ProfileForm = ({ onSubmit, initialData }: ProfileFormProps) => {
               name="experience"
               required
               defaultValue={initialData?.experience}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              className="mt-1 text-black block w-full rounded-md border border-gray-300 px-3 py-2"
             >
               <option value="">Select experience</option>
               <option value="0-2">0-2 years</option>
@@ -69,7 +69,7 @@ export const ProfileForm = ({ onSubmit, initialData }: ProfileFormProps) => {
               type="url"
               required
               defaultValue={initialData?.linkedin}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              className="mt-1 block text-black w-full rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
 

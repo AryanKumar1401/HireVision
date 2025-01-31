@@ -18,6 +18,13 @@ export default function SignUpPage() {
     const formData = new FormData(e.currentTarget)
     const email = formData.get('email') as string
     const password = formData.get('password') as string
+    const confirmPassword = formData.get('confirmPassword') as string
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
+      setLoading(false)
+      return
+    }
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -35,7 +42,7 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full p-8 bg-white rounded-xl shadow-lg">
-        <h2 className="text-2xl font-bold text-center mb-8">Create Account</h2>
+        <h2 className="text-2xl font-bold text-black text-center mb-8">Create Account</h2>
         
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-600 rounded">{error}</div>
@@ -48,7 +55,7 @@ export default function SignUpPage() {
               name="email"
               type="email"
               required
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border text-black border-gray-300 px-3 py-2"
             />
           </div>
 
@@ -58,7 +65,17 @@ export default function SignUpPage() {
               name="password"
               type="password"
               required
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border text-black border-gray-300 px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+            <input
+              name="confirmPassword"
+              type="password"
+              required
+              className="mt-1 block w-full rounded-md border text-black border-gray-300 px-3 py-2"
             />
           </div>
 

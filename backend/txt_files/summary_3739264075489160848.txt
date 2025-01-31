@@ -1,0 +1,12 @@
+Summary:
+Aryan is a software engineer well-versed in full stack web development and artificial intelligence with a focus on machine learning. He emphasizes his experience in creating scalable applications and enhancing AI solutions.
+
+Pros:
+1. Extensive experience in software engineering, including full stack web development and AI in machine learning.
+2. Strong background in building scalable applications showcases ability to handle complex projects.
+3. Experience in optimizing AI driven solutions highlights proficiency in cutting-edge technology.
+
+Cons:
+1. No specific mention of team collaboration skills or experience in working in cross-functional teams.
+2. Lack of information about specific projects or achievements to showcase practical application of skills.
+3. Insufficient details on communication skills and ability to effectively convey technical concepts to non-technical stakeholders.
