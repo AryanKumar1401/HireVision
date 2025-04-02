@@ -58,6 +58,7 @@ namex==0.0.8
 networkx==3.4.2
 numpy==2.0.2
 openai==1.60.0
+opencv-python==4.11.0.86
 opt_einsum==3.4.0
 optree==0.14.0
 packaging==24.2
