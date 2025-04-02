@@ -237,6 +237,39 @@ export default function Recruiters() {
         return;
       }
 
+      if (selectedVideo) {
+        const { data: analysisData, error } = await supabase
+        .from('analysis_results')
+        .select('*')
+        .eq('id', selectedVideo.id)
+        .single();
+        if (!error && analysisData) {
+          // Convert stored JSON strings back to objects if needed
+          const processedData = {
+            ...analysisData,
+            behavioral_scores: typeof analysisData.behavioral_scores === 'string' 
+              ? JSON.parse(analysisData.behavioral_scores) 
+              : analysisData.behavioral_scores,
+            communication_analysis: typeof analysisData.communication_analysis === 'string'
+              ? JSON.parse(analysisData.communication_analysis)
+              : analysisData.communication_analysis,
+            emotion_results: typeof analysisData.emotion_results === 'string'
+              ? JSON.parse(analysisData.emotion_results)
+              : analysisData.emotion_results
+          };
+          
+          setAnalysisResults(prev => ({
+            ...prev,
+            [selectedVideo.id]: processedData
+          }));
+          setAnalysis(processedData);
+          setIsAnalyzing(false);
+          return;
+        }
+      }
+
+      // If not found in Supabase, call the API (fallback)
+      console.log('Not found in Supabase. Calling API (fallback)...');
       const response = await fetch('http://localhost:8000/analyze-video', {
         method: 'POST',
         headers: {

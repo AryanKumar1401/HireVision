@@ -22,6 +22,7 @@ def summarize_text(text):
         ],
         max_tokens=150
     )
+    print("Summary:", response.choices[0].message.content)
     return response.choices[0].message.content
     
 def generate_behavioral_scores(summary):
@@ -47,9 +48,8 @@ def generate_behavioral_scores(summary):
         max_tokens=300,
         temperature=0.7
     )
-    
+    print("Behavioral Scores:", response.choices[0].message.content)
     return json.loads(response.choices[0].message.content)
-
 def generate_behavioral_scores_rule_based(summary):
     doc = nlp(summary)
     
@@ -91,5 +91,5 @@ def analyze_communication(summary):
         ],
         max_tokens=200
     )
-    
+    print("Communication Analysis:", response.choices[0].message.content)
     return json.loads(response.choices[0].message.content)

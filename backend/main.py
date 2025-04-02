@@ -1,8 +1,10 @@
+from datetime import datetime
 import assemblyai as aai  
 from supabase import create_client, Client
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
+import time
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -40,6 +42,7 @@ app.add_middleware(
 
 class VideoURL(BaseModel):
     video_url: str
+    user_id: str = None
  
 def analyze_video(video_url: str):
     try:
@@ -51,17 +54,30 @@ def analyze_video(video_url: str):
         # Transcribe the video file
         transcript = transcriber.transcribe(video_url)
         
-        if not transcript:
-            raise ValueError("Transcription failed - no transcript returned")
+        # Check if transcript exists and has text
+        if not transcript or not hasattr(transcript, 'text') or not transcript.text:
+            # Return a partial analysis without transcript-dependent parts
+            print("Transcription failed or returned empty result")
+            emotion_results = analyze_emotions_from_url(video_url, 10)
+            
+            return {
+                "summary": "Transcription could not be completed. Only emotion analysis is available.",
+                "filename": f"summary_{abs(hash(video_url))}.txt",
+                "transcript": "",
+                "behavioral_scores": {},
+                "communication_analysis": {},
+                "emotion_results": emotion_results
+            }
             
         print(f"Transcription successful. Length: {len(transcript.text)}")
+        print(f"Transcription text: {transcript.text[:100]}...")  # Print first 100 characters for debugging
         
         # Get the summary and behavioral analysis
         transcript_text = transcript.text
         summary = summarize_text(transcript_text)
         behavioral_scores = generate_behavioral_scores(summary)
         communication_analysis = analyze_communication(summary)
-        emotion_results = analyze_emotions_from_url(video_url,10)
+        emotion_results = analyze_emotions_from_url(video_url, 10)
         
         # Create txt_files directory if it doesn't exist
         os.makedirs("txt_files", exist_ok=True)
@@ -84,17 +100,48 @@ def analyze_video(video_url: str):
         }
     except Exception as e:
         print(f"Error in analyze_video: {str(e)}")
-        raise
+        # Return a minimal response with the error message
+        return {
+            "summary": f"Error analyzing video: {str(e)}",
+            "filename": "",
+            "transcript": "",
+            "behavioral_scores": {},
+            "communication_analysis": {},
+            "emotion_results": {}
+        }
 
 @app.post("/analyze-video")
 async def analyze_video_endpoint(video: VideoURL):
     try:
         print(f"Received request to analyze video: {video.video_url}")
         result = analyze_video(video.video_url)
-        if result:
-            return result
-        raise HTTPException(status_code=400, detail="Failed to analyze video")
+        
+        # If result is None, return an appropriate error
+        if not result:
+            return {"error": "Failed to analyze video", "details": "No result returned from analysis"}
+        
+        # Store results in Supabase if user_id is provided
+        if video.user_id and result:
+            try:
+                # Store in Supabase
+                supabase.table('analysis_results').upsert({
+                    'id': video.user_id,
+                    'summary': result.get('summary', ''),
+                    'transcript': result.get('transcript', ''),
+                    'behavioral_scores': json.dumps(result.get('behavioral_scores', {})),
+                    'communication_analysis': json.dumps(result.get('communication_analysis', {})),
+                    'emotion_results': json.dumps(result.get('emotion_results', {})),
+                    'updated_at': datetime.now().isoformat()
+                }).execute()
+                
+                print(f"Analysis results stored for user {video.user_id}")
+            except Exception as e:
+                print(f"Error storing analysis results: {str(e)}")
+                # Continue anyway to return results
+        
+        return result
     except ValueError as ve:
+        print(f"Value error in endpoint: {str(ve)}")
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         print(f"Error in endpoint: {str(e)}")
