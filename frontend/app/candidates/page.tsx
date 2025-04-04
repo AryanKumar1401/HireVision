@@ -19,7 +19,7 @@ export default function Candidates() {
   const {
     isRecording,
     recordingTime,
-    isLoading,
+    isLoading: cameraLoading,
     cameraError,
     streamRef,
     startRecording,
@@ -29,6 +29,7 @@ export default function Candidates() {
   const { isUploading, uploadProgress, uploadVideo } = useSupabaseUpload();
 
   const {
+    isLoading,
     showProfileForm,
     profileData,
     userEmail,
@@ -40,6 +41,15 @@ export default function Candidates() {
     await supabase.auth.signOut();
     router.push("/login");
   };
+
+  // Show loading state while profile data is being fetched
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+      </div>
+    );
+  }
 
   const handleStopRecording = async () => {
     const videoBlob = await stopRecording();
@@ -104,7 +114,7 @@ export default function Candidates() {
           <VideoPreview
             stream={streamRef.current}
             recordedUrl={signedUrl}
-            isLoading={isLoading}
+            isLoading={cameraLoading}
             error={cameraError}
           />
 
