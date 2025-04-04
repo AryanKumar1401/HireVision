@@ -4,3 +4,4 @@ node_modules
 venv
 txt_files
 services/pycache
+__pycache__
