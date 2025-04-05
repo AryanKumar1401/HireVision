@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 interface VideoPreviewProps {
   stream?: MediaStream | null;
@@ -7,7 +7,12 @@ interface VideoPreviewProps {
   error?: string | null;
 }
 
-export const VideoPreview = ({ stream, recordedUrl, isLoading, error }: VideoPreviewProps) => {
+export const VideoPreview = ({
+  stream,
+  recordedUrl,
+  isLoading,
+  error,
+}: VideoPreviewProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
