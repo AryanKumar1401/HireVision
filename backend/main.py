@@ -147,6 +147,10 @@ async def analyze_video_endpoint(video: VideoURL):
         print(f"Error in endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "service": "HireVision API"}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

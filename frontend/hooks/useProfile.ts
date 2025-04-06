@@ -5,35 +5,40 @@ import { ProfileFormData } from '@/types/candidate';
 const supabase = createClient();
 
 export const useProfile = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [showProfileForm, setShowProfileForm] = useState(true);
   const [profileData, setProfileData] = useState<ProfileFormData | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUserEmail(session?.user?.email ?? null);
-    };
-    getSession();
-  }, []);
+    const fetchUserData = async () => {
+      try {
+        // Get session info
+        const { data: { session } } = await supabase.auth.getSession();
+        setUserEmail(session?.user?.email ?? null);
+        
+        // Check profile if user is authenticated
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-
-        if (profile?.full_name) {
-          setProfileData(profile);
-          setShowProfileForm(false);
+          if (profile?.full_name) {
+            setProfileData(profile);
+            setShowProfileForm(false);
+          }
         }
+      } catch (error) {
+        console.error('Error fetching profile data:', error);
+      } finally {
+        // Set loading to false regardless of success or failure
+        setIsLoading(false);
       }
     };
-    fetchProfile();
+
+    fetchUserData();
   }, []);
 
   const updateProfile = async (formData: ProfileFormData) => {
@@ -69,6 +74,7 @@ export const useProfile = () => {
   };
 
   return {
+    isLoading,
     showProfileForm,
     profileData,
     userEmail,
