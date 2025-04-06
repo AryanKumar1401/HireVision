@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 
-export function useVideoRecording(autoInitialize = true) {
+export function useVideoRecording(
+  autoInitialize = true,
+  videoDeviceId?: string,
+  audioDeviceId?: string
+) {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isLoading, setIsLoading] = useState(autoInitialize);
@@ -12,16 +16,25 @@ export function useVideoRecording(autoInitialize = true) {
 
   const initializeCamera = async () => {
     setIsLoading(true);
+
+    // Stop any existing stream before creating a new one
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
+        video: videoDeviceId ? { deviceId: { exact: videoDeviceId } } : true,
+        audio: audioDeviceId ? { deviceId: { exact: audioDeviceId } } : true,
       });
 
       streamRef.current = stream;
       console.log("Audio tracks:", stream.getAudioTracks());
       if (stream.getAudioTracks().length === 0) {
-        setCameraError("No audio track found. Please check your microphone settings.");
+        setCameraError(
+          "No audio track found. Please check your microphone settings."
+        );
         return;
       }
       setIsLoading(false);
@@ -50,7 +63,7 @@ export function useVideoRecording(autoInitialize = true) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [autoInitialize]);
+  }, [autoInitialize, videoDeviceId, audioDeviceId]);
 
   const startRecording = () => {
     if (!streamRef.current) {
