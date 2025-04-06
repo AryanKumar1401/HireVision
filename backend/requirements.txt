@@ -65,7 +65,7 @@ packaging==24.2
 postgrest==0.19.1
 preshed==3.0.9
 propcache==0.2.1
-protobuf==5.29.3
+protobuf==5.28.3
 pydantic==2.4.2
 pydantic_core==2.10.1
 Pygments==2.19.1
@@ -96,7 +96,7 @@ sympy==1.13.1
 tensorboard==2.18.0
 tensorboard-data-server==0.7.2
 tensorflow==2.18.0
-tensorflow-io-gcs-filesystem==0.37.1
+tensorflow-io-gcs-filesystem==0.31.0
 termcolor==2.5.0
 tf_keras==2.18.0
 thinc==8.3.4
