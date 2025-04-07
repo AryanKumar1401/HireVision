@@ -28,7 +28,7 @@ export default function RecruiterSignInPage() {
         setError(error.message)
       } else {
         // Redirect to your recruiter dashboard after successful login
-        router.push('/recruiter')
+        router.push('/recruiters')
       }
       setLoading(false)
     }
@@ -100,7 +100,7 @@ export default function RecruiterSignInPage() {
   
           <p className="mt-4 text-center text-sm text-gray-600">
             Don't have an account?{' '}
-            <Link href="/recruiters/signup" className="text-blue-600 hover:underline">
+            <Link href="/recruiters/login" className="text-blue-600 hover:underline">
               Sign up
             </Link>
           </p>

@@ -24,8 +24,11 @@ export async function middleware(request: NextRequest) {
 
   const { data: { session } } = await supabase.auth.getSession()
 
-  if (!session && (request.nextUrl.pathname.startsWith('/candidates')
-      || request.nextUrl.pathname.startsWith('/recruiters'))) {
+  if (
+    !session && 
+    (request.nextUrl.pathname.startsWith('/candidates')
+      || request.nextUrl.pathname.startsWith('/recruiters'))
+    ) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
@@ -33,5 +36,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/candidates']
+  matcher: ['/candidates/:path*', '/recruiters/:path*']
 }
