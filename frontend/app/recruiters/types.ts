@@ -8,11 +8,22 @@ export interface CandidateDetails {
   video_url?: string;
 }
 
+export interface RecruiterProfile {
+  id: string;
+  full_name: string;
+  company: string;
+  job_title: string;
+  email: string;
+  phone?: string;
+  linkedin?: string;
+  hiring_for?: string[];
+}
+
 export interface Video {
   id: string;
   title: string;
   url: string;
-  candidate_details?: CandidateDetails;
+    candidate_details?: CandidateDetails;
 }
 
 export interface EmotionSummary {
@@ -57,7 +68,7 @@ export interface Analysis {
     strengths: string[];
     improvements: string[];
   };
-  emotional_analysis?: {
+emotional_analysis?: {
     summary: EmotionSummary;
   };
   emotion_results?: {

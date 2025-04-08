@@ -419,7 +419,7 @@ const Home = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link href="/recruiters" style={{ textDecoration: "none" }}>
+              <Link href="/recruiters/login" style={{ textDecoration: "none" }}>
                 <Button
                   variant="contained"
                   color="primary"
@@ -433,7 +433,7 @@ const Home = () => {
                   Try as Recruiter
                 </Button>
               </Link>
-              <Link href="/candidates" style={{ textDecoration: "none" }}>
+              <Link href="/login" style={{ textDecoration: "none" }}>
                 <Button
                   variant="outlined"
                   size="large"
@@ -444,9 +444,9 @@ const Home = () => {
                     color: "#F48C06",
                     borderColor: "#F48C06",
                     "&:hover": {
-                      borderWidth: 2,
+                      backgroundColor: "rgba(244, 140, 6, 0.1)",
                       borderColor: "#F48C06",
-                      backgroundColor: "rgba(244, 140, 6, 0.08)",
+                      borderWidth: 2,
                     },
                   }}
                 >

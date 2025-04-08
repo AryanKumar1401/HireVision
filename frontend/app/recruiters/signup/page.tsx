@@ -4,7 +4,7 @@ import { createClient } from "@/utils/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function SignUpPage() {
+export default function RecruiterSignUpPage() {
   const supabase = createClient();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -31,15 +31,18 @@ export default function SignUpPage() {
       password,
       options: {
         data: {
-          roles: ["candidate"], 
+          app_metadata: {
+            // Store roles in app_metadata
+            roles: ["recruiter"],
+          },
         },
       },
     });
-
+    console.log("supabase signup data", data);
     if (error) {
       setError(error.message);
     } else {
-      // After successful signup, update user metadata to include the 'candidate' role
+      // After successful signup, update user metadata to include the 'recruiter' role
       try {
         const { data: userResponse, error: userError } =
           await supabase.auth.getUser();
@@ -51,32 +54,36 @@ export default function SignUpPage() {
         }
 
         const user = userResponse.user;
-
         if (user) {
-          const { error: metadataError } = await supabase.auth.updateUser({
-            data: {
-              roles: ["candidate"],
-            },
-          });
-
-          if (metadataError) {
-            console.error("Error updating user metadata:", metadataError);
-            setError(metadataError.message);
-            setLoading(false);
-            return;
-          }
+          const { error: profileError } = await supabase
+            .from("recruiter_profiles")
+            .insert({
+              id: user.id,
+              email: user.email, // Use email from auth.user
+            });
         }
 
-        // Check user roles and redirect accordingly
-        const roles = user?.app_metadata?.roles || ["candidate"];
-        console.log("User roles:", roles);
+        // if (user) {
+        //   const { error: metadataError } = await supabase.auth.updateUser({
+        //     data: {
+        //       roles: ["recruiter"],
+        //     },
+        //   });
 
-        if (roles.includes("recruiter")) {
-          console.log("Redirecting to recruiter dashboard");
-          router.push("/recruiters");
-        } else {
-          router.push("/candidates");
-        }
+        //   if (metadataError) {
+        //     console.error("Error updating user metadata:", metadataError);
+        //     setError(metadataError.message);
+        //     setLoading(false);
+        //     return;
+        //   }
+        // }
+
+        // Redirect to recruiters page
+        console.log(
+          "Recruiter signed up successfully and redirecting to /recruiters:",
+          data
+        );
+        router.push("/recruiters");
       } catch (err) {
         console.error("Unexpected error after signup:", err);
         setError("An unexpected error occurred. Please try again.");
@@ -86,52 +93,52 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full p-8 bg-white rounded-xl shadow-lg">
-        <h2 className="text-2xl font-bold text-black text-center mb-8">
-          Create Account
+    <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="max-w-md w-full p-8 bg-gray-800 rounded-xl shadow-lg">
+        <h2 className="text-2xl font-bold text-white text-center mb-8">
+          Create Recruiter Account
         </h2>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-600 rounded">
+          <div className="mb-4 p-3 bg-red-900/50 text-red-200 rounded">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-300">
               Email
             </label>
             <input
               name="email"
               type="email"
               required
-              className="mt-1 block w-full rounded-md border text-black border-gray-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 text-white px-3 py-2"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-300">
               Password
             </label>
             <input
               name="password"
               type="password"
               required
-              className="mt-1 block w-full rounded-md border text-black border-gray-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 text-white px-3 py-2"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-300">
               Confirm Password
             </label>
             <input
               name="confirmPassword"
               type="password"
               required
-              className="mt-1 block w-full rounded-md border text-black border-gray-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 text-white px-3 py-2"
             />
           </div>
 
@@ -140,16 +147,28 @@ export default function SignUpPage() {
             disabled={loading}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50"
           >
-            {loading ? "Creating Account..." : "Create Account"}
+            {loading ? "Creating Account..." : "Create Recruiter Account"}
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-gray-600">
+        <p className="mt-4 text-center text-sm text-gray-400">
           Already have an account?{" "}
-          <Link href="/login" className="text-blue-600 hover:underline">
+          <Link
+            href="/recruiters/login"
+            className="text-blue-400 hover:underline"
+          >
             Sign in
           </Link>
         </p>
+
+        <div className="mt-6 pt-6 border-t border-gray-700">
+          <p className="text-center text-sm text-gray-400">
+            Are you a candidate?{" "}
+            <Link href="/signup" className="text-blue-400 hover:underline">
+              Sign up as Candidate
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
