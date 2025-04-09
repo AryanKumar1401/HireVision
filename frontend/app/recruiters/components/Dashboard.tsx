@@ -29,6 +29,8 @@ interface DashboardProps {
   topApplicants: string[];
   onVideoSelect: (video: Video) => void;
   onBackClick: () => void;
+  recruiterName?: string;
+  recruiterEmail?: string;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({
@@ -36,6 +38,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   topApplicants,
   onVideoSelect,
   onBackClick,
+  recruiterName,
+  recruiterEmail,
 }) => {
   // Calculate dynamic metrics
   const dynamicMetrics = {
@@ -46,29 +50,37 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 p-6 md:p-8">
-      {/* Header with title and back button */}
+      {/* Header with title */}
       <header className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-gray-700 pb-4">
         <h1 className="text-3xl md:text-4xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
           Recruitment Dashboard
         </h1>
-        <button
-          onClick={onBackClick}
-          className="mt-4 md:mt-0 px-5 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-all shadow-md hover:shadow-lg font-medium flex items-center"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 mr-2"
-            viewBox="0 0 20 20"
-            fill="currentColor"
+        <div className="flex items-center space-x-4">
+          {recruiterName && recruiterEmail && (
+            <div className="text-right">
+              <div className="text-white font-semibold">{recruiterName}</div>
+              <div className="text-gray-400 text-sm">{recruiterEmail}</div>
+            </div>
+          )}
+          <button
+            onClick={onBackClick}
+            className="px-5 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-all shadow-md hover:shadow-lg font-medium flex items-center"
           >
-            <path
-              fillRule="evenodd"
-              d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-              clipRule="evenodd"
-            />
-          </svg>
-          Back to Home
-        </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Back to Home
+          </button>
+        </div>
       </header>
 
       <div className="max-w-7xl mx-auto mb-10">

@@ -97,10 +97,11 @@ export default function RecruitersPage() {
   return (
     <div className="min-h-screen bg-gray-900">
       {userEmail && !selectedVideo && (
-        <div className="absolute top-4 right-4 z-50 flex items-center gap-4">
-          <span className="text-white/70">
-            {profileData?.full_name} ({userEmail})
+        <div className="absolute top-4 right-4 z-50 flex flex-col items-end gap-1">
+          {/* <span className="text-white font-semibold">
+            {profileData?.full_name}
           </span>
+          <span className="text-white/70 text-sm">({userEmail})</span> */}
           <button
             onClick={handleLogout}
             className="px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
@@ -123,6 +124,8 @@ export default function RecruitersPage() {
           topApplicants={topApplicants}
           onVideoSelect={handleVideoSelect}
           onBackClick={() => router.push("/")}
+          recruiterName={profileData?.full_name}
+          recruiterEmail={userEmail}
         />
       )}
     </div>
