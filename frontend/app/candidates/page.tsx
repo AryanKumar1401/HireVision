@@ -10,6 +10,7 @@ import { useVideoRecording } from "@/hooks/useVideoRecording";
 import { useSupabaseUpload } from "@/hooks/useSupabaseUpload";
 import { useProfile } from "@/hooks/useProfile";
 import { AudioLevelMeter } from "./components/AudioLevelMeter";
+import { DeviceSelector } from "./components/DeviceSelector";
 
 const supabase = createClient();
 
@@ -18,6 +19,10 @@ export default function Candidates() {
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isInterviewStarted, setIsInterviewStarted] = useState(false);
+  const [selectedVideoDeviceId, setSelectedVideoDeviceId] =
+    useState<string>("");
+  const [selectedAudioDeviceId, setSelectedAudioDeviceId] =
+    useState<string>("");
 
   const {
     isRecording,
@@ -28,7 +33,11 @@ export default function Candidates() {
     startRecording,
     stopRecording,
     initializeCamera,
-  } = useVideoRecording(isCameraActive); // Only initialize when camera is active
+  } = useVideoRecording(
+    isCameraActive,
+    selectedVideoDeviceId,
+    selectedAudioDeviceId
+  );
 
   const { isUploading, uploadProgress, uploadVideo } = useSupabaseUpload();
 
@@ -58,7 +67,20 @@ export default function Candidates() {
     setIsInterviewStarted(true);
   };
 
-  // Show loading state while profile data is being fetched
+  const handleVideoDeviceChange = async (deviceId: string) => {
+    setSelectedVideoDeviceId(deviceId);
+    if (isCameraActive) {
+      await initializeCamera();
+    }
+  };
+
+  const handleAudioDeviceChange = async (deviceId: string) => {
+    setSelectedAudioDeviceId(deviceId);
+    if (isCameraActive) {
+      await initializeCamera();
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
@@ -172,10 +194,21 @@ export default function Candidates() {
                   <AudioLevelMeter stream={streamRef.current} />
                 )}
 
+                <DeviceSelector
+                  onVideoDeviceChange={handleVideoDeviceChange}
+                  onAudioDeviceChange={handleAudioDeviceChange}
+                  selectedVideoDeviceId={selectedVideoDeviceId}
+                  selectedAudioDeviceId={selectedAudioDeviceId}
+                />
+
                 <div className="mt-4 text-center text-white/70">
                   <p>Speak normally to test your microphone levels.</p>
                   <p className="mt-1 text-sm">
                     The meter should move as you speak.
+                  </p>
+                  <p className="text-sm mt-1 text-blue-400">
+                    Use the selectors above to change your camera or microphone
+                    if needed.
                   </p>
                 </div>
               </div>
