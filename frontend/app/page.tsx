@@ -365,8 +365,9 @@ const Home = () => {
 
         {/* Replaced navbar with component */}
         <Navbar />
-
         {/* Add padding to account for fixed navbar */}
+
+        
         <div className="pt-24">
           {/* Hero Section */}
           <section className="relative z-10 flex flex-col items-center justify-center px-6 py-24 text-center">
@@ -384,7 +385,6 @@ const Home = () => {
                 AI-powered insights for recruiters. Instant feedback for
                 applicants.
               </p>
-
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Link href="/recruiters" style={{ textDecoration: "none" }}>
                   <Button
@@ -422,6 +422,35 @@ const Home = () => {
                 </Link>
               </div>
             </motion.div>
+
+            <div className="flex justify-center mt-12">
+            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 border-2 border-black rounded-full px-8 py-6 max-w-md text-center shadow-xl">
+              <h3 className="text-2xl font-bold text-black mb-3">Empower Your Business</h3>
+              <p className="text-black mb-5">
+                Join a network of forward-thinking companies achieving real growth.
+              </p>
+              <Link href="/companies" style={{ textDecoration: "none" }}>
+                <Button
+                  variant="contained"
+                  sx={{
+                    backgroundColor: "black",
+                    color: "white",
+                    fontWeight: 600,
+                    textTransform: "none",
+                    px: 4,
+                    py: 1.5,
+                    borderRadius: "8px",
+                    "&:hover": {
+                      backgroundColor: "#333",
+                    },
+                  }}
+                >
+                  Companies, Start Here
+                </Button>
+              </Link>
+            </div>
+          </div>
+
 
             {/* Hero illustration/mockup */}
             <motion.div
