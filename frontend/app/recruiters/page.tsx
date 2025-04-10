@@ -1,110 +1,133 @@
 "use client";
-import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/auth";
+import { useRecruiterProfile } from "./hooks/useRecruiterProfile";
+import { RecruiterProfileForm } from "./components/RecruiterProfileForm";
+import Dashboard from "./components/Dashboard";
+import VideoAnalysis from "./components/VideoAnalysis";
 import { Video } from "./types";
 import { useVideoAnalysis } from "./hooks/useVideoAnalysis";
-import VideoAnalysis from "./components/VideoAnalysis";
-import Dashboard from "./components/Dashboard";
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = createClient();
 
-export default function Recruiters() {
+export default function RecruitersPage() {
   const router = useRouter();
+  const { isLoading, showProfileForm, profileData, userEmail, updateProfile } =
+    useRecruiterProfile();
   const [videos, setVideos] = useState<Video[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-  const [topApplicants] = useState<string[]>([
-    "Application 1",
-    "Application 3",
-    "Application 4",
-  ]);
-
-  // Use our custom hook for video analysis
   const { analysis, isAnalyzing, analyzeVideo } = useVideoAnalysis();
 
-  // Fetch videos on component mount
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/recruiters/login");
+  };
+
+  const handleVideoSelect = async (video: Video) => {
+    setSelectedVideo(video);
+    await analyzeVideo(video);
+  };
+
+  const handleCloseAnalysis = () => {
+    setSelectedVideo(null);
+  };
+
   useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const { data: profiles, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .not("video_url", "is", null);
+
+        if (error) {
+          console.error("Error fetching profiles:", error);
+          return;
+        }
+
+        // Transform profiles into Video objects
+        const videoData: Video[] = profiles.map((profile) => ({
+          id: profile.id,
+          title: `${profile.full_name}'s Interview`,
+          url: profile.video_url || "",
+          created_at: profile.created_at,
+          candidate_details: {
+            full_name: profile.full_name,
+            email: profile.email,
+            phone: profile.phone || "",
+            experience: profile.experience || "",
+            linkedin: profile.linkedin || "",
+          },
+        }));
+
+        setVideos(videoData);
+      } catch (error) {
+        console.error("Error in fetchVideos:", error);
+      }
+    };
+
     fetchVideos();
   }, []);
 
-  // Trigger analysis when a video is selected
-  useEffect(() => {
-    if (selectedVideo) {
-      analyzeVideo(selectedVideo);
-      console.log("Selected video:", selectedVideo);
-    }
-  }, [selectedVideo, analyzeVideo]);
-
-  // Function to fetch videos from Supabase
-  const fetchVideos = async () => {
-    console.log("Fetching videos...");
-
-    try {
-      // Get all profiles that have video URLs
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("*");
-
-      if (profilesError) {
-        console.error("Error fetching profiles:", profilesError.message);
-        return;
-      }
-
-      // Get signed URLs for each video
-      const videoData = await Promise.all(
-        profiles.map(async (profile, index) => {
-          if (!profile.video_url) return null;
-
-          const { data: signedData } = await supabase.storage
-            .from("videos")
-            .createSignedUrl(profile.video_url, 3600);
-
-          if (!signedData?.signedUrl) return null;
-
-          return {
-            id: profile.id,
-            title: `Application ${index + 1}`,
-            url: signedData.signedUrl,
-            candidate_details: {
-              id: profile.id,
-              full_name: profile.full_name,
-              email: profile.email,
-              phone: profile.phone,
-              experience: profile.experience,
-              linkedin: profile.linkedin,
-            },
-          };
-        })
-      );
-
-      setVideos(videoData.filter((video) => video !== null));
-    } catch (error) {
-      console.error("Error in fetchVideos:", error);
-    }
-  };
-
-  // Render the video analysis view if a video is selected
-  if (selectedVideo) {
+  // Show loading state while profile data is being fetched
+  if (isLoading) {
     return (
-      <VideoAnalysis
-        video={selectedVideo}
-        analysis={analysis}
-        isAnalyzing={isAnalyzing}
-        onClose={() => setSelectedVideo(null)}
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  // Show profile form if the recruiter hasn't completed their profile
+  if (showProfileForm) {
+    return (
+      <RecruiterProfileForm
+        onSubmit={updateProfile}
+        profileData={profileData}
       />
     );
   }
 
-  // Otherwise render the dashboard
+  // Define top applicants based on most recent uploads
+  const topApplicants = videos
+    .slice(0, 2)
+    .map((video) => video.candidate_details?.full_name || "");
+
   return (
-    <Dashboard
-      videos={videos}
-      topApplicants={topApplicants}
-      onVideoSelect={setSelectedVideo}
-      onBackClick={() => router.push("/")}
-    />
+    <div className="min-h-screen bg-gray-900">
+      {userEmail && !selectedVideo && (
+        <div className="absolute top-4 right-4 z-50 flex flex-col items-end gap-1">
+          {/* <span className="text-white font-semibold">
+            {profileData?.full_name}
+          </span>
+          <span className="text-white/70 text-sm">({userEmail})</span> */}
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+      )}
+
+      {selectedVideo ? (
+        <VideoAnalysis
+          video={selectedVideo}
+          analysis={analysis}
+          isAnalyzing={isAnalyzing}
+          onClose={handleCloseAnalysis}
+        />
+      ) : (
+        <Dashboard
+          videos={videos}
+          topApplicants={topApplicants}
+          onVideoSelect={handleVideoSelect}
+          onBackClick={() => router.push("/")}
+          recruiterName={profileData?.full_name}
+          recruiterEmail={userEmail}
+        />
+      )}
+    </div>
   );
 }
