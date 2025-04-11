@@ -1,6 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 // Material UI imports
@@ -19,6 +19,8 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import Zoom from "@mui/material/Zoom";
 import useScrollTrigger from "@mui/material/useScrollTrigger";
 import Navbar from "../components/Navbar";
+import { createClient } from "@/utils/auth";
+import { isRecruiter } from "@/utils/auth";
 
 // Create a theme instance with your brand colors
 const theme = createTheme({
