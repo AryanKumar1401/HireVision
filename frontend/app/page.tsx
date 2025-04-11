@@ -431,7 +431,7 @@ const Home = () => {
               <p className="text-black mb-5">
                 Join a network of forward-thinking companies achieving real growth.
               </p>
-              <Link href="/companies" style={{ textDecoration: "none" }}>
+              <Link href="/companies/login" style={{ textDecoration: "none" }}>
                 <Button
                   variant="contained"
                   sx={{
