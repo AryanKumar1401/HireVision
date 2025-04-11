@@ -1,4 +1,5 @@
-import { ProfileFormData } from '@/types/candidate';
+import { ProfileFormData } from "@/types/candidate";
+import { useRouter } from "next/navigation";
 
 interface ProfileFormProps {
   onSubmit: (data: ProfileFormData) => void;
@@ -6,26 +7,38 @@ interface ProfileFormProps {
 }
 
 export const ProfileForm = ({ onSubmit, initialData }: ProfileFormProps) => {
+  const router = useRouter();
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const data = {
-      full_name: formData.get('full_name') as string,
-      phone: formData.get('phone') as string,
-      experience: formData.get('experience') as string,
-      linkedin: formData.get('linkedin') as string,
-      email: formData.get('email') as string,
+      full_name: formData.get("full_name") as string,
+      phone: formData.get("phone") as string,
+      experience: formData.get("experience") as string,
+      linkedin: formData.get("linkedin") as string,
+      email: formData.get("email") as string,
     };
     onSubmit(data);
+
+    // Force a reload after submission to refresh the UI state
+    setTimeout(() => {
+      router.refresh();
+      window.location.reload();
+    }, 500);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
-        <h2 className="text-2xl font-bold text-black mb-6">Complete Your Profile</h2>
-        <form onSubmit={onSubmit} className="space-y-4">
+        <h2 className="text-2xl font-bold text-black mb-6">
+          Complete Your Profile
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Full Name</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Full Name
+            </label>
             <input
               name="full_name"
               type="text"
@@ -36,7 +49,9 @@ export const ProfileForm = ({ onSubmit, initialData }: ProfileFormProps) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Phone Number
+            </label>
             <input
               name="phone"
               type="tel"
@@ -47,7 +62,9 @@ export const ProfileForm = ({ onSubmit, initialData }: ProfileFormProps) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Experience Level</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Experience Level
+            </label>
             <select
               name="experience"
               required
@@ -63,7 +80,9 @@ export const ProfileForm = ({ onSubmit, initialData }: ProfileFormProps) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">LinkedIn URL</label>
+            <label className="block text-sm font-medium text-gray-700">
+              LinkedIn URL
+            </label>
             <input
               name="linkedin"
               type="url"

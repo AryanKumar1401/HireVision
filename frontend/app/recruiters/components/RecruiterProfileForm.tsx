@@ -1,4 +1,5 @@
 import { RecruiterProfile } from "../types";
+import { useRouter } from "next/navigation";
 
 interface RecruiterProfileFormProps {
   onSubmit: (data: RecruiterProfile) => void;
@@ -9,6 +10,8 @@ export const RecruiterProfileForm = ({
   onSubmit,
   profileData,
 }: RecruiterProfileFormProps) => {
+  const router = useRouter();
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -21,6 +24,12 @@ export const RecruiterProfileForm = ({
       hiring_for: [formData.get("hiring_for") as string], // Simple implementation - can be enhanced for multiple positions
     };
     onSubmit(data);
+
+    // Force a reload after submission to refresh the UI state
+    setTimeout(() => {
+      router.refresh();
+      window.location.reload();
+    }, 500);
   };
 
   return (
