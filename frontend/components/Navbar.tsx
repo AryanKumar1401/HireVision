@@ -36,7 +36,7 @@ const Navbar = () => {
     // Redirect to appropriate route based on user type and auth mode
     if (isRecruiter) {
       router.push(
-        authMode === "login" ? "/recruiter/login" : "/recruiter/signup"
+        authMode === "login" ? "/recruiters/login" : "/recruiters/signup"
       );
     } else {
       router.push(authMode === "login" ? "/login" : "/signup");
