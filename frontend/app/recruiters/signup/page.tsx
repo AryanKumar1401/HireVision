@@ -20,6 +20,7 @@ export default function RecruiterSignUpPage() {
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+    const companyID = formData.get("companyID") as string;
     const confirmPassword = formData.get("confirmPassword") as string;
 
     if (password !== confirmPassword) {
@@ -61,7 +62,8 @@ export default function RecruiterSignUpPage() {
             .from("recruiter_profiles")
             .insert({
               id: user.id,
-              email: user.email, // Use email from auth.user
+              email: user.email, 
+              companyID: companyID,
             });
         }
 
@@ -131,6 +133,17 @@ export default function RecruiterSignUpPage() {
             <input
               name="email"
               type="email"
+              required
+              className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 text-white px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300">
+              Company ID
+            </label>
+            <input
+              name="companyID"
+              type="text"
               required
               className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 text-white px-3 py-2"
             />

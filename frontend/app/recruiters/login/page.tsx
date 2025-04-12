@@ -95,7 +95,6 @@ export default function RecruiterLoginPage() {
               className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 text-white px-3 py-2"
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-300">
               Password
