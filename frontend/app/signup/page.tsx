@@ -71,7 +71,6 @@ export default function SignUpPage() {
 
         // Check user roles and redirect accordingly
         const roles = user?.app_metadata?.roles || ["candidate"];
-        console.log("User roles:", roles);
 
         if (roles.includes("recruiter")) {
           console.log("Redirecting to recruiter dashboard");

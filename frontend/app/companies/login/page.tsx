@@ -24,7 +24,7 @@ const LoginPage = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
+    const companyId = generateCompanyId();
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -32,6 +32,7 @@ const LoginPage = () => {
         data: {
           admin_name: adminName,
           company_name: companyName,
+          company_number: companyId,
         },
       },
     });
@@ -42,15 +43,14 @@ const LoginPage = () => {
       return;
     }
 
-    const companyId = generateCompanyId();
 
     const { error: dbError } = await supabase.from("companies").insert([
       {
         company_name: companyName,
         admin_name: adminName,
-        admin_email: email, 
-        password: password, 
-        company_number: companyId
+        admin_email: email,
+        company_number: companyId,
+        user_id: data.user?.id, // Link to auth user
       },
     ]);
 

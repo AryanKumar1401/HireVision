@@ -11,6 +11,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Check if this is an intentional role switch with bypass parameter
+  const bypassRoleCheck = request.nextUrl.searchParams.has('bypass-role-check')
+  
+  // If bypass parameter is present, allow the request to proceed and remove the parameter
+  if (bypassRoleCheck) {
+    const cleanUrl = new URL(request.nextUrl.toString())
+    cleanUrl.searchParams.delete('bypass-role-check')
+    
+    // Create a new response with the cleaned URL
+    const response = NextResponse.redirect(cleanUrl)
+    return response
+  }
+
   const response = NextResponse.next()
 
   const supabase = createServerClient(
@@ -48,14 +61,41 @@ export async function middleware(request: NextRequest) {
     const isRecruiter = roles.includes('recruiter')
     console.log('User roles:', roles)
 
-    // If a recruiter tries to access candidate routes, redirect them
+    // For authenticated users trying to access a route that doesn't match their role,
+    // offer a role switch prompt instead of an immediate redirect
+    
+    // If a recruiter tries to access candidate routes, show role switch prompt
     if (isRecruiter && request.nextUrl.pathname.startsWith('/candidates')) {
-      return NextResponse.redirect(new URL('/recruiters', request.url))
+      // Check if user is already getting redirected to avoid loops
+      if (request.nextUrl.searchParams.has('role-switch')) {
+        return NextResponse.next()
+      }
+
+      // Redirect to their current dashboard with role switch params
+      const roleSwitchUrl = new URL('/recruiters', request.url)
+      roleSwitchUrl.searchParams.set('role-switch', 'true')
+      roleSwitchUrl.searchParams.set('current-role', 'recruiter')
+      roleSwitchUrl.searchParams.set('target-role', 'candidate')
+      roleSwitchUrl.searchParams.set('target-path', request.nextUrl.pathname)
+      
+      return NextResponse.redirect(roleSwitchUrl)
     }
 
-    // If a candidate (non-recruiter) tries to access recruiter routes, redirect them
+    // If a candidate tries to access recruiter routes, show role switch prompt
     if (!isRecruiter && request.nextUrl.pathname.startsWith('/recruiters')) {
-      return NextResponse.redirect(new URL('/candidates', request.url))
+      // Check if user is already getting redirected to avoid loops
+      if (request.nextUrl.searchParams.has('role-switch')) {
+        return NextResponse.next()
+      }
+      
+      // Redirect to their current dashboard with role switch params
+      const roleSwitchUrl = new URL('/candidates', request.url)
+      roleSwitchUrl.searchParams.set('role-switch', 'true')
+      roleSwitchUrl.searchParams.set('current-role', 'candidate')
+      roleSwitchUrl.searchParams.set('target-role', 'recruiter')
+      roleSwitchUrl.searchParams.set('target-path', request.nextUrl.pathname)
+      
+      return NextResponse.redirect(roleSwitchUrl)
     }
   }
 

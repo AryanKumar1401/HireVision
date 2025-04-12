@@ -22,7 +22,7 @@ export const hasRole = async (client: ReturnType<typeof createClient>, role: str
   const { data: { session } } = await client.auth.getSession();
   if (!session) return false;
 
-  const roles = session.user?.app_metadata?.roles || [];
+  const roles = session.user?.user_metadata?.app_metadata?.roles || [];
   return roles.includes(role);
 };
 
