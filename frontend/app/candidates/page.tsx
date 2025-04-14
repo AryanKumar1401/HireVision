@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { createClient } from "@/utils/auth";
@@ -15,13 +15,16 @@ import { DeviceSelector } from "./components/DeviceSelector";
 const supabase = createClient();
 
 // Interview questions array
-const interviewQuestions = [
-  "Tell me about yourself and your background in this field.",
-  "What are your greatest strengths and how do they help you in your work?",
-  "Describe a challenging project you worked on and how you handled it.",
-];
+  // const interviewQuestions = [
+  //   "Tell me about yourself and your background in this field.",
+  //   "What are your greatest strengths and how do they help you in your work?",
+  //   "Describe a challenging project you worked on and how you handled it.",
+  // ];
+
 
 export default function Candidates() {
+
+
   const router = useRouter();
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isInterviewStarted, setIsInterviewStarted] = useState(false);
@@ -41,6 +44,23 @@ export default function Candidates() {
   const [isAnalysisComplete, setIsAnalysisComplete] = useState<boolean>(false);
   const [processingStatus, setProcessingStatus] = useState<string>("");
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [questions, setQuestions] = useState<string[]>([]);
+  const [isQuestionsLoading, setIsQuestionsLoading] = useState<boolean>(true);
+
+  //Fetch the interview question from Supabase on mount
+  useEffect(() => {
+    async function fetchQuestions() {
+      const { data, error} = await supabase.from("interview_questions").select("question");
+      if(error){
+        console.error("Error retrieving questions from supabase");
+      } else if(data){
+        setQuestions(data.map((q) => q.question));
+      }
+      setIsQuestionsLoading(false);
+    }
+    fetchQuestions();
+  }, []);
+
 
   const {
     isRecording,
@@ -154,7 +174,7 @@ export default function Candidates() {
               video_url: newSignedUrl,
               user_id: userId,
               question_index: parseInt(questionIndex),
-              question_text: interviewQuestions[parseInt(questionIndex)],
+              question_text: questions[parseInt(questionIndex)],
             }),
           });
 
@@ -336,11 +356,10 @@ export default function Candidates() {
             {/* Question indicator */}
             <div className="mb-6 text-center">
               <div className="text-blue-400 font-medium mb-2">
-                Question {currentQuestionIndex + 1} of{" "}
-                {interviewQuestions.length}
+                Question {currentQuestionIndex + 1} of {isQuestionsLoading ? "...": questions.length}
               </div>
               <h2 className="text-2xl text-white/90 font-medium">
-                {interviewQuestions[currentQuestionIndex]}
+                {isQuestionsLoading ? "Loading question...": questions[currentQuestionIndex]}
               </h2>
             </div>
 
@@ -368,13 +387,13 @@ export default function Candidates() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={
-                    currentQuestionIndex === interviewQuestions.length - 1
+                    currentQuestionIndex === questions.length - 1
                       ? handleFinishInterview
                       : handleNextQuestion
                   }
                   className="px-8 py-3 rounded-lg font-medium text-lg bg-green-600/80 text-white hover:bg-green-600 transition-all duration-200"
                 >
-                  {currentQuestionIndex === interviewQuestions.length - 1
+                  {currentQuestionIndex === questions.length - 1
                     ? "Finish Interview"
                     : "Next Question"}
                 </motion.button>

@@ -6,6 +6,7 @@ import { useRecruiterProfile } from "./hooks/useRecruiterProfile";
 import { RecruiterProfileForm } from "./components/RecruiterProfileForm";
 import Dashboard from "./components/Dashboard";
 import VideoAnalysis from "./components/VideoAnalysis";
+import InterviewQuestions from "./components/InterviewQuestions";
 import { Video } from "./types";
 import { useVideoAnalysis } from "./hooks/useVideoAnalysis";
 
@@ -119,6 +120,7 @@ export default function RecruitersPage() {
           onClose={handleCloseAnalysis}
         />
       ) : (
+        <>
         <Dashboard
           videos={videos}
           topApplicants={topApplicants}
@@ -126,7 +128,12 @@ export default function RecruitersPage() {
           onBackClick={() => router.push("/")}
           recruiterName={profileData?.full_name}
           recruiterEmail={userEmail}
+
         />
+        <div className="mt-8 max-w-7xl mx-auto px-4">
+            <InterviewQuestions companyID={profileData?.companyID || ""} />
+        </div>
+        </>
       )}
     </div>
   );
