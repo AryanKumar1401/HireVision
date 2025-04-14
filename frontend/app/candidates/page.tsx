@@ -14,15 +14,33 @@ import { DeviceSelector } from "./components/DeviceSelector";
 
 const supabase = createClient();
 
+// Interview questions array
+const interviewQuestions = [
+  "Tell me about yourself and your background in this field.",
+  "What are your greatest strengths and how do they help you in your work?",
+  "Describe a challenging project you worked on and how you handled it.",
+];
+
 export default function Candidates() {
   const router = useRouter();
-  const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isInterviewStarted, setIsInterviewStarted] = useState(false);
   const [selectedVideoDeviceId, setSelectedVideoDeviceId] =
     useState<string>("");
   const [selectedAudioDeviceId, setSelectedAudioDeviceId] =
     useState<string>("");
+
+  // Multi-question state variables
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
+  const [recordedAnswers, setRecordedAnswers] = useState<Record<number, Blob>>(
+    {}
+  );
+  const [isAnswerRecorded, setIsAnswerRecorded] = useState<boolean>(false);
+  const [isInterviewFinished, setIsInterviewFinished] =
+    useState<boolean>(false);
+  const [isAnalysisComplete, setIsAnalysisComplete] = useState<boolean>(false);
+  const [processingStatus, setProcessingStatus] = useState<string>("");
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
 
   const {
     isRecording,
@@ -81,6 +99,94 @@ export default function Candidates() {
     }
   };
 
+  const handleStopAnswerRecording = async () => {
+    const videoBlob = await stopRecording();
+
+    // Store this answer in the recordedAnswers object
+    setRecordedAnswers((prev) => ({
+      ...prev,
+      [currentQuestionIndex]: videoBlob,
+    }));
+
+    // Mark that the current answer has been recorded
+    setIsAnswerRecorded(true);
+
+    // Store the most recent recording URL for preview
+    const { signedUrl: newSignedUrl } = await uploadVideo(videoBlob);
+    if (newSignedUrl) {
+      setSignedUrl(newSignedUrl);
+    }
+  };
+
+  const handleNextQuestion = () => {
+    // Move to the next question
+    setCurrentQuestionIndex((prev) => prev + 1);
+    // Reset answer recording state
+    setIsAnswerRecorded(false);
+    // Clear the preview
+    setSignedUrl(null);
+  };
+
+  const handleFinishInterview = async () => {
+    // Show processing state
+    setIsInterviewFinished(true);
+    setProcessingStatus("Uploading and analyzing your interview responses...");
+
+    const userId = (await supabase.auth.getUser()).data.user?.id;
+    let completedUploads = 0;
+
+    // Process each recorded answer
+    for (const [questionIndex, videoBlob] of Object.entries(recordedAnswers)) {
+      try {
+        // Upload the video
+        const {
+          publicUrl,
+          signedUrl: newSignedUrl,
+          filename,
+        } = await uploadVideo(videoBlob);
+
+        if (publicUrl && newSignedUrl) {
+          // Send for analysis with question index
+          const response = await fetch("http://localhost:8000/analyze-video", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              video_url: newSignedUrl,
+              user_id: userId,
+              question_index: parseInt(questionIndex),
+              question_text: interviewQuestions[parseInt(questionIndex)],
+            }),
+          });
+
+          if (response.ok) {
+            completedUploads++;
+            setProcessingStatus(
+              `Processed ${completedUploads} of ${
+                Object.keys(recordedAnswers).length
+              } responses...`
+            );
+          }
+        }
+      } catch (error) {
+        console.error(
+          `Error processing answer for question ${questionIndex}:`,
+          error
+        );
+      }
+    }
+
+    // Mark analysis as complete
+    setIsAnalysisComplete(true);
+    setProcessingStatus(
+      "All responses have been uploaded and sent for analysis!"
+    );
+
+    // Wait a moment to show completion message before redirecting
+    setTimeout(() => {
+      router.push("/candidates/thank-you");
+    }, 3000);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
@@ -88,37 +194,6 @@ export default function Candidates() {
       </div>
     );
   }
-
-  const handleStopRecording = async () => {
-    const videoBlob = await stopRecording();
-    const {
-      publicUrl,
-      signedUrl: newSignedUrl,
-      filename,
-    } = await uploadVideo(videoBlob);
-
-    if (publicUrl && newSignedUrl) {
-      setSignedUrl(newSignedUrl);
-      await updateVideoUrl(filename);
-
-      try {
-        const response = await fetch("http://localhost:8000/analyze-video", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            video_url: newSignedUrl,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-          }),
-        });
-
-        if (response.ok) {
-          console.log("Analysis initiated successfully");
-        }
-      } catch (error) {
-        console.error("Error initiating analysis:", error);
-      }
-    }
-  };
 
   if (showProfileForm) {
     return <ProfileForm onSubmit={updateProfile} profileData={profileData} />;
@@ -214,8 +289,61 @@ export default function Candidates() {
               </div>
             )}
           </motion.div>
+        ) : isInterviewFinished ? (
+          // Show processing/completion status after interview
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-[800px] rounded-2xl overflow-hidden shadow-2xl bg-gray-900/50 backdrop-blur-sm p-10 text-center"
+          >
+            <div className="space-y-6">
+              <h2 className="text-2xl text-white/90 font-medium">
+                {isAnalysisComplete
+                  ? "Interview Complete!"
+                  : "Processing Your Interview"}
+              </h2>
+
+              {!isAnalysisComplete && (
+                <div className="flex justify-center my-8">
+                  <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+                </div>
+              )}
+
+              <p className="text-white/80 text-lg">{processingStatus}</p>
+
+              {isAnalysisComplete && (
+                <div className="mt-4">
+                  <svg
+                    className="w-16 h-16 mx-auto text-green-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+              )}
+            </div>
+          </motion.div>
         ) : (
+          // Interview in progress - display current question and recording UI
           <div className="w-full max-w-[1400px] rounded-2xl overflow-hidden shadow-2xl bg-gray-900/50 backdrop-blur-sm p-6">
+            {/* Question indicator */}
+            <div className="mb-6 text-center">
+              <div className="text-blue-400 font-medium mb-2">
+                Question {currentQuestionIndex + 1} of{" "}
+                {interviewQuestions.length}
+              </div>
+              <h2 className="text-2xl text-white/90 font-medium">
+                {interviewQuestions[currentQuestionIndex]}
+              </h2>
+            </div>
+
             <VideoPreview
               stream={streamRef.current}
               recordedUrl={signedUrl}
@@ -229,9 +357,29 @@ export default function Candidates() {
               isUploading={isUploading}
               uploadProgress={uploadProgress}
               onStartRecording={startRecording}
-              onStopRecording={handleStopRecording}
+              onStopRecording={handleStopAnswerRecording}
               onGoBack={() => router.push("/")}
             />
+
+            {/* Next/Finish button - only visible when answer is recorded */}
+            {isAnswerRecorded && !isRecording && (
+              <div className="flex justify-center mt-6">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={
+                    currentQuestionIndex === interviewQuestions.length - 1
+                      ? handleFinishInterview
+                      : handleNextQuestion
+                  }
+                  className="px-8 py-3 rounded-lg font-medium text-lg bg-green-600/80 text-white hover:bg-green-600 transition-all duration-200"
+                >
+                  {currentQuestionIndex === interviewQuestions.length - 1
+                    ? "Finish Interview"
+                    : "Next Question"}
+                </motion.button>
+              </div>
+            )}
           </div>
         )}
 

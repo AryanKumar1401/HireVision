@@ -20,13 +20,14 @@ ASSEMBLYAI_API_KEY = os.getenv("ASSEMBLY")
 OPEN_AI_API_KEY = os.getenv("OPEN_AI_API_KEY")
 SUPABASE_URL = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
 SUPABASE_KEY = os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")  # Add this to your .env file
 
 aai.settings.api_key = ASSEMBLYAI_API_KEY
 transcriber = aai.Transcriber()
 
 client = OpenAI(api_key=OPEN_AI_API_KEY)
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 app = FastAPI()
 
@@ -43,6 +44,8 @@ app.add_middleware(
 class VideoURL(BaseModel):
     video_url: str
     user_id: str = None
+    question_index: int = None
+    question_text: str = None
  
 def analyze_video(video_url: str):
     try:
@@ -123,18 +126,36 @@ async def analyze_video_endpoint(video: VideoURL):
         # Store results in Supabase if user_id is provided
         if video.user_id and result:
             try:
-                # Store in Supabase
-                supabase.table('analysis_results').upsert({
-                    'id': video.user_id,
-                    'summary': result.get('summary', ''),
-                    'transcript': result.get('transcript', ''),
-                    'behavioral_scores': json.dumps(result.get('behavioral_scores', {})),
-                    'communication_analysis': json.dumps(result.get('communication_analysis', {})),
-                    'emotion_results': json.dumps(result.get('emotion_results', {})),
-                    'updated_at': datetime.now().isoformat()
-                }).execute()
-                
-                print(f"Analysis results stored for user {video.user_id}")
+                # Check if we have a question index (multi-question mode)
+                if video.question_index is not None:
+                    # Store in the interview_answers table with question index
+                    supabase.table('interview_answers').upsert({
+                        'user_id': video.user_id,
+                        'question_index': video.question_index,
+                        'question_text': video.question_text or '',
+                        'video_url': video.video_url,
+                        'summary': result.get('summary', ''),
+                        'transcript': result.get('transcript', ''),
+                        'behavioral_scores': json.dumps(result.get('behavioral_scores', {})),
+                        'communication_analysis': json.dumps(result.get('communication_analysis', {})),
+                        'emotion_results': json.dumps(result.get('emotion_results', {})),
+                        'created_at': datetime.now().isoformat()
+                    }).execute()
+                    
+                    print(f"Analysis results stored for user {video.user_id}, question {video.question_index}")
+                else:
+                    # Legacy single-question mode - store in analysis_results
+                    supabase.table('analysis_results').upsert({
+                        'id': video.user_id,
+                        'summary': result.get('summary', ''),
+                        'transcript': result.get('transcript', ''),
+                        'behavioral_scores': json.dumps(result.get('behavioral_scores', {})),
+                        'communication_analysis': json.dumps(result.get('communication_analysis', {})),
+                        'emotion_results': json.dumps(result.get('emotion_results', {})),
+                        'updated_at': datetime.now().isoformat()
+                    }).execute()
+                    
+                    print(f"Analysis results stored for user {video.user_id}")
             except Exception as e:
                 print(f"Error storing analysis results: {str(e)}")
                 # Continue anyway to return results
