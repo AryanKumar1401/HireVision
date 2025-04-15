@@ -11,6 +11,7 @@ export interface CandidateDetails {
 export interface RecruiterProfile {
   id: string;
   full_name: string;
+  company_number: string;
   company: string;
   job_title: string;
   email: string;

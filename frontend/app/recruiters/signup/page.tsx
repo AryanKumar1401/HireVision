@@ -63,7 +63,7 @@ export default function RecruiterSignUpPage() {
             .insert({
               id: user.id,
               email: user.email, 
-              companyID: companyID,
+              company_number: companyID,
             });
         }
 

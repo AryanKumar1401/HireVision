@@ -4,15 +4,15 @@ import {createClient} from "@/utils/auth";
 
 interface Question{
     id: string; 
-    companyID: string; 
+    company_number: string; 
     question: string;
 }
 
 interface InterviewQuestionsProps {
-    companyID: string;
+    company_number: string;
 }
 
-export default function InterviewQuestions({companyID} : InterviewQuestionsProps){
+export default function InterviewQuestions({company_number} : InterviewQuestionsProps){
     const supabase = createClient();
 
     const [questions, setQuestions] = useState<Question[]>([]);
@@ -27,7 +27,7 @@ export default function InterviewQuestions({companyID} : InterviewQuestionsProps
           const { data, error } = await supabase
             .from("interview_questions")
             .select("*")
-            .eq("companyID", companyID);
+            .eq("company_number", company_number);
           if (error) {
             setError(error.message);
           } else {
@@ -36,13 +36,13 @@ export default function InterviewQuestions({companyID} : InterviewQuestionsProps
           setLoading(false);
         }
         fetchQuestions();
-      }, [companyID]);
+      }, [company_number]);
 
       const addQuestion = async () => {
         if (!newQuestion.trim()) return;
         const { data, error } = await supabase
           .from("interview_questions")
-          .insert([{ companyID, question: newQuestion }])
+          .insert([{ company_number: company_number, question: newQuestion }])
           .single();
         if (error) {
           setError(error.message);

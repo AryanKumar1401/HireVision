@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/auth";
-import { us eRecruiterProfile } from "./hooks/useRecruiterProfile";
+import { useRecruiterProfile } from "./hooks/useRecruiterProfile";
 import { RecruiterProfileForm } from "./components/RecruiterProfileForm";
 import Dashboard from "./components/Dashboard";
 import VideoAnalysis from "./components/VideoAnalysis";
@@ -131,8 +131,8 @@ export default function RecruitersPage() {
 
         />
         <div className="mt-8 max-w-7xl mx-auto px-4">
-          {profileData?.companyID ? (
-              <InterviewQuestions companyID={profileData.companyID} />
+          {profileData?.company_number ? (
+              <InterviewQuestions company_number={profileData.company_number} />
             ) : (
               <div className="text-center text-white">
                 Please update your profile with your Company ID to manage interview questions.
