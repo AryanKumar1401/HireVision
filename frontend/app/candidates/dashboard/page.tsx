@@ -6,9 +6,19 @@ import { motion } from "framer-motion";
 export default function CandidateDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("pending");
-  const [floatingElements, setFloatingElements] = useState([]);
+  const [floatingElements, setFloatingElements] = useState<FloatingElement[]>([]);
 
   // Generate random floating elements on mount
+
+  interface FloatingElement {
+    id: number;
+    x: number;
+    y: number;
+    size: number;
+    duration: number;
+    delay: number;
+  }
+
   useEffect(() => {
     const elements = Array.from({ length: 12 }, (_, i) => ({
       id: i,
@@ -28,14 +38,14 @@ export default function CandidateDashboard() {
   ];
 
   // Handler for starting/resuming an interview
-  const handleStartInterview = (interviewId) => {
+  const handleStartInterview = (interviewId : string) => {
     // router.push(`/interview/${interviewId}`);
     router.push('/candidates');
   };
 
   // Handler for profile navigation
   const handleNavigateToProfile = () => {
-    router.push("/profile");
+    
   };
 
   return (
