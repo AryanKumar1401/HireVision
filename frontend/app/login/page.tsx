@@ -28,7 +28,7 @@ export default function SignInPage() {
     if (error) {
       setError(error.message);
     } else {
-      router.push("/candidates");
+      router.push("/candidates/dashboard");
     }
     setLoading(false);
   };

@@ -76,7 +76,7 @@ export default function SignUpPage() {
           console.log("Redirecting to recruiter dashboard");
           router.push("/recruiters");
         } else {
-          router.push("/candidates");
+          router.push("/candidates/dashboard");
         }
       } catch (err) {
         console.error("Unexpected error after signup:", err);

@@ -43,6 +43,19 @@ const Navbar = () => {
     }
   };
 
+  // const handleUserTypeSelect = (type: "candidate" | "recruiter" | "company") => {
+  //   setUserTypeModalOpen(false);
+  //   // Redirect based on the selected user type and auth mode
+  //   if (type === "recruiter") {
+  //     router.push(authMode === "login" ? "/recruiters/login" : "/recruiters/signup");
+  //   } else if (type === "company") {
+  //     router.push(authMode === "login" ? "/companies/signin" : "/companies/signup");
+  //   } else { // candidate
+  //     router.push(authMode === "login" ? "/login" : "/signup");
+  //   }
+  // };
+  
+
   // Close modal when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -489,7 +502,28 @@ const Navbar = () => {
                   </div>
                 </>
               )}
-
+              {!isLoggedIn && !loading && (
+                <div className="flex items-center ml-4 space-x-2">
+                  <button
+                    onClick={() => handleAuthClick("login")}
+                    className="px-4 py-1 text-sm text-white/80 hover:text-white transition-colors"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => handleAuthClick("signup")}
+                    className="px-4 py-1.5 bg-[#F48C06] hover:bg-[#F48C06]/90 text-white text-sm rounded-full transition-colors"
+                  >
+                    Sign Up
+                  </button>
+                  <button
+                    onClick={() => router.push("/companies/signin")}
+                    className="px-4 py-1 text-sm text-white/80 hover:text-white transition-colors border border-gray-600 rounded-md"
+                  >
+                    Companies
+                  </button>
+                </div>
+              )}
               <div className="w-full max-w-[200px] h-px bg-gradient-to-r from-transparent via-gray-600/30 to-transparent my-4" />
               <div className="flex gap-4 mt-4">
                 <Link

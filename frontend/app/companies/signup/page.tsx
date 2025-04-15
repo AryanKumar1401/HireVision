@@ -7,7 +7,9 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [adminName, setAdminName] = useState("");
+  const [email, setAdminEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -16,61 +18,87 @@ const LoginPage = () => {
   const router = useRouter();
   const supabase = createClientComponentClient();
 
-  const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
+  const generateCompanyId = () => Math.floor(Math.random() * 900000) + 100000;
+
+  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
-    // Sign in using Supabase's auth signInWithPassword method
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const companyId = generateCompanyId();
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          admin_name: adminName,
+          company_name: companyName,
+          company_number: companyId,
+        },
+      },
     });
 
-    if (signInError) {
-      setError(signInError.message);
+    if (signUpError) {
+      setError(signUpError.message);
+      setLoading(false);
+      return;
+    }
+
+
+    const { error: dbError } = await supabase.from("companies").insert([
+      {
+        company_name: companyName,
+        admin_name: adminName,
+        admin_email: email,
+        company_number: companyId,
+        user_id: data.user?.id, // Link to auth user
+      },
+    ]);
+
+    if (dbError) {
+      setError(dbError.message);
       setLoading(false);
       return;
     }
 
     router.push("/companies/dashboard");
+    setLoading(false);
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-800 to-purple-800">
-      {/* Animated Background Blobs – Slightly different from sign up */}
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-purple-900 to-blue-900">
+      {/* Floating Animated Blobs */}
       <motion.div
-        initial={{ opacity: 0.7, x: -120, y: -100 }}
-        animate={{ x: [-120, 80, -120], y: [-100, 30, -100] }}
-        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute w-36 h-36 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-70"
+        initial={{ opacity: 0.7, x: -100, y: -100 }}
+        animate={{ x: [-100, 100, -100], y: [-100, 50, -100] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute w-40 h-40 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-70"
       />
       <motion.div
-        initial={{ opacity: 0.6, x: 180, y: 60 }}
-        animate={{ x: [180, -40, 180], y: [60, -60, 60] }}
-        transition={{ duration: 27, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute w-28 h-28 bg-teal-400 rounded-full mix-blend-multiply filter blur-3xl opacity-70"
+        initial={{ opacity: 0.6, x: 200, y: 50 }}
+        animate={{ x: [200, -50, 200], y: [50, -100, 50] }}
+        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute w-32 h-32 bg-yellow-400 rounded-full mix-blend-multiply filter blur-3xl opacity-70"
       />
       <motion.div
-        initial={{ opacity: 0.65, x: -150, y: 280 }}
-        animate={{ x: [-150, 20, -150], y: [280, 220, 280] }}
-        transition={{ duration: 32, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute w-40 h-40 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-70"
+        initial={{ opacity: 0.65, x: -150, y: 300 }}
+        animate={{ x: [-150, 50, -150], y: [300, 250, 300] }}
+        transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute w-48 h-48 bg-green-400 rounded-full mix-blend-multiply filter blur-3xl opacity-70"
       />
 
-      {/* Main Content Container */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-16">
-        {/* Header */}
-        <div className="mb-10 text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white">
-            Welcome Back
+      {/* Main Content */}
+      <div className="relative z-10 flex flex-col items-center justify-start min-h-screen px-4 py-16">
+        {/* Separate Large Header */}
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl md:text-6xl font-extrabold text-white">
+            Join the Hiring Revolution
           </h1>
-          <p className="mt-4 text-xl md:text-2xl text-indigo-200">
-            Sign in to manage your company account
+          <p className="mt-4 text-2xl text-indigo-200">
+            Hire better talent, faster &amp; simpler.
           </p>
         </div>
 
-        {/* Login Form */}
+        {/* Sign Up Form Container */}
         <div className="max-w-md w-full p-8 bg-gray-800 rounded-xl shadow-lg">
           <div className="flex items-center mb-6">
             <Link href="/" className="text-gray-300 hover:text-white">
@@ -88,7 +116,7 @@ const LoginPage = () => {
               </svg>
             </Link>
             <h2 className="text-2xl font-bold text-white flex-1 pl-3">
-              Company Sign In
+              Company Sign Up
             </h2>
           </div>
 
@@ -98,7 +126,37 @@ const LoginPage = () => {
             </div>
           )}
 
-          <form onSubmit={handleSignIn} className="space-y-4">
+          <form onSubmit={handleSignUp} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300">
+                Company Name
+              </label>
+              <input
+                name="companyName"
+                type="text"
+                required
+                placeholder="Your Company Name"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 text-white px-3 py-2"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300">
+                Admin Name
+              </label>
+              <input
+                name="adminName"
+                type="text"
+                required
+                placeholder="Admin Name"
+                value={adminName}
+                onChange={(e) => setAdminName(e.target.value)}
+                className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 text-white px-3 py-2"
+              />
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-300">
                 Admin Email
@@ -109,14 +167,14 @@ const LoginPage = () => {
                 required
                 placeholder="your-email@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => setAdminEmail(e.target.value)}
                 className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 text-white px-3 py-2"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300">
-                Password
+                Admin Password
               </label>
               <div className="relative">
                 <input
@@ -171,19 +229,21 @@ const LoginPage = () => {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? "Signing up..." : "Sign Up"}
             </button>
           </form>
 
-          <p className="mt-4 text-center text-sm text-gray-400">
-            Don't have an account?{" "}
-            <Link
-              href="/companies/signup"
-              className="text-blue-400 hover:underline"
-            >
-              Sign Up
-            </Link>
-          </p>
+          <div className="mt-6 pt-6 border-t border-gray-700">
+            <p className="text-center text-sm text-gray-400">
+              Already have a company account?{" "}
+              <Link
+                href="/companies/signin"
+                className="text-blue-400 hover:underline"
+              >
+                Sign In
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
