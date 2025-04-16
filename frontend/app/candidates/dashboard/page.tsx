@@ -45,7 +45,7 @@ export default function CandidateDashboard() {
 
   // Handler for profile navigation
   const handleNavigateToProfile = () => {
-    
+    router.push('/candidates/profile')
   };
 
   return (
