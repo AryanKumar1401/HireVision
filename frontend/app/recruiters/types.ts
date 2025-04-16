@@ -24,7 +24,8 @@ export interface Video {
   id: string;
   title: string;
   url: string;
-    candidate_details?: CandidateDetails;
+  created_at?: string;
+  candidate_details?: CandidateDetails;
 }
 
 export interface EmotionSummary {
@@ -69,7 +70,7 @@ export interface Analysis {
     strengths: string[];
     improvements: string[];
   };
-emotional_analysis?: {
+  emotional_analysis?: {
     summary: EmotionSummary;
   };
   emotion_results?: {
@@ -84,3 +85,18 @@ export interface JobDescription {
   requirements: string[];
   responsibilities: string[];
 }
+
+export interface FilterOptions {
+  experienceLevel: string[];
+  searchQuery: string;
+  ratingMin: number;
+  dateRange: {
+    start: Date | null;
+    end: Date | null;
+  };
+}
+
+export type FilterChangeHandler = (
+  filterType: keyof FilterOptions,
+  value: any
+) => void;
