@@ -89,7 +89,7 @@ export async function middleware(request: NextRequest) {
       }
       
       // Redirect to their current dashboard with role switch params
-      const roleSwitchUrl = new URL('/candidates', request.url)
+      const roleSwitchUrl = new URL('/', request.url)
       roleSwitchUrl.searchParams.set('role-switch', 'true')
       roleSwitchUrl.searchParams.set('current-role', 'candidate')
       roleSwitchUrl.searchParams.set('target-role', 'recruiter')

@@ -70,3 +70,18 @@ export const aggregateMetrics = {
   averageYearsExperience: 4.5,
   applicantsInProgress: 0, // This will be computed from videos.length * 0.6
 } as const;
+
+// Constants for filtering
+export const EXPERIENCE_LEVELS = [
+  { label: "All Experience", value: "all" },
+  { label: "0-2 years", value: "0-2" },
+  { label: "3-5 years", value: "3-5" },
+  { label: "5+ years", value: "5+" },
+];
+
+export const RATING_OPTIONS = [
+  { label: "All Ratings", value: 0 },
+  { label: "4.0+", value: 4.0 },
+  { label: "4.5+", value: 4.5 },
+  { label: "5.0", value: 5.0 },
+];

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -14,7 +14,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { Video } from "../types";
+import { Video, FilterOptions } from "../types";
 import {
   COLORS,
   skillsData,
@@ -23,6 +23,7 @@ import {
   jobDescription,
   aggregateMetrics,
 } from "../constants";
+import FilterPanel from "./FilterPanel";
 
 interface DashboardProps {
   videos: Video[];
@@ -33,6 +34,91 @@ interface DashboardProps {
   recruiterEmail?: string;
 }
 
+// Helper function to check if video matches search query
+const matchesSearchQuery = (video: Video, query: string): boolean => {
+  const lowerCaseQuery = query.toLowerCase();
+
+  // Search in title
+  if (video.title.toLowerCase().includes(lowerCaseQuery)) {
+    return true;
+  }
+
+  // Search in candidate details if available
+  if (video.candidate_details) {
+    const candidate = video.candidate_details;
+
+    if (
+      candidate.full_name.toLowerCase().includes(lowerCaseQuery) ||
+      candidate.email.toLowerCase().includes(lowerCaseQuery) ||
+      (candidate.experience &&
+        candidate.experience.toLowerCase().includes(lowerCaseQuery))
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+// Helper function to check if video matches experience level
+const matchesExperienceLevel = (video: Video, levels: string[]): boolean => {
+  if (!video.candidate_details?.experience) {
+    return false;
+  }
+
+  const expYears = parseInt(video.candidate_details.experience);
+
+  return levels.some((level) => {
+    if (level === "0-2") {
+      return expYears >= 0 && expYears <= 2;
+    } else if (level === "3-5") {
+      return expYears >= 3 && expYears <= 5;
+    } else if (level === "5+") {
+      return expYears > 5;
+    }
+    return false;
+  });
+};
+
+// Helper function to check if video matches minimum rating
+// This is mocked since we don't have actual rating data
+const matchesRatingMin = (video: Video, minRating: number): boolean => {
+  // Mock rating - in a real application, this would come from your data
+  // For this demo, we'll create a pseudo-random rating based on the video id
+  const mockRating = (parseInt(video.id, 36) % 20) / 4 + 3; // Range between 3 and 7.75
+  return mockRating >= minRating;
+};
+
+// Helper function to check if video is within date range
+const matchesDateRange = (
+  video: Video,
+  dateRange: { start: Date | null; end: Date | null }
+): boolean => {
+  if (!video.created_at) {
+    return true; // If there's no date, we can't filter by it
+  }
+
+  const videoDate = new Date(video.created_at);
+
+  // Check start date
+  if (dateRange.start && videoDate < dateRange.start) {
+    return false;
+  }
+
+  // Check end date
+  if (dateRange.end) {
+    // Add one day to make it inclusive
+    const endPlusOneDay = new Date(dateRange.end);
+    endPlusOneDay.setDate(endPlusOneDay.getDate() + 1);
+
+    if (videoDate > endPlusOneDay) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 const Dashboard: React.FC<DashboardProps> = ({
   videos,
   topApplicants,
@@ -41,6 +127,61 @@ const Dashboard: React.FC<DashboardProps> = ({
   recruiterName,
   recruiterEmail,
 }) => {
+  // Filter state
+  const [filters, setFilters] = useState<FilterOptions>({
+    experienceLevel: ["all"],
+    searchQuery: "",
+    ratingMin: 0,
+    dateRange: {
+      start: null,
+      end: null,
+    },
+  });
+
+  // Filter change handler
+  const handleFilterChange = (filterType: keyof FilterOptions, value: any) => {
+    setFilters((prev) => ({
+      ...prev,
+      [filterType]: value,
+    }));
+  };
+
+  // Apply filters to videos
+  const filteredVideos = useMemo(() => {
+    return videos.filter((video) => {
+      // Filter by search query
+      if (
+        filters.searchQuery &&
+        !matchesSearchQuery(video, filters.searchQuery)
+      ) {
+        return false;
+      }
+
+      // Filter by experience level
+      if (
+        !filters.experienceLevel.includes("all") &&
+        !matchesExperienceLevel(video, filters.experienceLevel)
+      ) {
+        return false;
+      }
+
+      // Filter by rating (mocked since we don't have actual rating data)
+      if (
+        filters.ratingMin > 0 &&
+        !matchesRatingMin(video, filters.ratingMin)
+      ) {
+        return false;
+      }
+
+      // Filter by date range
+      if (!matchesDateRange(video, filters.dateRange)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [videos, filters]);
+
   // Calculate dynamic metrics
   const dynamicMetrics = {
     ...aggregateMetrics,
@@ -222,6 +363,13 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
+        {/* Filter Panel */}
+        <FilterPanel
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          totalResults={filteredVideos.length}
+        />
+
         {/* Applications Section */}
         <section className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg">
           <h2 className="text-2xl font-bold text-white mb-6 pb-2 border-b border-gray-700 flex items-center">
@@ -240,20 +388,45 @@ const Dashboard: React.FC<DashboardProps> = ({
             </svg>
             Applications
             <span className="ml-3 bg-blue-500 text-white text-sm rounded-full px-2 py-1">
-              {videos.length}
+              {filteredVideos.length}
             </span>
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {videos.map((video) => (
-              <ApplicationCard
-                key={video.id}
-                video={video}
-                isTopApplicant={topApplicants.includes(video.title)}
-                onSelect={() => onVideoSelect(video)}
-              />
-            ))}
-          </div>
+          {filteredVideos.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredVideos.map((video) => (
+                <ApplicationCard
+                  key={video.id}
+                  video={video}
+                  isTopApplicant={topApplicants.includes(video.title)}
+                  onSelect={() => onVideoSelect(video)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-12 w-12 text-gray-500 mx-auto mb-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <p className="text-gray-400 text-lg">
+                No matching candidates found
+              </p>
+              <p className="text-gray-500 mt-2">
+                Try adjusting your filters to see more results
+              </p>
+            </div>
+          )}
         </section>
       </div>
     </div>
