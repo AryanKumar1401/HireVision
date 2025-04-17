@@ -316,16 +316,16 @@ const Home = () => {
           </motion.div>
 
           <div className="flex justify-center mt-12">
-            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 border-2 border-black rounded-full px-8 py-6 max-w-md text-center shadow-xl">
-              <h3 className="text-2xl font-bold text-black mb-3">
+            <div className="bg-[#1A2333] border border-[#F48C06]/30 rounded-xl px-8 py-6 max-w-md text-center shadow-xl hover:shadow-[#F48C06]/10 hover:border-[#F48C06]/50 transition-all duration-300">
+              <h3 className="text-2xl font-bold text-white mb-3">
                 Empower Your Business
               </h3>
-              <p className="text-black mb-5">
+              <p className="text-gray-300 mb-5">
                 Join a network of forward-thinking companies achieving real
                 growth.
               </p>
               <Link href="/companies/login">
-                <button className="bg-black hover:bg-gray-800 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300">
+                <button className="bg-[#F48C06] hover:bg-[#F48C06]/90 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 shadow-lg shadow-[#F48C06]/20">
                   Companies, Start Here
                 </button>
               </Link>
