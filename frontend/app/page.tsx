@@ -315,22 +315,51 @@ const Home = () => {
             </div>
           </motion.div>
 
-          <div className="flex justify-center mt-12">
-            <div className="bg-[#1A2333] border border-[#F48C06]/30 rounded-xl px-8 py-6 max-w-md text-center shadow-xl hover:shadow-[#F48C06]/10 hover:border-[#F48C06]/50 transition-all duration-300">
-              <h3 className="text-2xl font-bold text-white mb-3">
+          <motion.div
+            className="flex justify-center mt-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+          >
+            <motion.div
+              className="bg-[#1A2333] border border-[#F48C06]/30 rounded-xl px-8 py-6 max-w-md text-center shadow-xl hover:shadow-[#F48C06]/10 hover:border-[#F48C06]/50 transition-all duration-300"
+              whileHover={{
+                scale: 1.03,
+                boxShadow: "0 10px 25px rgba(244, 140, 6, 0.15)",
+              }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <motion.h3
+                className="text-2xl font-bold text-white mb-3"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+              >
                 Empower Your Business
-              </h3>
-              <p className="text-gray-300 mb-5">
+              </motion.h3>
+              <motion.p
+                className="text-gray-300 mb-5"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.7 }}
+              >
                 Join a network of forward-thinking companies achieving real
                 growth.
-              </p>
+              </motion.p>
               <Link href="/companies/login">
-                <button className="bg-[#F48C06] hover:bg-[#F48C06]/90 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 shadow-lg shadow-[#F48C06]/20">
+                <motion.button
+                  className="bg-[#F48C06] hover:bg-[#F48C06]/90 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 shadow-lg shadow-[#F48C06]/20"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.8 }}
+                >
                   Companies, Start Here
-                </button>
+                </motion.button>
               </Link>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Hero illustration/mockup */}
           <motion.div
