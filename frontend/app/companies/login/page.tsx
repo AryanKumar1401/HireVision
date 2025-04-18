@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/utils/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -14,26 +14,69 @@ const LoginPage = () => {
   const [error, setError] = useState("");
 
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    // Sign in using Supabase's auth signInWithPassword method
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      // Sign in using Supabase's auth signInWithPassword method
+      const { data, error: signInError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-    if (signInError) {
-      setError(signInError.message);
+      if (signInError) {
+        setError(signInError.message);
+        setLoading(false);
+        return;
+      }
+
+      // Debug session data
+      console.log("Auth data:", data);
+      console.log("User metadata:", data.user?.user_metadata);
+
+      // Check if user has company_admin role
+      const user = data.user;
+      let roles = [];
+
+      // Check if roles exist in user_metadata.app_metadata.roles
+      if (user?.user_metadata?.app_metadata?.roles) {
+        roles = user.user_metadata.app_metadata.roles;
+      }
+      // Fallback to check if roles exist directly in user_metadata.roles
+      else if (user?.user_metadata?.roles) {
+        roles = user.user_metadata.roles;
+      }
+
+      console.log("Detected roles:", roles);
+
+      if (!roles.includes("company_admin")) {
+        // Sign out if not a company admin
+        await supabase.auth.signOut();
+        setError(
+          "You are not authorized as a company admin. Please sign in with the correct account."
+        );
+        setLoading(false);
+        return;
+      }
+
+      console.log("Redirecting to dashboard...");
+
+      // Set loading to false before redirecting
+      
+
+      // Use window.location for a hard redirect instead of router.push to force a full page reload
+      router.push("/companies/dashboard");
+    } catch (err) {
+      console.error("Sign in error:", err);
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    router.push("/companies/dashboard");
   };
 
   return (
