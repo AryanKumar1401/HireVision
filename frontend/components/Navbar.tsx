@@ -80,23 +80,51 @@ const Navbar = () => {
           setIsLoggedIn(true);
           setUserEmail(session.user.email);
 
-          // Check if user is a recruiter
+          // Check user roles
           const recruiterStatus = await isRecruiter(supabase);
+          const companyStatus = await isCompanyAdmin(supabase); // This checks the role
+
           setIsRecruiterUser(recruiterStatus);
+          setIsCompanyUser(companyStatus); // Directly use the role status
 
-          // Check if user is a company admin
-          const companyStatus = await isCompanyAdmin(supabase);
-          setIsCompanyUser(companyStatus);
+          let companyProfile = null;
 
-          // Check if user is a company
-          if (!companyStatus) {
-            const { data: companyProfile } = await supabase
-              .from("company_profiles")
-              .select("*")
-              .eq("id", session.user.id)
-              .single();
+          // Fetch company profile ONLY if the user is a company admin
+          if (companyStatus) {
+            console.log(
+              "Fetching company profile for user ID:",
+              session.user.id
+            );
 
-            setIsCompanyUser(!!companyProfile);
+            const { data: adminCompanyData, error: companyError } =
+              await supabase
+                .from("companies")
+                .select("*")
+                .eq("user_id", session.user.id) // Fetch using the admin's user_id
+                .single();
+
+            if (companyError) {
+              console.error("Error fetching company profile:", companyError);
+
+              // Try logging the full error object and code
+              console.error("Error code:", companyError.code);
+              console.error("Error message:", companyError.message);
+              console.error("Error details:", companyError.details);
+
+              // Check if the error is because no rows were returned
+              if (companyError.code === "PGRST116") {
+                console.log(
+                  "No company profile found - may need to be created"
+                );
+                // We could redirect to company profile creation here if needed
+              }
+            } else {
+              console.log(
+                "Successfully fetched company profile:",
+                adminCompanyData
+              );
+              companyProfile = adminCompanyData;
+            }
           }
 
           // Check profile completeness based on user type
@@ -104,27 +132,38 @@ const Navbar = () => {
             // Check recruiter profile
             const { data: recruiterProfile } = await supabase
               .from("recruiter_profiles")
-              .select("*")
+              .select("full_name") // Only select necessary field
               .eq("id", session.user.id)
               .single();
-
             setHasCompletedProfile(!!recruiterProfile?.full_name);
-          } else if (companyStatus || !!companyProfile) {
-            // Company profile is complete if it has a name
+          } else if (companyStatus) {
+            // Company profile completeness depends on the fetched companyProfile
             setHasCompletedProfile(!!companyProfile?.company_name);
           } else {
             // Check candidate profile
             const { data: profile } = await supabase
               .from("profiles")
-              .select("*")
+              .select("full_name") // Only select necessary field
               .eq("id", session.user.id)
               .single();
-
             setHasCompletedProfile(!!profile?.full_name);
           }
+        } else {
+          // Reset states if no session
+          setIsLoggedIn(false);
+          setUserEmail(null);
+          setIsRecruiterUser(false);
+          setIsCompanyUser(false);
+          setHasCompletedProfile(false);
         }
       } catch (error) {
         console.error("Error checking auth status:", error);
+        // Reset states on error
+        setIsLoggedIn(false);
+        setUserEmail(null);
+        setIsRecruiterUser(false);
+        setIsCompanyUser(false);
+        setHasCompletedProfile(false);
       } finally {
         setLoading(false);
       }
