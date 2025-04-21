@@ -30,6 +30,7 @@ interface DashboardProps {
   topApplicants: string[];
   onVideoSelect: (video: Video) => void;
   onBackClick: () => void;
+  onOpenInvite: () => void; // Add this prop
   recruiterName?: string;
   recruiterEmail?: string;
 }
@@ -124,9 +125,9 @@ const Dashboard: React.FC<DashboardProps> = ({
   topApplicants,
   onVideoSelect,
   onBackClick,
+  onOpenInvite,
   recruiterName,
   recruiterEmail,
-  
 }) => {
   // Filter state
   const [filters, setFilters] = useState<FilterOptions>({
@@ -207,7 +208,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           {/* 🔹 Invite Candidate button */}
           {
             <button
-              // onClick={onOpenInvite}
+              onClick={onOpenInvite}
               className="px-5 py-2 bg-green-600/20 hover:bg-green-600/30 text-green-300 rounded-lg transition-all shadow-md hover:shadow-lg font-medium flex items-center"
             >
               <svg
@@ -217,8 +218,12 @@ const Dashboard: React.FC<DashboardProps> = ({
                 viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M12 4v16m8-8H4" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
               </svg>
               Invite Candidate
             </button>
@@ -807,7 +812,7 @@ const ApplicationCard = ({ video, isTopApplicant, onSelect }) => (
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zm-4 7a7 7 0 00-7 7h14a7 7 0 00-7-7z"
               />
             </svg>
             {video.candidate_details.full_name}
@@ -849,7 +854,7 @@ const ApplicationCard = ({ video, isTopApplicant, onSelect }) => (
           >
             <path
               fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.445-10.832A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
               clipRule="evenodd"
             />
           </svg>

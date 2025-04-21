@@ -27,11 +27,15 @@ export default function RecruitersPage() {
   >([]);
   const [legacyVideos, setLegacyVideos] = useState<Video[]>([]); // For backward compatibility
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-<<<<<<< HEAD
-  const { analysis, isAnalyzing, analyzeVideo } = useVideoAnalysis();
-  const [inviteOpen, setInviteOpen] = useState(true);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteMessage, setInviteMessage] = useState<string | null>(null);
+  const [selectedAnswers, setSelectedAnswers] = useState<InterviewAnswer[]>([]);
+  const [selectedAnswer, setSelectedAnswer] = useState<InterviewAnswer | null>(
+    null
+  );
+  const { analysis, isAnalyzing, analyzeVideo, analyzeAnswer } =
+    useVideoAnalysis();
   const INVITE_API = "https://api.myapp.com/invite";
 
   const sendInvite = async () => {
@@ -43,12 +47,12 @@ export default function RecruitersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: inviteEmail.trim() }),
       });
-  
+
       if (!res.ok) {
         const { detail } = await res.json();
         throw new Error(detail || "Failed to send invite");
       }
-  
+
       setInviteMessage("Invite sent! 🎉");
       setInviteEmail("");
     } catch (err: any) {
@@ -56,16 +60,6 @@ export default function RecruitersPage() {
       setInviteMessage(err.message ?? "Error sending invite");
     }
   };
-  
-
-=======
-  const [selectedAnswers, setSelectedAnswers] = useState<InterviewAnswer[]>([]);
-  const [selectedAnswer, setSelectedAnswer] = useState<InterviewAnswer | null>(
-    null
-  );
-  const { analysis, isAnalyzing, analyzeVideo, analyzeAnswer } =
-    useVideoAnalysis();
->>>>>>> f7602a7740cc950fc9a9c0ba099890ecfb16d825
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -392,43 +386,47 @@ export default function RecruitersPage() {
       )}
 
       {inviteOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="bg-gray-800 w-full max-w-md rounded-xl p-8 border border-gray-700">
-              <h3 className="text-xl font-semibold text-white mb-4">
-                Invite a Candidate
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-gray-800 w-full max-w-md rounded-xl p-8 border border-gray-700">
+            <h3 className="text-xl font-semibold text-white mb-4">
+              Invite a Candidate
+            </h3>
 
-              <input
-                type="email"
-                placeholder="candidate@example.com"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
-              />
+            <input
+              type="email"
+              placeholder="candidate@example.com"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+            />
 
-              {<p className="mt-2 text-sm text-center text-gray-300">{inviteMessage}</p>}
+            {
+              <p className="mt-2 text-sm text-center text-gray-300">
+                {inviteMessage}
+              </p>
+            }
 
-              <div className="mt-6 flex justify-end space-x-2">
-                <button
-                  onClick={() => {
-                    setInviteOpen(false);
-                    setInviteMessage(null);
-                    setInviteEmail("");
-                  }}
-                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={sendInvite}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm"
-                >
-                  Invite Candidate
-                </button>
-              </div>
+            <div className="mt-6 flex justify-end space-x-2">
+              <button
+                onClick={() => {
+                  setInviteOpen(false);
+                  setInviteMessage(null);
+                  setInviteEmail("");
+                }}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={sendInvite}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm"
+              >
+                Invite Candidate
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
       {selectedVideo ? (
         <VideoAnalysis
@@ -445,6 +443,7 @@ export default function RecruitersPage() {
             videos={videosToUse}
             topApplicants={topApplicants}
             onVideoSelect={handleVideoSelect}
+            onOpenInvite={() => setInviteOpen(true)}
             onBackClick={() => router.push("/")}
             recruiterName={profileData?.full_name}
             recruiterEmail={userEmail}
