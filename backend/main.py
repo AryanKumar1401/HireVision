@@ -120,22 +120,21 @@ async def invite_cand(invite: Invite):
     """
     Endpoint for sending invite to candidates through supabase native email system api call 
     """
-    result = supabase.auth.admin.invite_user_by_email(
-        invite.email,
-        redirect_to='http://localhost:3000/recruiters',
-    )
-
-    if result.get(error):
-        raise HTTPException(status_code=500, detail=result["error"]["message"])
-
-    supabase.table("candidate_invites").insert(
-        {
-            "email": invite.email,
-            "status": "sent",
-        }
-    ).execute()
-
-    return {"success": True}
+    try:
+        # The Python client doesn't accept redirect_to parameter
+        result = supabase.auth.admin.invite_user_by_email(invite.email)
+        
+        # Store the invite in the database
+        supabase.table("candidate_invites").insert(
+            {
+                "email": invite.email,
+                "status": "sent",
+            }
+        ).execute()
+        
+        return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/analyze-video")
 async def analyze_video_endpoint(video: VideoURL):

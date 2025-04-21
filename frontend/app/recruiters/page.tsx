@@ -36,7 +36,7 @@ export default function RecruitersPage() {
   );
   const { analysis, isAnalyzing, analyzeVideo, analyzeAnswer } =
     useVideoAnalysis();
-  const INVITE_API = "https://api.myapp.com/invite";
+  const INVITE_API = "http://localhost:8000/invite";
 
   const sendInvite = async () => {
     if (!inviteEmail.trim()) return;
