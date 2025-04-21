@@ -25,6 +25,7 @@ const LoginPage = () => {
     setLoading(true);
     setError("");
     const companyId = generateCompanyId();
+    
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -33,9 +34,15 @@ const LoginPage = () => {
           admin_name: adminName,
           company_name: companyName,
           company_number: companyId,
+          app_metadata: {
+            roles: ["company_admin"], // Assign the role of company_admin
+          }
         },
       },
     });
+    console.log("SignUp Data:", data);
+    
+
 
     if (signUpError) {
       setError(signUpError.message);

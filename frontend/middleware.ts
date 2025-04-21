@@ -6,7 +6,10 @@ export async function middleware(request: NextRequest) {
   if (
     request.nextUrl.pathname.includes('/login') ||
     request.nextUrl.pathname.includes('/signup') ||
-    request.nextUrl.pathname.includes('/recruiters/signup')
+    request.nextUrl.pathname.includes('/recruiters/signup') ||
+    request.nextUrl.pathname.includes('/companies/login') ||
+    request.nextUrl.pathname.includes('/companies/signin') ||
+    request.nextUrl.pathname.includes('/companies/signup')
   ) {
     return NextResponse.next()
   }
@@ -45,7 +48,7 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { session } } = await supabase.auth.getSession()
-
+  console.log('Session data:', session)
   // Redirect unauthenticated users to the appropriate login page
   if (!session) {
     if (request.nextUrl.pathname.startsWith('/candidates')) {
@@ -55,10 +58,15 @@ export async function middleware(request: NextRequest) {
     if (request.nextUrl.pathname.startsWith('/recruiters')) {
       return NextResponse.redirect(new URL('/recruiters/login', request.url))
     }
+    
+    if (request.nextUrl.pathname.startsWith('/companies')) {
+      return NextResponse.redirect(new URL('/companies/login', request.url))
+    }
   } else {
     const user = session.user
     const roles = user?.user_metadata?.app_metadata?.roles || []
     const isRecruiter = roles.includes('recruiter')
+    const isCompanyAdmin = roles.includes('company_admin')
     console.log('User roles:', roles)
 
     // For authenticated users trying to access a route that doesn't match their role,
@@ -82,7 +90,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // If a candidate tries to access recruiter routes, show role switch prompt
-    if (!isRecruiter && request.nextUrl.pathname.startsWith('/recruiters')) {
+    if (!isRecruiter && !isCompanyAdmin && request.nextUrl.pathname.startsWith('/recruiters')) {
       // Check if user is already getting redirected to avoid loops
       if (request.nextUrl.searchParams.has('role-switch')) {
         return NextResponse.next()
@@ -97,12 +105,63 @@ export async function middleware(request: NextRequest) {
       
       return NextResponse.redirect(roleSwitchUrl)
     }
+    
+    // If a company admin tries to access candidate routes, show role switch prompt
+    if (isCompanyAdmin && request.nextUrl.pathname.startsWith('/candidates')) {
+      // Check if user is already getting redirected to avoid loops
+      if (request.nextUrl.searchParams.has('role-switch')) {
+        return NextResponse.next()
+      }
+      
+      // Redirect to their current dashboard with role switch params
+      const roleSwitchUrl = new URL('/companies/dashboard', request.url)
+      roleSwitchUrl.searchParams.set('role-switch', 'true')
+      roleSwitchUrl.searchParams.set('current-role', 'company_admin')
+      roleSwitchUrl.searchParams.set('target-role', 'candidate')
+      roleSwitchUrl.searchParams.set('target-path', request.nextUrl.pathname)
+      
+      return NextResponse.redirect(roleSwitchUrl)
+    }
+    
+    // If a company admin tries to access recruiter routes, show role switch prompt
+    if (isCompanyAdmin && request.nextUrl.pathname.startsWith('/recruiters')) {
+      // Check if user is already getting redirected to avoid loops
+      if (request.nextUrl.searchParams.has('role-switch')) {
+        return NextResponse.next()
+      }
+      
+      // Redirect to their current dashboard with role switch params
+      const roleSwitchUrl = new URL('/companies/dashboard', request.url)
+      roleSwitchUrl.searchParams.set('role-switch', 'true')
+      roleSwitchUrl.searchParams.set('current-role', 'company_admin')
+      roleSwitchUrl.searchParams.set('target-role', 'recruiter')
+      roleSwitchUrl.searchParams.set('target-path', request.nextUrl.pathname)
+      
+      return NextResponse.redirect(roleSwitchUrl)
+    }
+    
+    // If a candidate or recruiter tries to access company routes, show role switch prompt
+    if (!isCompanyAdmin && request.nextUrl.pathname.startsWith('/companies')) {
+      // Check if user is already getting redirected to avoid loops
+      if (request.nextUrl.searchParams.has('role-switch')) {
+        return NextResponse.next()
+      }
+      
+      // Redirect to their current dashboard with role switch params
+      const roleSwitchUrl = new URL(isRecruiter ? '/recruiters' : '/', request.url)
+      roleSwitchUrl.searchParams.set('role-switch', 'true')
+      roleSwitchUrl.searchParams.set('current-role', isRecruiter ? 'recruiter' : 'candidate')
+      roleSwitchUrl.searchParams.set('target-role', 'company_admin')
+      roleSwitchUrl.searchParams.set('target-path', request.nextUrl.pathname)
+      
+      return NextResponse.redirect(roleSwitchUrl)
+    }
   }
 
   return response
 }
 
 export const config = {
-  matcher: ['/candidates/:path*', '/recruiters/:path*']
+  matcher: ['/candidates/:path*', '/recruiters/:path*', '/companies/:path*']
 }
 

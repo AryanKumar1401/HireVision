@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/utils/auth";
-import { isRecruiter } from "@/utils/auth";
+import { isRecruiter, isCompanyAdmin } from "@/utils/auth";
 import { useRouter } from "next/navigation";
 
 const Navbar = () => {
@@ -20,6 +20,7 @@ const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isRecruiterUser, setIsRecruiterUser] = useState(false);
+  const [isCompanyUser, setIsCompanyUser] = useState(false);
   const [hasCompletedProfile, setHasCompletedProfile] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -30,31 +31,22 @@ const Navbar = () => {
   };
 
   // Handle user type selection
-  const handleUserTypeSelect = (isRecruiter: boolean) => {
+  const handleUserTypeSelect = (
+    type: "candidate" | "recruiter" | "company"
+  ) => {
     setUserTypeModalOpen(false);
-
-    // Redirect to appropriate route based on user type and auth mode
-    if (isRecruiter) {
+    if (type === "recruiter") {
       router.push(
         authMode === "login" ? "/recruiters/login" : "/recruiters/signup"
+      );
+    } else if (type === "company") {
+      router.push(
+        authMode === "login" ? "/companies/login" : "/companies/signup"
       );
     } else {
       router.push(authMode === "login" ? "/login" : "/signup");
     }
   };
-
-  // const handleUserTypeSelect = (type: "candidate" | "recruiter" | "company") => {
-  //   setUserTypeModalOpen(false);
-  //   // Redirect based on the selected user type and auth mode
-  //   if (type === "recruiter") {
-  //     router.push(authMode === "login" ? "/recruiters/login" : "/recruiters/signup");
-  //   } else if (type === "company") {
-  //     router.push(authMode === "login" ? "/companies/signin" : "/companies/signup");
-  //   } else { // candidate
-  //     router.push(authMode === "login" ? "/login" : "/signup");
-  //   }
-  // };
-  
 
   // Close modal when clicking outside
   useEffect(() => {
@@ -88,33 +80,90 @@ const Navbar = () => {
           setIsLoggedIn(true);
           setUserEmail(session.user.email);
 
-          // Check if user is a recruiter
+          // Check user roles
           const recruiterStatus = await isRecruiter(supabase);
+          const companyStatus = await isCompanyAdmin(supabase); // This checks the role
+
           setIsRecruiterUser(recruiterStatus);
+          setIsCompanyUser(companyStatus); // Directly use the role status
+
+          let companyProfile = null;
+
+          // Fetch company profile ONLY if the user is a company admin
+          if (companyStatus) {
+            console.log(
+              "Fetching company profile for user ID:",
+              session.user.id
+            );
+
+            const { data: adminCompanyData, error: companyError } =
+              await supabase
+                .from("companies")
+                .select("*")
+                .eq("user_id", session.user.id) // Fetch using the admin's user_id
+                .single();
+
+            if (companyError) {
+              console.error("Error fetching company profile:", companyError);
+
+              // Try logging the full error object and code
+              console.error("Error code:", companyError.code);
+              console.error("Error message:", companyError.message);
+              console.error("Error details:", companyError.details);
+
+              // Check if the error is because no rows were returned
+              if (companyError.code === "PGRST116") {
+                console.log(
+                  "No company profile found - may need to be created"
+                );
+                // We could redirect to company profile creation here if needed
+              }
+            } else {
+              console.log(
+                "Successfully fetched company profile:",
+                adminCompanyData
+              );
+              companyProfile = adminCompanyData;
+            }
+          }
 
           // Check profile completeness based on user type
           if (recruiterStatus) {
             // Check recruiter profile
             const { data: recruiterProfile } = await supabase
               .from("recruiter_profiles")
-              .select("*")
+              .select("full_name") // Only select necessary field
               .eq("id", session.user.id)
               .single();
-
             setHasCompletedProfile(!!recruiterProfile?.full_name);
+          } else if (companyStatus) {
+            // Company profile completeness depends on the fetched companyProfile
+            setHasCompletedProfile(!!companyProfile?.company_name);
           } else {
             // Check candidate profile
             const { data: profile } = await supabase
               .from("profiles")
-              .select("*")
+              .select("full_name") // Only select necessary field
               .eq("id", session.user.id)
               .single();
-
             setHasCompletedProfile(!!profile?.full_name);
           }
+        } else {
+          // Reset states if no session
+          setIsLoggedIn(false);
+          setUserEmail(null);
+          setIsRecruiterUser(false);
+          setIsCompanyUser(false);
+          setHasCompletedProfile(false);
         }
       } catch (error) {
         console.error("Error checking auth status:", error);
+        // Reset states on error
+        setIsLoggedIn(false);
+        setUserEmail(null);
+        setIsRecruiterUser(false);
+        setIsCompanyUser(false);
+        setHasCompletedProfile(false);
       } finally {
         setLoading(false);
       }
@@ -281,7 +330,12 @@ const Navbar = () => {
                         {userEmail}
                       </p>
                       <p className="text-xs text-gray-400">
-                        Role: {isRecruiterUser ? "Recruiter" : "Candidate"}
+                        Role:{" "}
+                        {isCompanyUser
+                          ? "Company"
+                          : isRecruiterUser
+                          ? "Recruiter"
+                          : "Candidate"}
                       </p>
                     </div>
 
@@ -324,7 +378,13 @@ const Navbar = () => {
 
                     <div className="px-2 py-2">
                       <Link
-                        href={isRecruiterUser ? "/recruiters" : "/candidates"}
+                        href={
+                          isCompanyUser
+                            ? "/companies"
+                            : isRecruiterUser
+                            ? "/recruiters"
+                            : "/candidates"
+                        }
                         className="block px-4 py-2 text-sm text-white hover:bg-gray-700 rounded-md transition-colors"
                       >
                         <div className="flex items-center">
@@ -461,13 +521,23 @@ const Navbar = () => {
                         {userEmail}
                       </p>
                       <p className="text-xs text-gray-400">
-                        {isRecruiterUser ? "Recruiter" : "Candidate"}
+                        {isCompanyUser
+                          ? "Company"
+                          : isRecruiterUser
+                          ? "Recruiter"
+                          : "Candidate"}
                       </p>
                     </div>
                   </div>
 
                   <Link
-                    href={isRecruiterUser ? "/recruiters" : "/candidates"}
+                    href={
+                      isCompanyUser
+                        ? "/companies"
+                        : isRecruiterUser
+                        ? "/recruiters"
+                        : "/candidates"
+                    }
                     className="block w-full py-2 bg-gray-700/50 hover:bg-gray-700 text-white text-sm rounded-md transition-colors text-center mb-2"
                   >
                     Go to Dashboard
@@ -574,7 +644,7 @@ const Navbar = () => {
 
                 <div className="flex flex-col gap-4">
                   <button
-                    onClick={() => handleUserTypeSelect(false)}
+                    onClick={() => handleUserTypeSelect("candidate")}
                     className="bg-[#1A2333] hover:bg-[#232D40] transition-colors p-5 rounded-lg flex flex-col items-center"
                   >
                     <div className="bg-blue-500/20 p-3 rounded-full mb-3">
@@ -601,7 +671,7 @@ const Navbar = () => {
                   </button>
 
                   <button
-                    onClick={() => handleUserTypeSelect(true)}
+                    onClick={() => handleUserTypeSelect("recruiter")}
                     className="bg-[#1A2333] hover:bg-[#232D40] transition-colors p-5 rounded-lg flex flex-col items-center"
                   >
                     <div className="bg-[#F48C06]/20 p-3 rounded-full mb-3">
@@ -624,6 +694,31 @@ const Navbar = () => {
                     </h4>
                     <p className="text-sm text-gray-400 mt-1 text-center">
                       Post jobs and evaluate candidates
+                    </p>
+                  </button>
+
+                  <button
+                    onClick={() => handleUserTypeSelect("company")}
+                    className="bg-[#1A2333] hover:bg-[#232D40] transition-colors p-5 rounded-lg flex flex-col items-center"
+                  >
+                    <div className="bg-green-500/20 p-3 rounded-full mb-3">
+                      <svg
+                        className="w-8 h-8 text-green-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 21V9h18v12M3 9l9-7 9 7"
+                        />
+                      </svg>
+                    </div>
+                    <h4 className="text-lg font-medium text-white">Company</h4>
+                    <p className="text-sm text-gray-400 mt-1 text-center">
+                      Manage your company and post jobs
                     </p>
                   </button>
                 </div>

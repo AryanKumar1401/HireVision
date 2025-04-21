@@ -7,7 +7,13 @@ import { RecruiterProfileForm } from "./components/RecruiterProfileForm";
 import Dashboard from "./components/Dashboard";
 import VideoAnalysis from "./components/VideoAnalysis";
 import InterviewQuestions from "./components/InterviewQuestions";
-import { Video } from "./types";
+import {
+  Video,
+  CandidateInterview,
+  InterviewAnswer,
+  CandidateDetails,
+  Analysis,
+} from "./types";
 import { useVideoAnalysis } from "./hooks/useVideoAnalysis";
 
 const supabase = createClient();
@@ -16,8 +22,12 @@ export default function RecruitersPage() {
   const router = useRouter();
   const { isLoading, showProfileForm, profileData, userEmail, updateProfile } =
     useRecruiterProfile();
-  const [videos, setVideos] = useState<Video[]>([]);
+  const [candidateInterviews, setCandidateInterviews] = useState<
+    CandidateInterview[]
+  >([]);
+  const [legacyVideos, setLegacyVideos] = useState<Video[]>([]); // For backward compatibility
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+<<<<<<< HEAD
   const { analysis, isAnalyzing, analyzeVideo } = useVideoAnalysis();
   const [inviteOpen, setInviteOpen] = useState(true);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -48,6 +58,14 @@ export default function RecruitersPage() {
   };
   
 
+=======
+  const [selectedAnswers, setSelectedAnswers] = useState<InterviewAnswer[]>([]);
+  const [selectedAnswer, setSelectedAnswer] = useState<InterviewAnswer | null>(
+    null
+  );
+  const { analysis, isAnalyzing, analyzeVideo, analyzeAnswer } =
+    useVideoAnalysis();
+>>>>>>> f7602a7740cc950fc9a9c0ba099890ecfb16d825
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -56,16 +74,241 @@ export default function RecruitersPage() {
 
   const handleVideoSelect = async (video: Video) => {
     setSelectedVideo(video);
-    await analyzeVideo(video);
+
+    // Find all answers for this candidate in the candidateInterviews array
+    const candidateId = video.id;
+    const candidateInterview = candidateInterviews.find(
+      (interview) => interview.candidate_id === candidateId
+    );
+
+    if (candidateInterview && candidateInterview.answers.length > 0) {
+      // We have interview answers for this candidate
+      setSelectedAnswers(candidateInterview.answers);
+
+      // Set the first answer as the selected one and analyze it
+      const firstAnswer = candidateInterview.answers[0];
+      setSelectedAnswer(firstAnswer);
+      await analyzeAnswer(firstAnswer);
+    } else {
+      // Fall back to the legacy behavior - analyze the video directly
+      setSelectedAnswers([]);
+      setSelectedAnswer(null);
+      await analyzeVideo(video);
+    }
+  };
+
+  // New function to handle selection of specific answer
+  const handleAnswerSelect = async (answer: InterviewAnswer) => {
+    setSelectedAnswer(answer);
+    await analyzeAnswer(answer);
   };
 
   const handleCloseAnalysis = () => {
     setSelectedVideo(null);
+    setSelectedAnswers([]);
+    setSelectedAnswer(null);
   };
 
   useEffect(() => {
-    const fetchVideos = async () => {
+    const fetchCandidateInterviews = async () => {
       try {
+        console.log("Fetching interview data from Supabase...");
+
+        // First check the connection to Supabase
+        try {
+          const { data: connectionTest, error: connectionError } =
+            await supabase.from("profiles").select("count").limit(1);
+
+          if (connectionError) {
+            console.error("Supabase connection test failed:", connectionError);
+            console.log(
+              "Connection to Supabase failed, falling back to legacy method"
+            );
+            fetchLegacyVideos();
+            return;
+          }
+
+          console.log("Supabase connection test successful:", connectionTest);
+        } catch (connErr) {
+          console.error("Supabase connection error:", connErr);
+          fetchLegacyVideos();
+          return;
+        }
+
+        // Now attempt to get interview_answers
+        const { data: allAnswers, error: answersError } = await supabase
+          .from("interview_answers")
+          .select("*")
+          .limit(1);
+
+        if (answersError) {
+          console.error(
+            "Error checking interview_answers table:",
+            answersError
+          );
+          console.log("Falling back to legacy method due to table error");
+          fetchLegacyVideos();
+          return;
+        }
+
+        // Log the raw response
+        console.log("Raw response from interview_answers table:", allAnswers);
+
+        if (!allAnswers || allAnswers.length === 0) {
+          console.log(
+            "No interview answers found, falling back to legacy method"
+          );
+          fetchLegacyVideos();
+          return;
+        }
+
+        console.log("Successfully found interview answers table with data");
+
+        // Fetch all distinct user_ids who have interview answers
+        const { data: userIdData, error: userIdError } = await supabase
+          .from("interview_answers")
+          .select("user_id")
+          .limit(100);
+
+        if (userIdError) {
+          console.error("Error fetching user IDs:", userIdError);
+          fetchLegacyVideos();
+          return;
+        }
+
+        // Get unique user IDs using Set
+        const uniqueUserIds = [
+          ...new Set(userIdData.map((item) => item.user_id)),
+        ];
+        console.log(
+          `Found ${uniqueUserIds.length} unique candidates with interviews`
+        );
+
+        if (uniqueUserIds.length === 0) {
+          console.log(
+            "No unique candidate IDs found, falling back to legacy method"
+          );
+          fetchLegacyVideos();
+          return;
+        }
+
+        // Fetch candidate profiles for these users
+        const { data: candidates, error: candidatesError } = await supabase
+          .from("profiles")
+          .select("*")
+          .in("id", uniqueUserIds);
+
+        if (candidatesError || !candidates || candidates.length === 0) {
+          console.error("Error fetching candidate profiles:", candidatesError);
+          console.log("Falling back to legacy method due to profiles error");
+          fetchLegacyVideos();
+          return;
+        }
+
+        console.log(`Found ${candidates.length} candidate profiles`);
+
+        // For each candidate, fetch their interview answers
+        const candidateInterviewsData: CandidateInterview[] = [];
+        const videoObjects: Video[] = [];
+
+        for (const candidate of candidates) {
+          const { data: answers, error: answersError } = await supabase
+            .from("interview_answers")
+            .select("*")
+            .eq("user_id", candidate.id)
+            .order("created_at", { ascending: false });
+
+          if (answersError || !answers || answers.length === 0) {
+            console.log(
+              `No answers found for candidate ${candidate.id}, skipping`
+            );
+            continue;
+          }
+
+          console.log(
+            `Found ${answers.length} answers for candidate ${candidate.id}`
+          );
+
+          // Process the answers
+          const candidateDetails: CandidateDetails = {
+            id: candidate.id,
+            full_name: candidate.full_name || "Unknown Candidate",
+            email: candidate.email || "",
+            phone: candidate.phone || "",
+            experience: candidate.experience || "",
+            linkedin: candidate.linkedin || "",
+          };
+
+          const processedAnswers: InterviewAnswer[] = answers.map((answer) => {
+            // Prepare analysis object from the answer data
+            const analysis: Analysis = {
+              summary: answer.summary || "",
+              behavioral_scores: answer.behavioral_scores,
+              communication_analysis: answer.communication_analysis,
+              emotion_results: answer.emotion_results,
+            };
+
+            return {
+              id: answer.id,
+              user_id: answer.user_id,
+              question_index: answer.question_index,
+              question_text:
+                answer.question_text || `Question ${answer.question_index + 1}`,
+              video_url: answer.video_url,
+              summary: answer.summary || "",
+              transcript: answer.transcript,
+              behavioral_scores: answer.behavioral_scores,
+              communication_analysis: answer.communication_analysis,
+              emotion_results: answer.emotion_results,
+              created_at: answer.created_at,
+              analysis: analysis,
+            };
+          });
+
+          // Add candidate interview data
+          candidateInterviewsData.push({
+            candidate_id: candidate.id,
+            candidate_details: candidateDetails,
+            answers: processedAnswers,
+            created_at: answers[0].created_at,
+            latest_answer_date: answers[0].created_at,
+          });
+
+          // Create a legacy Video object for the candidate (using the first answer's video)
+          // This is needed for compatibility with the existing Dashboard component
+          videoObjects.push({
+            id: candidate.id,
+            title: `${candidateDetails.full_name}'s Interview`,
+            url: answers[0].video_url,
+            created_at: answers[0].created_at,
+            candidate_details: candidateDetails,
+          });
+        }
+
+        if (candidateInterviewsData.length === 0) {
+          console.log(
+            "No complete candidate interviews found, falling back to legacy method"
+          );
+          fetchLegacyVideos();
+          return;
+        }
+
+        console.log(
+          `Successfully processed ${candidateInterviewsData.length} candidate interviews`
+        );
+        setCandidateInterviews(candidateInterviewsData);
+        setLegacyVideos(videoObjects);
+      } catch (error) {
+        console.error("Error in fetchCandidateInterviews:", error);
+        console.log("Falling back to legacy method due to error");
+        fetchLegacyVideos();
+      }
+    };
+
+    // Legacy method - for backward compatibility
+    const fetchLegacyVideos = async () => {
+      try {
+        console.log("Fetching legacy video data from profiles...");
         const { data: profiles, error } = await supabase
           .from("profiles")
           .select("*")
@@ -76,6 +319,8 @@ export default function RecruitersPage() {
           return;
         }
 
+        console.log(`Found ${profiles.length} profiles with video_url`);
+
         // Transform profiles into Video objects
         const videoData: Video[] = profiles.map((profile) => ({
           id: profile.id,
@@ -83,6 +328,7 @@ export default function RecruitersPage() {
           url: profile.video_url || "",
           created_at: profile.created_at,
           candidate_details: {
+            id: profile.id,
             full_name: profile.full_name,
             email: profile.email,
             phone: profile.phone || "",
@@ -91,13 +337,13 @@ export default function RecruitersPage() {
           },
         }));
 
-        setVideos(videoData);
+        setLegacyVideos(videoData);
       } catch (error) {
-        console.error("Error in fetchVideos:", error);
+        console.error("Error in fetchLegacyVideos:", error);
       }
     };
 
-    fetchVideos();
+    fetchCandidateInterviews();
   }, []);
 
   // Show loading state while profile data is being fetched
@@ -119,10 +365,18 @@ export default function RecruitersPage() {
     );
   }
 
-  // Define top applicants based on most recent uploads
-  const topApplicants = videos
-    .slice(0, 2)
-    .map((video) => video.candidate_details?.full_name || "");
+  // Define top applicants based on most recent interviews
+  const topApplicants =
+    candidateInterviews.length > 0
+      ? candidateInterviews
+          .slice(0, 2)
+          .map((interview) => interview.candidate_details.full_name)
+      : legacyVideos
+          .slice(0, 2)
+          .map((video) => video.candidate_details?.full_name || "Unknown");
+
+  // Choose which videos array to use based on whether we have new format data
+  const videosToUse = legacyVideos; // Always use legacy format for Dashboard component compatibility
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -179,30 +433,32 @@ export default function RecruitersPage() {
       {selectedVideo ? (
         <VideoAnalysis
           video={selectedVideo}
+          candidateAnswers={selectedAnswers}
           analysis={analysis}
           isAnalyzing={isAnalyzing}
           onClose={handleCloseAnalysis}
+          onAnswerSelect={handleAnswerSelect}
         />
       ) : (
         <>
-        <Dashboard
-          videos={videos}
-          topApplicants={topApplicants}
-          onVideoSelect={handleVideoSelect}
-          onBackClick={() => router.push("/")}
-          recruiterName={profileData?.full_name}
-          recruiterEmail={userEmail}
-
-        />
-        <div className="mt-8 max-w-7xl mx-auto px-4">
-          {profileData?.company_number ? (
+          <Dashboard
+            videos={videosToUse}
+            topApplicants={topApplicants}
+            onVideoSelect={handleVideoSelect}
+            onBackClick={() => router.push("/")}
+            recruiterName={profileData?.full_name}
+            recruiterEmail={userEmail}
+          />
+          <div className="mt-8 max-w-7xl mx-auto px-4">
+            {profileData?.company_number ? (
               <InterviewQuestions company_number={profileData.company_number} />
             ) : (
               <div className="text-center text-white">
-                Please update your profile with your Company ID to manage interview questions.
+                Please update your profile with your Company ID to manage
+                interview questions.
               </div>
             )}
-        </div>
+          </div>
         </>
       )}
     </div>

@@ -20,12 +20,38 @@ export interface RecruiterProfile {
   hiring_for?: string[];
 }
 
+// Legacy Video interface - kept for backward compatibility
 export interface Video {
   id: string;
   title: string;
   url: string;
   created_at?: string;
   candidate_details?: CandidateDetails;
+}
+
+// New interface for interview answers
+export interface InterviewAnswer {
+  id: string;
+  user_id: string;
+  question_index: number;
+  question_text: string;
+  video_url: string; // Changed from answer_video_url to match DB column
+  summary: string; // Added to match DB column
+  transcript?: string; // Added to match DB column
+  behavioral_scores?: any; // Using any for jsonb type
+  communication_analysis?: any; // Using any for jsonb type
+  emotion_results?: any; // Using any for jsonb type
+  created_at: string;
+  analysis?: Analysis | null; // Virtual property computed from the above fields
+}
+
+// New interface for candidate interviews
+export interface CandidateInterview {
+  candidate_id: string;
+  candidate_details: CandidateDetails;
+  answers: InterviewAnswer[];
+  created_at: string;
+  latest_answer_date: string;
 }
 
 export interface EmotionSummary {

@@ -31,7 +31,15 @@ export const isRecruiter = async (client: ReturnType<typeof createClient>) => {
   return hasRole(client, 'recruiter');
 };
 
+// Check if the user is a company admin
+export const isCompanyAdmin = async (client: ReturnType<typeof createClient>) => {
+  return hasRole(client, 'company_admin');
+};
+
 // Check if the user is a candidate
 export const isCandidate = async (client: ReturnType<typeof createClient>) => {
-  return !await isRecruiter(client);
+  // User is a candidate if they are neither a recruiter nor a company admin
+  const recruiterStatus = await isRecruiter(client);
+  const companyStatus = await isCompanyAdmin(client);
+  return !recruiterStatus && !companyStatus;
 };
