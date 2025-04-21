@@ -7,7 +7,7 @@ import os
 import time
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 import spacy
 import json
 from services.emotion_recognition import analyze_emotions_from_url
@@ -40,6 +40,8 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+class Invite(BaseModel):
+    email: EmailStr
 
 class VideoURL(BaseModel):
     video_url: str
@@ -112,6 +114,28 @@ def analyze_video(video_url: str):
             "communication_analysis": {},
             "emotion_results": {}
         }
+
+@app.post("/invite")
+async def invite_cand(invite: Invite):
+    """
+    Endpoint for sending invite to candidates through supabase native email system api call 
+    """
+    result = supabase.auth.admin.invite_user_by_email(
+        invite.email,
+        redirect_to='http://localhost:3000/recruiters',
+    )
+
+    if result.get(error):
+        raise HTTPException(status_code=500, detail=result["error"]["message"])
+
+    supabase.table("candidate_invites").insert(
+        {
+            "email": invite.email,
+            "status": "sent",
+        }
+    ).execute()
+
+    return {"success": True}
 
 @app.post("/analyze-video")
 async def analyze_video_endpoint(video: VideoURL):
