@@ -19,7 +19,7 @@ const RoleSwitchModal = ({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSwitchRole = async () => {
+  const handleLogout = async () => {
     setIsLoading(true);
     try {
       // Create Supabase client
@@ -28,14 +28,10 @@ const RoleSwitchModal = ({
       // Sign out the current user
       await supabase.auth.signOut();
 
-      // Redirect to the appropriate signup page based on target role
-      if (targetRole === "recruiter") {
-        router.push("/recruiters/signup");
-      } else {
-        router.push("/signup");
-      }
+      // Redirect to home page after logout
+      router.push("/");
     } catch (error) {
-      console.error("Error switching role:", error);
+      console.error("Error logging out:", error);
     } finally {
       setIsLoading(false);
       onClose();
@@ -53,7 +49,7 @@ const RoleSwitchModal = ({
       >
         <div className="px-6 py-5 border-b border-gray-700">
           <h3 className="text-xl font-semibold text-white">
-            Role Switch Required
+            Different Role Required
           </h3>
         </div>
 
@@ -63,17 +59,16 @@ const RoleSwitchModal = ({
             <span className="font-medium text-blue-400 capitalize">
               {currentRole}
             </span>
-            . To access this {targetRole} page, you'll need to sign up with a{" "}
-            {targetRole} account.
+            . This page is for {targetRole} users. You need to log out before accessing this section.
           </p>
 
           <div className="flex flex-col gap-4 pt-2">
             <button
-              onClick={handleSwitchRole}
+              onClick={handleLogout}
               disabled={isLoading}
               className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-center text-sm rounded-md transition-colors disabled:opacity-70"
             >
-              {isLoading ? "Logging out..." : `Switch Role and Continue`}
+              {isLoading ? "Logging out..." : "Log Out"}
             </button>
 
             <button
