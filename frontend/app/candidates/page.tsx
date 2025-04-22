@@ -141,7 +141,9 @@ export default function Candidates() {
     setCurrentQuestionIndex((prev) => prev + 1);
     // Reset answer recording state
     setIsAnswerRecorded(false);
-    // Clear the preview
+
+    // Just clear the signedUrl to reveal the camera feed
+    // Don't re-initialize the camera to maintain continuous stream
     setSignedUrl(null);
   };
 

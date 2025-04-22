@@ -15,12 +15,59 @@ export const VideoPreview = ({
   error,
 }: VideoPreviewProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const playAttemptTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Helper function to safely play the video with retry logic
+  const safelyPlayVideo = () => {
+    if (!videoRef.current) return;
+
+    // Clear any existing timeout to avoid race conditions
+    if (playAttemptTimeoutRef.current) {
+      clearTimeout(playAttemptTimeoutRef.current);
+    }
+
+    // Add a small delay before attempting to play
+    playAttemptTimeoutRef.current = setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.play().catch((err) => {
+          console.warn("Video play was interrupted, will retry once:", err);
+          // One retry after a short delay
+          setTimeout(() => {
+            if (videoRef.current) {
+              videoRef.current
+                .play()
+                .catch((e) =>
+                  console.error("Final attempt to play video failed:", e)
+                );
+            }
+          }, 300);
+        });
+      }
+    }, 100);
+  };
 
   useEffect(() => {
-    if (videoRef.current && stream) {
+    // Only attach stream if no recorded URL is being shown
+    if (videoRef.current && stream && !recordedUrl) {
       videoRef.current.srcObject = stream;
+      safelyPlayVideo();
     }
-  }, [stream]);
+
+    // Cleanup on unmount
+    return () => {
+      if (playAttemptTimeoutRef.current) {
+        clearTimeout(playAttemptTimeoutRef.current);
+      }
+    };
+  }, [stream, recordedUrl]);
+
+  // If recorded URL is removed, reattach the stream
+  useEffect(() => {
+    if (!recordedUrl && videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+      safelyPlayVideo();
+    }
+  }, [recordedUrl, stream]);
 
   if (isLoading) {
     return (

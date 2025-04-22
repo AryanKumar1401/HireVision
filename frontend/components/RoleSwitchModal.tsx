@@ -59,7 +59,8 @@ const RoleSwitchModal = ({
             <span className="font-medium text-blue-400 capitalize">
               {currentRole}
             </span>
-            . This page is for {targetRole} users. You need to log out before accessing this section.
+            . This page is for {targetRole} users. You need to log out before
+            accessing this section.
           </p>
 
           <div className="flex flex-col gap-4 pt-2">
