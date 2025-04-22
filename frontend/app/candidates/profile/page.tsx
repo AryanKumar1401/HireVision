@@ -24,7 +24,7 @@ export default function ProfilePage() {
     phone: "",
     experience: "",
     linkedin: "",
-    updated_at: null,
+    updated_at: null as string | null,
     email: "",
   });
 
@@ -76,8 +76,11 @@ export default function ProfilePage() {
             email: data.email || "",
           });
         }
-      } catch (error) {
-        console.error("Error fetching profile:", error.message);
+      } catch (error: any) {
+        console.error(
+          "Error fetching profile:",
+          error instanceof Error ? error.message : "Unknown error"
+        );
       } finally {
         setIsLoading(false);
       }
@@ -86,7 +89,9 @@ export default function ProfilePage() {
     fetchProfileData();
   }, [router]);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -132,13 +137,16 @@ export default function ProfilePage() {
       setTimeout(() => setSuccessMessage(""), 3000);
       setIsEditing(false);
     } catch (error) {
-      console.error("Error updating profile:", error.message);
+      console.error(
+        "Error updating profile:",
+        error instanceof Error ? error.message : "Unknown error"
+      );
     } finally {
       setIsSaving(false);
     }
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string | null) => {
     if (!dateString) return "Never updated";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {

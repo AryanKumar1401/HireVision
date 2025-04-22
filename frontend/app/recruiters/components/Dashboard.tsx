@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useMemo } from "react";
 import {
   BarChart,
@@ -458,8 +459,15 @@ const Dashboard: React.FC<DashboardProps> = ({
   );
 };
 
+interface MetricCardProps {
+  value: number;
+  label: string;
+  color: "blue" | "green" | "purple" | "amber";
+  icon: React.ReactNode;
+}
+
 // Enhanced Sub-components
-const MetricCard = ({ value, label, color, icon }) => {
+const MetricCard = ({ value, label, color, icon }: MetricCardProps) => {
   const colorClasses = {
     blue: "text-blue-400",
     green: "text-green-400",
@@ -563,7 +571,12 @@ const JobDescriptionCard = () => (
   </div>
 );
 
-const SkillsChart = () => (
+interface SkillsChartProps {}
+
+// Create a type based on the skillsData constant
+type SkillData = (typeof skillsData)[number];
+
+const SkillsChart = ({}: SkillsChartProps) => (
   <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg h-full">
     <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
       <svg
@@ -582,7 +595,7 @@ const SkillsChart = () => (
     </h3>
     <ResponsiveContainer width="100%" height={220}>
       <BarChart
-        data={skillsData}
+        data={[...skillsData] as SkillData[]}
         barSize={30}
         margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
       >
@@ -718,7 +731,7 @@ const ExperienceDistributionChart = () => (
       <ResponsiveContainer width="100%" height={220}>
         <PieChart>
           <Pie
-            data={experienceData}
+            data={[...experienceData] as (typeof experienceData)[number][]}
             cx="50%"
             cy="50%"
             labelLine={false}
@@ -762,7 +775,17 @@ const ExperienceDistributionChart = () => (
   </div>
 );
 
-const ApplicationCard = ({ video, isTopApplicant, onSelect }) => (
+interface ApplicationCardProps {
+  video: Video;
+  isTopApplicant: boolean;
+  onSelect: () => void;
+}
+
+const ApplicationCard = ({
+  video,
+  isTopApplicant,
+  onSelect,
+}: ApplicationCardProps) => (
   <button
     onClick={onSelect}
     className={`

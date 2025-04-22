@@ -78,7 +78,7 @@ const Navbar = () => {
 
         if (session?.user) {
           setIsLoggedIn(true);
-          setUserEmail(session.user.email);
+          setUserEmail(session.user.email || null);
 
           // Check user roles
           const recruiterStatus = await isRecruiter(supabase);

@@ -31,7 +31,7 @@ export const useProfile = () => {
           }
         }
       } catch (error) {
-        console.error('Error fetching profile data:', error);
+        console.error('Error fetching profile data:', error instanceof Error ? error.message : "Unknown error");
       } finally {
         // Set loading to false regardless of success or failure
         setIsLoading(false);

@@ -446,7 +446,7 @@ export default function RecruitersPage() {
             onOpenInvite={() => setInviteOpen(true)}
             onBackClick={() => router.push("/")}
             recruiterName={profileData?.full_name}
-            recruiterEmail={userEmail}
+            recruiterEmail={userEmail || undefined}
           />
           <div className="mt-8 max-w-7xl mx-auto px-4">
             {profileData?.company_number ? (

@@ -15,7 +15,10 @@ export const RecruiterProfileForm = ({
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const data = {
+
+    // Create a partial profile with only the form fields
+    // The missing required fields (id, company_number, email) will be added in the parent component
+    const formProfileData = {
       full_name: formData.get("full_name") as string,
       company: formData.get("company") as string,
       job_title: formData.get("job_title") as string,
@@ -23,7 +26,9 @@ export const RecruiterProfileForm = ({
       linkedin: formData.get("linkedin") as string,
       hiring_for: [formData.get("hiring_for") as string], // Simple implementation - can be enhanced for multiple positions
     };
-    onSubmit(data);
+
+    // Pass the partial data to parent component
+    onSubmit(formProfileData as Partial<RecruiterProfile> as RecruiterProfile);
 
     // Force a reload after submission to refresh the UI state
     setTimeout(() => {

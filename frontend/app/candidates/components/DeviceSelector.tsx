@@ -59,7 +59,9 @@ export const DeviceSelector = ({
         <select
           id="camera-select"
           value={selectedVideoDeviceId || ""}
-          onChange={(e) => onVideoDeviceChange(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+            onVideoDeviceChange(e.target.value)
+          }
           className="w-full bg-gray-800 text-white/90 py-2 px-3 rounded-md border border-gray-700 focus:border-blue-500 focus:outline-none"
         >
           {videoDevices.map((device) => (
@@ -77,7 +79,9 @@ export const DeviceSelector = ({
         <select
           id="mic-select"
           value={selectedAudioDeviceId || ""}
-          onChange={(e) => onAudioDeviceChange(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+            onAudioDeviceChange(e.target.value)
+          }
           className="w-full bg-gray-800 text-white/90 py-2 px-3 rounded-md border border-gray-700 focus:border-blue-500 focus:outline-none"
         >
           {audioDevices.map((device) => (

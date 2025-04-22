@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { createClient } from "@/utils/auth";
 import { useRouter } from "next/navigation";
+import { Suspense } from "react";
 
 const ThankYouPage = () => {
   const supabase = createClient();
@@ -53,6 +54,7 @@ const ThankYouPage = () => {
   }
 
   return (
+    <Suspense fallback={<div>Loading…</div>}>
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent blur-3xl" />
 
@@ -160,6 +162,7 @@ const ThankYouPage = () => {
         </motion.div>
       </div>
     </div>
+    </Suspense>
   );
 };
 

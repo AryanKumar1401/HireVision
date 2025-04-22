@@ -32,7 +32,7 @@ export const useRecruiterProfile = () => {
           }
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error('Error fetching user data:', error instanceof Error ? error.message : "Unknown error");
       } finally {
         setIsLoading(false);
       }
@@ -49,10 +49,12 @@ export const useRecruiterProfile = () => {
       console.log('session user while updating form: ', user);      
       if (!user) throw new Error('No authenticated user');
 
+      // Create a profile object with spread values first and then override with specific values
+      // This prevents the TypeScript error about properties being overwritten
       const profile = {
-        id: user.id,
-        email: user.email,
         ...profileFormData,
+        id: user.id,
+        email: user.email!,
       };
 
       const { error } = await supabase
@@ -65,7 +67,7 @@ export const useRecruiterProfile = () => {
       setProfileData(profile);
       setShowProfileForm(false);
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Error updating profile:', error instanceof Error ? error.message : "Unknown error");
     } finally {
       setIsLoading(false);
     }

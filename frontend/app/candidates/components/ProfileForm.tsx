@@ -1,12 +1,13 @@
+"use client";
 import { ProfileFormData } from "@/types/candidate";
 import { useRouter } from "next/navigation";
 
 interface ProfileFormProps {
   onSubmit: (data: ProfileFormData) => void;
-  initialData?: ProfileFormData;
+  profileData?: ProfileFormData;
 }
 
-export const ProfileForm = ({ onSubmit, initialData }: ProfileFormProps) => {
+export const ProfileForm = ({ onSubmit, profileData }: ProfileFormProps) => {
   const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -43,7 +44,7 @@ export const ProfileForm = ({ onSubmit, initialData }: ProfileFormProps) => {
               name="full_name"
               type="text"
               required
-              defaultValue={initialData?.full_name}
+              defaultValue={profileData?.full_name}
               className="mt-1 block w-full text-black rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
@@ -56,7 +57,7 @@ export const ProfileForm = ({ onSubmit, initialData }: ProfileFormProps) => {
               name="phone"
               type="tel"
               required
-              defaultValue={initialData?.phone}
+              defaultValue={profileData?.phone}
               className="mt-1 block w-full text-black rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
@@ -68,7 +69,7 @@ export const ProfileForm = ({ onSubmit, initialData }: ProfileFormProps) => {
             <select
               name="experience"
               required
-              defaultValue={initialData?.experience}
+              defaultValue={profileData?.experience}
               className="mt-1 text-black block w-full rounded-md border border-gray-300 px-3 py-2"
             >
               <option value="">Select experience</option>
@@ -87,7 +88,7 @@ export const ProfileForm = ({ onSubmit, initialData }: ProfileFormProps) => {
               name="linkedin"
               type="url"
               required
-              defaultValue={initialData?.linkedin}
+              defaultValue={profileData?.linkedin}
               className="mt-1 block text-black w-full rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
