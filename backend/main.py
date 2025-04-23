@@ -12,6 +12,13 @@ import spacy
 import json
 from services.emotion_recognition import analyze_emotions_from_url
 from services.sentiment import summarize_text, generate_behavioral_scores_rule_based, analyze_communication, generate_behavioral_scores
+from email.message import EmailMessage
+import smtplib
+import re
+from email.utils import parseaddr
+
+
+
 nlp = spacy.load("en_core_web_sm")
 
 # Directly setting the API keys (not recommended for production)
@@ -115,6 +122,66 @@ def analyze_video(video_url: str):
             "emotion_results": {}
         }
 
+
+def clean_address(addr: str) -> str:
+    ADDR_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    """Return a safe RFC‑2822 address or raise ValueError."""
+    realname, email = parseaddr(addr)
+    email = email.strip().replace("\r", "").replace("\n", "")
+    if not ADDR_RE.match(email):
+        raise ValueError(f"Invalid e‑mail address: {addr!r}")
+    return email
+
+def send_invite_email(invite: Invite):
+    """
+    Function for sending an invite email for a candidate to complete a HireVision assessment using SMTP.
+    """
+    try:
+        email_host = "smtp.gmail.com"
+        email_port = 587
+        email_user = "pradhipakk@gmail.com"
+        email_pswd = "ilbsk4me"
+        # sender_email = "pradhipakk@gmail.com"
+
+        sender = clean_address(email_user)
+        recipient = clean_address(invite.email)
+        
+        msg = EmailMessage()
+        msg['Subject'] = "HireVision Assessment Invite"
+        msg['From'] = sender
+        msg['To'] = recipient
+
+        email_content = (
+            "Hello,\n\n"
+            "You have been invited to complete a HireVision assessment. "
+            "Please click the link below to start your assessment:\n\n"
+            "http://localhost:3000/candidates\n\n"
+            "If you have any questions, feel free to reach out.\n\n"
+            "Best regards,\n"
+            "HireVision Team"
+        )
+        msg.set_content(email_content)
+        
+        with smtplib.SMTP(email_host, email_port) as server:
+            server.starttls()  # Secure the connection
+            server.login(email_user, email_pswd)  # Log in to your email account
+            server.send_message(msg)
+        
+        # Optionally, store the invite record in the database if needed.
+        supabase.table("candidate_invites").insert(
+            {
+                "email": recipient,
+                "status": "sent",
+            }
+        ).execute()
+        
+        return {"success": True, "message": f"Invitation sent to {recipient}"}
+    except smtplib.SMTPException as e:
+        print(f"SMTP error occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to send email")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/invite")
 async def invite_cand(invite: Invite):
     """
@@ -122,8 +189,7 @@ async def invite_cand(invite: Invite):
     """
     try:
         # The Python client doesn't accept redirect_to parameter
-        result = supabase.auth.admin.invite_user_by_email(invite.email)
-        
+        send_invite_email(invite)
         # Store the invite in the database
         supabase.table("candidate_invites").insert(
             {

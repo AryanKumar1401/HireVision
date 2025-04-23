@@ -45,7 +45,7 @@ export default function RecruitersPage() {
       const res = await fetch(INVITE_API, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: inviteEmail.trim() }),
+        body: JSON.stringify({ email: inviteEmail.replace(/[\r\n]/g, '').trim() }),
       });
 
       if (!res.ok) {
@@ -53,8 +53,14 @@ export default function RecruitersPage() {
         throw new Error(detail || "Failed to send invite");
       }
 
-      setInviteMessage("Invite sent! 🎉");
-      setInviteEmail("");
+      const data = await res.json();
+      
+      if (data.success) {
+        setInviteMessage(data.message || "Invite sent successfully! 🎉");
+        setInviteEmail("");
+      } else {
+        throw new Error(data.message || "Failed to send invite");
+      }
     } catch (err: any) {
       console.error(err);
       setInviteMessage(err.message ?? "Error sending invite");

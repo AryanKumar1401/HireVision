@@ -1,9 +1,11 @@
 "use client";
 import { useState, useEffect, Suspense } from "react"; // Import Suspense
+import { createClient } from "@/utils/auth";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import HomeIcon from "@mui/icons-material/Home";
 import PersonIcon from "@mui/icons-material/Person";
+import CloseIcon from "@mui/icons-material/Close"; 
 
 export default function CandidateDashboard() {
   const router = useRouter();
@@ -11,7 +13,17 @@ export default function CandidateDashboard() {
   const [floatingElements, setFloatingElements] = useState<FloatingElement[]>(
     []
   );
+  const [completed, setCompleted] = useState<any[]>([]);
+  const [openIdx,  setOpenIdx]  = useState<number | null>(null); // modal
+  const supabase = createClient();
 
+  const toObj = (v: any) =>
+    typeof v === "string" && v.trim().length ? JSON.parse(v) : v ?? {};
+  
+  const row = openIdx !== null ? completed[openIdx] : null;
+  const scores = row ? toObj(row.behavioral_scores) : {};
+  const comm   = row ? toObj(row.communication_analysis) : {};
+  const emot   = row ? toObj(row.emotion_results) : {};
   // Generate random floating elements on mount
 
   interface FloatingElement {
@@ -35,6 +47,24 @@ export default function CandidateDashboard() {
     setFloatingElements(elements);
   }, []);
 
+  useEffect(() => {
+    const fetchCompleted = async () => {
+      const {
+        data,
+        error
+      } = await supabase.from("interview_answers")
+                        .select("*")
+                        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+                        .order("created_at", { ascending: false });
+      console.log("successfully retrieved supabase data")
+      if (error) console.error("completed‑fetch", error);
+      else       setCompleted(data || []);
+    };
+
+    fetchCompleted();
+  }, []);
+
+  
   // For demonstration, using dummy pending interview data:
   const pendingInterviews = [
     {
@@ -331,9 +361,33 @@ export default function CandidateDashboard() {
                     d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
                   />
                 </svg>
-                <p className="text-gray-400">
-                  Your completed interviews will appear here.
-                </p>
+                {completed.length === 0 ? (
+                  <div className="bg-gray-800/50 … rounded-xl p-8 text-center">
+                    <p className="text-gray-400">Your completed interviews will appear here.</p>
+                  </div>
+                ) : (
+                  /*  -------- step 3: buttons for each completed interview -------- */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {completed.map((row, i) => (
+                      <button
+                        key={row.id}
+                        onClick={() => setOpenIdx(i)}
+                        className="bg-gray-800/60 hover:bg-gray-700/70 border border-gray-700 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-blue-900/30"
+                      >
+                        <h4 className="text-white font-medium text-lg mb-1">
+                          {row.question_text || "Interview"}
+                        </h4>
+                        <p className="text-sm text-gray-400 mb-2">
+                          {new Date(row.created_at).toLocaleDateString()}
+                        </p>
+                        <div className="text-blue-400 text-xs">
+                          Click to view details
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
               </div>
             </motion.div>
           )}
@@ -522,6 +576,151 @@ export default function CandidateDashboard() {
             </motion.div>
           )}
         </div>
+        {/* ───────── Modal ───────── */}
+        {openIdx !== null && completed[openIdx] ? (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-gray-900 w-full max-w-3xl mx-4 rounded-2xl border border-gray-700 overflow-hidden">
+              <div className="flex justify-between items-center px-6 py-4 border-b border-gray-700">
+                <h4 className="text-lg font-semibold text-white">Interview Details</h4>
+                <button
+                  onClick={() => setOpenIdx(null)}
+                  className="text-gray-400 hover:text-gray-200"
+                >
+                  <CloseIcon />
+                </button>
+              </div>
+              {/* ───── pretty modal content – replace the <pre> block with this  ───── */}
+              {(() => {
+                const row = completed[openIdx];           // the active interview
+                const scores = row.behavioral_scores ?? {}; // parsed objects are already JSONB
+                const comm   = row.communication_analysis ?? {};
+                const emot   = row.emotion_results ?? {};
+
+                return (
+                  <div className="divide-y divide-gray-700 overflow-auto max-h-[70vh]">
+                    {/* top summary */}
+                    <section className="p-6 space-y-2">
+                      <h5 className="text-xl font-semibold text-white">
+                        {row.question_text || "Interview"}
+                      </h5>
+                      <p className="text-sm text-gray-400">
+                        Completed&nbsp;
+                        {new Date(row.created_at).toLocaleString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+
+                      <div className="mt-4 bg-gray-800/50 border border-gray-700 rounded-xl p-4">
+                        <h6 className="text-sm font-medium text-gray-300 mb-1">AI Summary</h6>
+                        <p className="text-gray-100 text-sm whitespace-pre-wrap">
+                          {row.summary || "—"}
+                        </p>
+                      </div>
+                    </section>
+
+                    {/* behavioural & comm scores */}
+                    <section className="grid md:grid-cols-2 gap-px bg-gray-700/50">
+                      {/* behavioural */}
+                      <div className="p-6 bg-gray-900">
+                        <h6 className="text-sm font-medium text-gray-300 mb-4">
+                          Behavioural Scores
+                        </h6>
+                        {Object.keys(scores).length === 0 ? (
+                          <p className="text-gray-500 text-sm">No scores available.</p>
+                        ) : (
+                          <ul className="space-y-2">
+                            {Object.entries(scores).map(([k, v]) => (
+                              <li key={k} className="flex justify-between">
+                                <span className="text-gray-400 text-sm capitalize">{k}</span>
+                                <span className="text-white text-sm font-medium">{v}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      {/* communication */}
+                      <div className="p-6 bg-gray-900">
+                        <h6 className="text-sm font-medium text-gray-300 mb-4">
+                          Communication Analysis
+                        </h6>
+                        {Object.keys(comm).length === 0 ? (
+                          <p className="text-gray-500 text-sm">No data available.</p>
+                        ) : (
+                          <ul className="space-y-2">
+                            {Object.entries(comm).map(([key, value]) => (
+                              <li key={key} className="flex justify-between">
+                                <span className="text-gray-400 text-sm capitalize">{key}</span>
+                                <span className="text-white text-sm font-medium">{value}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </section>
+
+                    {/* emotions */}
+                    <section className="p-6">
+                      <h6 className="text-sm font-medium text-gray-300 mb-4">
+                        Detected Emotions <span className="text-gray-500">(top 3)</span>
+                      </h6>
+                      {Object.keys(emot).length === 0 ? (
+                        <p className="text-gray-500 text-sm">No emotion data.</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(emot)
+                            .sort((a, b) => b[1] - a[1])
+                            .slice(0, 3)
+                            .map(([emo, val]) => (
+                              <span
+                                key={emo}
+                                className="px-3 py-1 rounded-full text-xs font-medium bg-blue-600/20 text-blue-300"
+                              >
+                                {emo}&nbsp;{Math.round(val * 100)}%
+                              </span>
+                            ))}
+                        </div>
+                      )}
+                    </section>
+
+                    {/* collapsible transcript */}
+                    <details className="p-6 bg-gray-800/50 border-t border-gray-700 group">
+                      <summary className="cursor-pointer text-gray-300 text-sm select-none flex items-center gap-2">
+                        <svg
+                          className="h-4 w-4 transform transition-transform group-open:rotate-90"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                        Full Transcript
+                      </summary>
+                      <pre className="mt-4 max-h-56 overflow-y-auto whitespace-pre-wrap text-gray-200 text-xs leading-relaxed">
+                        {row.transcript || "—"}
+                      </pre>
+                    </details>
+                  </div>
+                );
+              })()}
+
+            </div>
+          </div>
+        ) : openIdx !== null ? (
+          <div className="fixed inset-0 flex items-center justify-center z-50 text-white">
+            Loading interview details...
+          </div>
+        ) : null}
+
       </div>
     </Suspense>
   );
