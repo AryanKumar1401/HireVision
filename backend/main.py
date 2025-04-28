@@ -16,6 +16,8 @@ from email.message import EmailMessage
 import smtplib
 import re
 from email.utils import parseaddr
+import librosa
+import numpy as np
 
 
 
@@ -56,6 +58,37 @@ class VideoURL(BaseModel):
     question_index: int = None
     question_text: str = None
  
+
+def detect_enthusiasm(audio_file: str, sr: int = 22050, energy_threshold: float = 0.6) -> list:
+    """
+    Given an audio file, return a list of timestamps (in seconds) where the energy peaks.
+    This is a simplistic approach; you can adapt it to use pitch or a pretrained model.
+    """
+    # Load the audio file
+    y, sr = librosa.load(audio_file, sr=sr)
+    
+    # Compute RMS energy for short frames
+    hop_length = 512
+    frame_length = 1024
+    rms = librosa.feature.rms(y=y, frame_length=frame_length, hop_length=hop_length)[0]
+    
+    # Normalize energy to 0-1 range
+    rms_norm = (rms - np.min(rms)) / (np.max(rms) - np.min(rms) + 1e-6)
+    
+    # Identify frames where normalized energy exceeds the threshold
+    enthusiastic_frames = np.where(rms_norm > energy_threshold)[0]
+    
+    # Convert frame indices to timestamps
+    timestamps = librosa.frames_to_time(enthusiastic_frames, sr=sr, hop_length=hop_length)
+    # Optionally, filter out timestamps that are close together
+    filtered_timestamps = []
+    prev = -999
+    for t in timestamps:
+        if t - prev > 1.0:  # at least 1 second apart
+            filtered_timestamps.append(round(t, 2))
+            prev = t
+    return filtered_timestamps
+
 def analyze_video(video_url: str):
     try:
         print(f"Attempting to transcribe video from URL: {video_url}")
