@@ -58,6 +58,26 @@ class VideoURL(BaseModel):
     question_index: int = None
     question_text: str = None
  
+def extract_main_themes(transcript: str, num_themes: int = 4) -> list:
+    import openai
+    prompt = (
+        f"Extract {num_themes} main themes from the following transcript. "
+        "Make sure each theme is a short descriptive phrase.\n\n"
+        f"Transcript: {transcript}\n\n"
+        "Themes (comma-separated):"
+    )
+    
+    response = openai.Completion.create(
+        engine="text-davinci-003",  # or another suitable engine
+        prompt=prompt,
+        max_tokens=100,
+        temperature=0.5,
+    )
+    
+    raw_themes = response.choices[0].text.strip()
+    # Split and clean the themes
+    themes = [theme.strip() for theme in raw_themes.split(",") if theme.strip()]
+    return themes[:num_themes]
 
 def detect_enthusiasm(audio_file: str, sr: int = 22050, energy_threshold: float = 0.6) -> list:
     """
@@ -117,12 +137,16 @@ def analyze_video(video_url: str):
         print(f"Transcription successful. Length: {len(transcript.text)}")
         print(f"Transcription text: {transcript.text[:100]}...")  # Print first 100 characters for debugging
         
-        # Get the summary and behavioral analysis
+        # Get transcript text etc.
         transcript_text = transcript.text
+        
         summary = summarize_text(transcript_text)
         behavioral_scores = generate_behavioral_scores(summary)
         communication_analysis = analyze_communication(summary)
         emotion_results = analyze_emotions_from_url(video_url, 10)
+        
+        # Extract main themes from the transcript
+        main_themes = extract_main_themes(transcript_text, num_themes=4)
         
         # Create txt_files directory if it doesn't exist
         os.makedirs("txt_files", exist_ok=True)
@@ -141,7 +165,8 @@ def analyze_video(video_url: str):
             "transcript": transcript_text,
             "behavioral_scores": behavioral_scores,
             "communication_analysis": communication_analysis,
-            "emotion_results": emotion_results
+            "emotion_results": emotion_results,
+            # "main_themes": main_themes
         }
     except Exception as e:
         print(f"Error in analyze_video: {str(e)}")
