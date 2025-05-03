@@ -15,6 +15,7 @@ import {
   Analysis,
 } from "./types";
 import { useVideoAnalysis } from "./hooks/useVideoAnalysis";
+import { getBackendUrl } from "@/utils/env";
 
 const supabase = createClient();
 
@@ -36,7 +37,7 @@ export default function RecruitersPage() {
   );
   const { analysis, isAnalyzing, analyzeVideo, analyzeAnswer } =
     useVideoAnalysis();
-  const INVITE_API = "http://localhost:8000/invite";
+  const INVITE_API = `${getBackendUrl()}/invite`;
 
   const sendInvite = async () => {
     if (!inviteEmail.trim()) return;
@@ -45,7 +46,9 @@ export default function RecruitersPage() {
       const res = await fetch(INVITE_API, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: inviteEmail.replace(/[\r\n]/g, '').trim() }),
+        body: JSON.stringify({
+          email: inviteEmail.replace(/[\r\n]/g, "").trim(),
+        }),
       });
 
       if (!res.ok) {
@@ -54,7 +57,7 @@ export default function RecruitersPage() {
       }
 
       const data = await res.json();
-      
+
       if (data.success) {
         setInviteMessage(data.message || "Invite sent successfully! 🎉");
         setInviteEmail("");
