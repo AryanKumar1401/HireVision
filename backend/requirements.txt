@@ -99,3 +99,4 @@ weasel==0.4.1
 websockets==13.1
 # Removed wrapt (TensorFlow dep)
 yarl==1.18.3
+librosa==0.11.0
