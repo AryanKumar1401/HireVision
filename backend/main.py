@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 import spacy
 import json
-from services.emotion_recognition import analyze_emotions_from_url
+# Removed emotion_recognition import
 from services.sentiment import summarize_text, generate_behavioral_scores_rule_based, analyze_communication, generate_behavioral_scores
 from email.message import EmailMessage
 import smtplib
@@ -18,9 +18,26 @@ import re
 from email.utils import parseaddr
 import librosa
 import numpy as np
-import subprocess
 
-
+# Function to generate placeholder emotion data instead of using facial recognition
+def generate_placeholder_emotion_data():
+    return {
+        "summary": {
+            "total_frames_analyzed": 0,
+            "dominant_emotion": "neutral",
+            "dominant_emotion_confidence": 0.7,
+            "average_emotions": {
+                "angry": 0.05, 
+                "disgust": 0.02, 
+                "fear": 0.03,
+                "happy": 0.15, 
+                "sad": 0.05, 
+                "surprise": 0.10, 
+                "neutral": 0.60
+            }
+        },
+        "detailed_results": []
+    }
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -127,9 +144,12 @@ def analyze_video(video_url: str):
         transcript = transcriber.transcribe(video_url)
         if not transcript or not hasattr(transcript, 'text') or not transcript.text:
             print("Transcription failed or returned empty result")
-            emotion_results = analyze_emotions_from_url(video_url, 10)
+            
+            # Replace emotion analysis with placeholder data
+            emotion_results = generate_placeholder_emotion_data()
+            
             return {
-                "summary": "Transcription could not be completed. Only emotion analysis is available.",
+                "summary": "Transcription could not be completed. Only basic analysis is available.",
                 "filename": f"summary_{abs(hash(video_url))}.txt",
                 "transcript": "",
                 "behavioral_scores": {},
@@ -142,15 +162,19 @@ def analyze_video(video_url: str):
         summary = summarize_text(transcript_text)
         behavioral_scores = generate_behavioral_scores(summary)
         communication_analysis = analyze_communication(summary)
-        emotion_results = analyze_emotions_from_url(video_url, 10)
         
-        # Extract main themes (if needed)
-        # main_themes = extract_main_themes(transcript_text, num_themes=4)
+        # Replace emotion analysis with placeholder data
+        emotion_results = generate_placeholder_emotion_data()
         
-        # Generate unique filenames for files and audio
-        filename = f"summary_{abs(hash(video_url))}.txt"
-        audio_filename = f"audio_{abs(hash(video_url))}.wav"
+        # Extract main themes from the transcript
+        main_themes = extract_main_themes(transcript_text, num_themes=4)
+        
+        # Create txt_files directory if it doesn't exist
         os.makedirs("txt_files", exist_ok=True)
+        
+        # Generate a unique filename
+        filename = f"summary_{abs(hash(video_url))}.txt"
+        file_path = os.path.join("txt_files", filename)
         
         # Write the summary to a file
         with open(os.path.join("txt_files", filename), "w") as file:

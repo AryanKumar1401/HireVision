@@ -3,6 +3,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { createClient } from "@/utils/auth";
+import { getBackendUrl } from "@/utils/env";
 import { ProfileForm } from "./components/ProfileForm";
 import { VideoPreview } from "./components/VideoPreview";
 import { RecordingControls } from "./components/RecordingControls";
@@ -177,7 +178,7 @@ export default function Candidates() {
 
         if (publicUrl && newSignedUrl) {
           // Send for analysis with question index
-          const response = await fetch("http://localhost:8000/analyze-video", {
+          const response = await fetch(`${getBackendUrl()}/analyze-video`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

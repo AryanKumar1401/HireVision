@@ -5,6 +5,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeRegistry } from "./theme-registry";
 import RoleSwitchProvider from "@/components/RoleSwitchProvider";
+import { Providers } from "@/components/Providers";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -37,9 +38,11 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeRegistry>
-          <RoleSwitchProvider>{children}</RoleSwitchProvider>
-        </ThemeRegistry>
+        <Providers>
+          <ThemeRegistry>
+            <RoleSwitchProvider>{children}</RoleSwitchProvider>
+          </ThemeRegistry>
+        </Providers>
       </body>
     </html>
   );

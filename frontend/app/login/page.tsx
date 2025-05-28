@@ -1,36 +1,26 @@
 "use client";
 import { useState } from "react";
-import { createClient } from "@/utils/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { loginUser } from "@/store/slices/authSlice";
 
 export default function SignInPage() {
-  const supabase = createClient();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const { loading, error } = useAppSelector((state) => state.auth);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setError(error.message);
-    } else {
+    const result = await dispatch(loginUser({ email, password }));
+    if (loginUser.fulfilled.match(result)) {
       router.push("/candidates/dashboard");
     }
-    setLoading(false);
   };
 
   return (

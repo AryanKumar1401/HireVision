@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import HomeIcon from "@mui/icons-material/Home";
 import PersonIcon from "@mui/icons-material/Person";
-import CloseIcon from "@mui/icons-material/Close"; 
+import CloseIcon from "@mui/icons-material/Close";
 
 export default function CandidateDashboard() {
   const router = useRouter();
@@ -14,16 +14,16 @@ export default function CandidateDashboard() {
     []
   );
   const [completed, setCompleted] = useState<any[]>([]);
-  const [openIdx,  setOpenIdx]  = useState<number | null>(null); // modal
+  const [openIdx, setOpenIdx] = useState<number | null>(null); // modal
   const supabase = createClient();
 
   const toObj = (v: any) =>
     typeof v === "string" && v.trim().length ? JSON.parse(v) : v ?? {};
-  
+
   const row = openIdx !== null ? completed[openIdx] : null;
   const scores = row ? toObj(row.behavioral_scores) : {};
-  const comm   = row ? toObj(row.communication_analysis) : {};
-  const emot   = row ? toObj(row.emotion_results) : {};
+  const comm = row ? toObj(row.communication_analysis) : {};
+  const emot = row ? toObj(row.emotion_results) : {};
   // Generate random floating elements on mount
 
   interface FloatingElement {
@@ -49,22 +49,19 @@ export default function CandidateDashboard() {
 
   useEffect(() => {
     const fetchCompleted = async () => {
-      const {
-        data,
-        error
-      } = await supabase.from("interview_answers")
-                        .select("*")
-                        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
-                        .order("created_at", { ascending: false });
-      console.log("successfully retrieved supabase data")
+      const { data, error } = await supabase
+        .from("interview_answers")
+        .select("*")
+        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+        .order("created_at", { ascending: false });
+      console.log("successfully retrieved supabase data");
       if (error) console.error("completed‑fetch", error);
-      else       setCompleted(data || []);
+      else setCompleted(data || []);
     };
 
     fetchCompleted();
   }, []);
 
-  
   // For demonstration, using dummy pending interview data:
   const pendingInterviews = [
     {
@@ -363,7 +360,9 @@ export default function CandidateDashboard() {
                 </svg>
                 {completed.length === 0 ? (
                   <div className="bg-gray-800/50 … rounded-xl p-8 text-center">
-                    <p className="text-gray-400">Your completed interviews will appear here.</p>
+                    <p className="text-gray-400">
+                      Your completed interviews will appear here.
+                    </p>
                   </div>
                 ) : (
                   /*  -------- step 3: buttons for each completed interview -------- */
@@ -387,7 +386,6 @@ export default function CandidateDashboard() {
                     ))}
                   </div>
                 )}
-
               </div>
             </motion.div>
           )}
@@ -581,7 +579,9 @@ export default function CandidateDashboard() {
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-gray-900 w-full max-w-3xl mx-4 rounded-2xl border border-gray-700 overflow-hidden">
               <div className="flex justify-between items-center px-6 py-4 border-b border-gray-700">
-                <h4 className="text-lg font-semibold text-white">Interview Details</h4>
+                <h4 className="text-lg font-semibold text-white">
+                  Interview Details
+                </h4>
                 <button
                   onClick={() => setOpenIdx(null)}
                   className="text-gray-400 hover:text-gray-200"
@@ -591,10 +591,10 @@ export default function CandidateDashboard() {
               </div>
               {/* ───── pretty modal content – replace the <pre> block with this  ───── */}
               {(() => {
-                const row = completed[openIdx];           // the active interview
+                const row = completed[openIdx]; // the active interview
                 const scores = row.behavioral_scores ?? {}; // parsed objects are already JSONB
-                const comm   = row.communication_analysis ?? {};
-                const emot   = row.emotion_results ?? {};
+                const comm = row.communication_analysis ?? {};
+                const emot = row.emotion_results ?? {};
 
                 return (
                   <div className="divide-y divide-gray-700 overflow-auto max-h-[70vh]">
@@ -615,7 +615,9 @@ export default function CandidateDashboard() {
                       </p>
 
                       <div className="mt-4 bg-gray-800/50 border border-gray-700 rounded-xl p-4">
-                        <h6 className="text-sm font-medium text-gray-300 mb-1">AI Summary</h6>
+                        <h6 className="text-sm font-medium text-gray-300 mb-1">
+                          AI Summary
+                        </h6>
                         <p className="text-gray-100 text-sm whitespace-pre-wrap">
                           {row.summary || "—"}
                         </p>
@@ -630,13 +632,19 @@ export default function CandidateDashboard() {
                           Behavioural Scores
                         </h6>
                         {Object.keys(scores).length === 0 ? (
-                          <p className="text-gray-500 text-sm">No scores available.</p>
+                          <p className="text-gray-500 text-sm">
+                            No scores available.
+                          </p>
                         ) : (
                           <ul className="space-y-2">
                             {Object.entries(scores).map(([k, v]) => (
                               <li key={k} className="flex justify-between">
-                                <span className="text-gray-400 text-sm capitalize">{k}</span>
-                                <span className="text-white text-sm font-medium">{v}</span>
+                                <span className="text-gray-400 text-sm capitalize">
+                                  {k}
+                                </span>
+                                <span className="text-white text-sm font-medium">
+                                  {String(v)}
+                                </span>
                               </li>
                             ))}
                           </ul>
@@ -649,13 +657,19 @@ export default function CandidateDashboard() {
                           Communication Analysis
                         </h6>
                         {Object.keys(comm).length === 0 ? (
-                          <p className="text-gray-500 text-sm">No data available.</p>
+                          <p className="text-gray-500 text-sm">
+                            No data available.
+                          </p>
                         ) : (
                           <ul className="space-y-2">
                             {Object.entries(comm).map(([key, value]) => (
                               <li key={key} className="flex justify-between">
-                                <span className="text-gray-400 text-sm capitalize">{key}</span>
-                                <span className="text-white text-sm font-medium">{value}</span>
+                                <span className="text-gray-400 text-sm capitalize">
+                                  {key}
+                                </span>
+                                <span className="text-white text-sm font-medium">
+                                  {String(value)}
+                                </span>
                               </li>
                             ))}
                           </ul>
@@ -666,21 +680,24 @@ export default function CandidateDashboard() {
                     {/* emotions */}
                     {/* <section className="p-6">
                       <h6 className="text-sm font-medium text-gray-300 mb-4">
-                        Detected Emotions <span className="text-gray-500">(top 3)</span>
+                        Detected Emotions{" "}
+                        <span className="text-gray-500">(top 3)</span>
                       </h6>
                       {Object.keys(emot).length === 0 ? (
-                        <p className="text-gray-500 text-sm">No emotion data.</p>
+                        <p className="text-gray-500 text-sm">
+                          No emotion data.
+                        </p>
                       ) : (
                         <div className="flex flex-wrap gap-2">
                           {Object.entries(emot)
-                            .sort((a, b) => b[1] - a[1])
+                            .sort((a, b) => Number(b[1]) - Number(a[1]))
                             .slice(0, 3)
                             .map(([emo, val]) => (
                               <span
                                 key={emo}
                                 className="px-3 py-1 rounded-full text-xs font-medium bg-blue-600/20 text-blue-300"
                               >
-                                {emo}&nbsp;{Math.round(val * 100)}%
+                                {emo}&nbsp;{Math.round(Number(val) * 100)}%
                               </span>
                             ))}
                         </div>
@@ -712,7 +729,6 @@ export default function CandidateDashboard() {
                   </div>
                 );
               })()}
-
             </div>
           </div>
         ) : openIdx !== null ? (
@@ -720,7 +736,6 @@ export default function CandidateDashboard() {
             Loading interview details...
           </div>
         ) : null}
-
       </div>
     </Suspense>
   );
