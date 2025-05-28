@@ -36,7 +36,7 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({
 
   return (
     <main className="flex flex-col items-center justify-between min-h-screen bg-gray-900 p-8 relative overflow-hidden">
-      <div className="relative bg-gray-800 rounded-xl p-6 w-full max-w-7xl">
+      <div className="relative bg-gradient-to-br from-gray-800 via-gray-900 to-black rounded-2xl p-8 w-full max-w-7xl shadow-2xl">
         {/* Header with close button */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-white">
@@ -53,7 +53,7 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({
         {/* Question navigation tabs - only show if multiple answers exist */}
         {hasMultipleAnswers && (
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-white mb-3">
+            <h3 className="text-2xl font-bold text-white mb-5 tracking-wide text-center">
               Interview Questions
             </h3>
             <div className="flex flex-wrap gap-2">
@@ -61,10 +61,10 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({
                 <button
                   key={answer.id}
                   onClick={() => handleAnswerChange(index)}
-                  className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+                  className={`px-4 py-2 rounded-full text-md transition-all font-semibold ${
                     index === selectedAnswerIndex
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                      ? "bg-blue-500 text-white hover:bg-blue-600 shadow-lg"
+                      : "bg-white bg-opacity-10 text-gray-300 hover:bg-white hover:bg-opacity-20"
                   }`}
                 >
                   Question {answer.question_index + 1}
@@ -106,8 +106,8 @@ const CandidateInfoColumn: React.FC<{
 
   return (
     <div className="space-y-6">
-      <div className="bg-gray-700 rounded-lg p-4">
-        <h3 className="text-lg font-semibold text-white mb-3">
+      <div className="bg-white bg-opacity-10 rounded-2xl p-5 shadow-md hover:scale-[1.01] transition-transform">
+        <h3 className="text-2xl font-bold text-white mb-5 tracking-wide text-center">
           Video Interview
         </h3>
         <video
@@ -117,31 +117,31 @@ const CandidateInfoColumn: React.FC<{
         />
       </div>
 
-      <div className="bg-gray-700 rounded-lg p-4">
-        <h3 className="text-lg font-semibold text-white mb-3">
+      <div className="bg-gradient-to-br from-green-600 to-yellow-600 bg-opacity-10 rounded-2xl p-5 shadow-md hover:scale-[1.01] transition-transform">
+        <h3 className="text-2xl font-bold text-white mb-5 tracking-wide text-center">
           Candidate Information
         </h3>
         {video.candidate_details ? (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="text-gray-400">Full Name:</div>
-              <div className="text-white">
+              <div className=" text-lg font-bold text-white-400">Full Name:</div>
+              <div className="text-lg font-bold text-white-400">
                 {video.candidate_details.full_name}
               </div>
 
-              <div className="text-gray-400">Email:</div>
-              <div className="text-white">{video.candidate_details.email}</div>
+              <div className="text-lg font-bold text-white-400">Email:</div>
+              <div className="text-md font-bold text-white-400">{video.candidate_details.email}</div>
 
-              <div className="text-gray-400">Phone:</div>
-              <div className="text-white">{video.candidate_details.phone}</div>
+              <div className="text-lg font-bold text-white-400">Phone:</div>
+              <div className="text-lg font-bold text-white-400">{video.candidate_details.phone}</div>
 
-              <div className="text-gray-400">Experience:</div>
-              <div className="text-white">
+              <div className="text-lg font-bold text-white-400">Experience:</div>
+              <div className="text-lg font-bold text-white-400">
                 {video.candidate_details.experience}
               </div>
 
-              <div className="text-gray-400">LinkedIn:</div>
-              <div className="text-white">
+              <div className="text-lg font-bold text-white-400">LinkedIn:</div>
+              <div className="text-lg font-bold text-white-400">
                 <a
                   href={video.candidate_details.linkedin}
                   target="_blank"
@@ -160,8 +160,8 @@ const CandidateInfoColumn: React.FC<{
         )}
       </div>
 
-      <div className="bg-gray-700 rounded-lg p-4">
-        <h3 className="text-lg font-semibold text-white mb-3">
+      {/* <div className="bg-white bg-opacity-10 rounded-2xl p-5 shadow-md hover:scale-[1.01] transition-transform">
+        <h3 className="text-2xl font-bold text-white mb-5 tracking-wide text-center">
           Key Performance Indicators
         </h3>
         <div className="grid grid-cols-2 gap-3">
@@ -174,7 +174,7 @@ const CandidateInfoColumn: React.FC<{
             <div className="text-sm text-gray-300">Interview Rating</div>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
@@ -185,14 +185,14 @@ const InterviewSummary: React.FC<{
   questionText?: string;
 }> = ({ analysis, isAnalyzing, questionText }) => {
   return (
-    <div className="bg-gray-700 rounded-lg p-4">
-      <h3 className="text-lg font-semibold text-white mb-3">
+    <div className="bg-gradient-to-br from-blue-600 to-indigo-600 bg-opacity-10 rounded-2xl p-5 shadow-md hover:scale-[1.01] transition-transform">
+      <h3 className="text-2xl font-bold text-white mb-5 tracking-wide text-center">
         Interview Summary
       </h3>
 
       {/* Display the question text if available */}
       {questionText && (
-        <div className="bg-gray-600 rounded-lg p-3 mb-4">
+        <div className="bg-white bg-opacity-10 rounded-2xl p-4 shadow-sm hover:scale-105 transition-transform">
           <h4 className="text-white font-medium mb-1">Question</h4>
           <div className="text-gray-300 italic">{questionText}</div>
         </div>
@@ -224,7 +224,7 @@ const AnalysisColumn: React.FC<{
     <div className="space-y-6">
       <BehavioralAnalysis analysis={analysis} />
       <CommunicationAssessment analysis={analysis} isAnalyzing={isAnalyzing} />
-      <EmotionalAnalysis analysis={analysis} isAnalyzing={isAnalyzing} />
+      {/* <EmotionalAnalysis analysis={analysis} isAnalyzing={isAnalyzing} /> */}
     </div>
   );
 };
@@ -233,39 +233,33 @@ const BehavioralAnalysis: React.FC<{ analysis: Analysis | null }> = ({
   analysis,
 }) => {
   return (
-    <div className="bg-gray-700 rounded-lg p-4">
-      <h3 className="text-lg font-semibold text-white mb-3">
-        Behavioral Analysis
-      </h3>
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gray-600 p-3 rounded-lg text-center">
-            <div className="text-xl font-bold text-yellow-400">
-              {analysis?.behavioral_scores?.confidence?.score || "N/A"}
-            </div>
-            <div className="text-sm text-gray-300">Confidence</div>
+    <div className="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl p-6 shadow-lg">
+    <h3 className="text-2xl font-bold text-white mb-6 tracking-wide text-center">
+      🌟 Behavioral Analysis 🌟
+    </h3>
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-6">
+        <div className="bg-white bg-opacity-20 p-5 rounded-2xl text-center hover:scale-105 transition-transform">
+          <div className="text-lg font-semibold text-yellow-300">🎤 TEDx Speaker</div>
+        </div>
+        <div className="bg-white bg-opacity-20 p-5 rounded-2xl text-center hover:scale-105 transition-transform">
+          <div className="text-lg font-semibold text-pink-300">
+            🐶 Built an app to feed his dog
           </div>
-          <div className="bg-gray-600 p-3 rounded-lg text-center">
-            <div className="text-xl font-bold text-pink-400">
-              {analysis?.behavioral_scores?.enthusiasm?.score || "N/A"}
-            </div>
-            <div className="text-sm text-gray-300">Enthusiasm</div>
+        </div>
+        <div className="bg-white bg-opacity-20 p-5 rounded-2xl text-center hover:scale-105 transition-transform">
+          <div className="text-lg font-semibold text-green-300">
+            🌾 Passionate about ML in agri spaces
           </div>
-          <div className="bg-gray-600 p-3 rounded-lg text-center">
-            <div className="text-xl font-bold text-cyan-400">
-              {analysis?.behavioral_scores?.clarity?.score || "N/A"}
-            </div>
-            <div className="text-sm text-gray-300">Clarity</div>
-          </div>
-          <div className="bg-gray-600 p-3 rounded-lg text-center">
-            <div className="text-xl font-bold text-orange-400">
-              {analysis?.behavioral_scores?.leadership?.score || "N/A"}
-            </div>
-            <div className="text-sm text-gray-300">Leadership</div>
+        </div>
+        <div className="bg-white bg-opacity-20 p-5 rounded-2xl text-center hover:scale-105 transition-transform">
+          <div className="text-lg font-semibold text-blue-300">
+            🤝 Enjoys volunteering
           </div>
         </div>
       </div>
     </div>
+  </div>
   );
 };
 
@@ -274,8 +268,8 @@ const CommunicationAssessment: React.FC<{
   isAnalyzing: boolean;
 }> = ({ analysis, isAnalyzing }) => {
   return (
-    <div className="bg-gray-700 rounded-lg p-4">
-      <h3 className="text-lg font-semibold text-white mb-3">
+    <div className="bg-gradient-to-br from-orange-600 to-purple-600 bg-opacity-10 rounded-2xl p-5 shadow-md hover:scale-[1.01] transition-transform">
+      <h3 className="text-2xl font-bold text-white mb-5 tracking-wide text-center">
         Communication Assessment
       </h3>
       <div className="space-y-3">
@@ -308,94 +302,94 @@ const CommunicationAssessment: React.FC<{
   );
 };
 
-const EmotionalAnalysis: React.FC<{
-  analysis: Analysis | null;
-  isAnalyzing: boolean;
-}> = ({ analysis, isAnalyzing }) => {
-  return (
-    <div className="bg-gray-700 rounded-lg p-4">
-      <h3 className="text-lg font-semibold text-white mb-3">
-        Emotional Analysis
-      </h3>
-      {isAnalyzing ? (
-        <div className="animate-pulse h-20 bg-gray-500 rounded" />
-      ) : analysis?.emotion_results ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gray-600 p-3 rounded-lg">
-              <div className="text-gray-300">Dominant Emotion</div>
-              <div className="text-xl font-bold text-white capitalize">
-                {analysis.emotion_results?.summary?.dominant_emotion ||
-                  "Unknown"}
-              </div>
-              <div className="text-sm text-gray-400">
-                {analysis.emotion_results?.summary?.dominant_emotion_confidence
-                  ? (
-                      analysis.emotion_results.summary
-                        .dominant_emotion_confidence * 100
-                    ).toFixed(1) + "% confidence"
-                  : "No confidence data"}
-              </div>
-            </div>
-            <div className="bg-gray-600 p-3 rounded-lg">
-              <div className="text-gray-300">Frames Analyzed</div>
-              <div className="text-xl font-bold text-white">
-                {analysis.emotion_results?.summary?.total_frames_analyzed ||
-                  "N/A"}
-              </div>
-            </div>
-          </div>
+// const EmotionalAnalysis: React.FC<{
+//   analysis: Analysis | null;
+//   isAnalyzing: boolean;
+// }> = ({ analysis, isAnalyzing }) => {
+//   return (
+//     <div className="bg-white bg-opacity-10 rounded-2xl p-5 shadow-md hover:scale-[1.01] transition-transform">
+//       <h3 className="text-2xl font-bold text-white mb-5 tracking-wide text-center">
+//         Emotional Analysis
+//       </h3>
+//       {isAnalyzing ? (
+//         <div className="animate-pulse h-20 bg-gray-500 rounded" />
+//       ) : analysis?.emotion_results ? (
+//         <div className="space-y-4">
+//           <div className="grid grid-cols-2 gap-4">
+//             <div className="bg-gray-600 p-3 rounded-lg">
+//               <div className="text-gray-300">Dominant Emotion</div>
+//               <div className="text-xl font-bold text-white capitalize">
+//                 {analysis.emotion_results?.summary?.dominant_emotion ||
+//                   "Unknown"}
+//               </div>
+//               <div className="text-sm text-gray-400">
+//                 {analysis.emotion_results?.summary?.dominant_emotion_confidence
+//                   ? (
+//                       analysis.emotion_results.summary
+//                         .dominant_emotion_confidence * 100
+//                     ).toFixed(1) + "% confidence"
+//                   : "No confidence data"}
+//               </div>
+//             </div>
+//             <div className="bg-gray-600 p-3 rounded-lg">
+//               <div className="text-gray-300">Frames Analyzed</div>
+//               <div className="text-xl font-bold text-white">
+//                 {analysis.emotion_results?.summary?.total_frames_analyzed ||
+//                   "N/A"}
+//               </div>
+//             </div>
+//           </div>
 
-          <div className="bg-gray-600 p-4 rounded-lg">
-            <h4 className="text-white font-medium mb-3">Emotion Timeline</h4>
-            {analysis.emotion_results?.detailed_results ? (
-              <EmotionTimeline
-                frames={analysis.emotion_results.detailed_results}
-              />
-            ) : (
-              <div className="text-gray-400">No timeline data available</div>
-            )}
-          </div>
+//           <div className="bg-gray-600 p-4 rounded-lg">
+//             <h4 className="text-white font-medium mb-3">Emotion Timeline</h4>
+//             {analysis.emotion_results?.detailed_results ? (
+//               <EmotionTimeline
+//                 frames={analysis.emotion_results.detailed_results}
+//               />
+//             ) : (
+//               <div className="text-gray-400">No timeline data available</div>
+//             )}
+//           </div>
 
-          <div className="bg-gray-600 p-4 rounded-lg">
-            <h4 className="text-white font-medium mb-3">
-              Emotion Distribution
-            </h4>
-            {analysis.emotion_results?.summary?.average_emotions ? (
-              <div className="space-y-2">
-                {Object.entries(
-                  analysis.emotion_results.summary.average_emotions
-                ).map(([emotion, value]) => (
-                  <div key={emotion} className="flex items-center">
-                    <div className="w-24 text-gray-300 capitalize">
-                      {emotion}
-                    </div>
-                    <div className="flex-1">
-                      <div className="h-2 bg-gray-700 rounded-full">
-                        <div
-                          className="h-full bg-blue-500 rounded-full"
-                          style={{ width: `${value * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                    <div className="w-16 text-right text-gray-300">
-                      {(value * 100).toFixed(1)}%
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-gray-400">
-                No emotion distribution data available
-              </div>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="text-gray-400">No emotional analysis available</div>
-      )}
-    </div>
-  );
-};
+//           <div className="bg-gray-600 p-4 rounded-lg">
+//             <h4 className="text-white font-medium mb-3">
+//               Emotion Distribution
+//             </h4>
+//             {analysis.emotion_results?.summary?.average_emotions ? (
+//               <div className="space-y-2">
+//                 {Object.entries(
+//                   analysis.emotion_results.summary.average_emotions
+//                 ).map(([emotion, value]) => (
+//                   <div key={emotion} className="flex items-center">
+//                     <div className="w-24 text-gray-300 capitalize">
+//                       {emotion}
+//                     </div>
+//                     <div className="flex-1">
+//                       <div className="h-2 bg-gray-700 rounded-full">
+//                         <div
+//                           className="h-full bg-blue-500 rounded-full"
+//                           style={{ width: `${value * 100}%` }}
+//                         />
+//                       </div>
+//                     </div>
+//                     <div className="w-16 text-right text-gray-300">
+//                       {(value * 100).toFixed(1)}%
+//                     </div>
+//                   </div>
+//                 ))}
+//               </div>
+//             ) : (
+//               <div className="text-gray-400">
+//                 No emotion distribution data available
+//               </div>
+//             )}
+//           </div>
+//         </div>
+//       ) : (
+//         <div className="text-gray-400">No emotional analysis available</div>
+//       )}
+//     </div>
+//   );
+// };
 
 export default VideoAnalysis;

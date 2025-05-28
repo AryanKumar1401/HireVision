@@ -18,6 +18,7 @@ import re
 from email.utils import parseaddr
 import librosa
 import numpy as np
+import subprocess
 
 
 
@@ -109,56 +110,60 @@ def detect_enthusiasm(audio_file: str, sr: int = 22050, energy_threshold: float 
             prev = t
     return filtered_timestamps
 
+def extract_audio_from_video(video_url: str, output_audio: str) -> None:
+    """
+    Extract audio from a video URL and save it to output_audio.
+    This example assumes that the video_url is accessible to ffmpeg.
+    """
+    command = f"ffmpeg -y -i {video_url} -q:a 0 -map a {output_audio}"
+    subprocess.run(command, shell=True, check=True)
+
 def analyze_video(video_url: str):
     try:
         print(f"Attempting to transcribe video from URL: {video_url}")
-        # Check if URL is accessible
         if not video_url or not video_url.startswith('http'):
             raise ValueError("Invalid video URL format")
             
-        # Transcribe the video file
         transcript = transcriber.transcribe(video_url)
-        
-        # Check if transcript exists and has text
         if not transcript or not hasattr(transcript, 'text') or not transcript.text:
-            # Return a partial analysis without transcript-dependent parts
             print("Transcription failed or returned empty result")
             emotion_results = analyze_emotions_from_url(video_url, 10)
-            
             return {
                 "summary": "Transcription could not be completed. Only emotion analysis is available.",
                 "filename": f"summary_{abs(hash(video_url))}.txt",
                 "transcript": "",
                 "behavioral_scores": {},
                 "communication_analysis": {},
-                "emotion_results": emotion_results
+                "emotion_results": emotion_results,
+                "enthusiasm_timestamps": []
             }
             
-        print(f"Transcription successful. Length: {len(transcript.text)}")
-        print(f"Transcription text: {transcript.text[:100]}...")  # Print first 100 characters for debugging
-        
-        # Get transcript text etc.
         transcript_text = transcript.text
-        
         summary = summarize_text(transcript_text)
         behavioral_scores = generate_behavioral_scores(summary)
         communication_analysis = analyze_communication(summary)
         emotion_results = analyze_emotions_from_url(video_url, 10)
         
-        # Extract main themes from the transcript
-        main_themes = extract_main_themes(transcript_text, num_themes=4)
+        # Extract main themes (if needed)
+        # main_themes = extract_main_themes(transcript_text, num_themes=4)
         
-        # Create txt_files directory if it doesn't exist
+        # Generate unique filenames for files and audio
+        filename = f"summary_{abs(hash(video_url))}.txt"
+        audio_filename = f"audio_{abs(hash(video_url))}.wav"
         os.makedirs("txt_files", exist_ok=True)
         
-        # Generate a unique filename
-        filename = f"summary_{abs(hash(video_url))}.txt"
-        file_path = os.path.join("txt_files", filename)
-        
         # Write the summary to a file
-        with open(file_path, "w") as file:
+        with open(os.path.join("txt_files", filename), "w") as file:
             file.write(summary)
-
+        
+        # Extract audio from video and then detect enthusiastic moments
+        try:
+            extract_audio_from_video(video_url, audio_filename)
+            enthusiasm_timestamps = detect_enthusiasm(audio_filename)
+        except Exception as audio_e:
+            print(f"Audio extraction/analysis failed: {str(audio_e)}")
+            enthusiasm_timestamps = []
+        
         return {
             "summary": summary,
             "filename": filename,
@@ -166,20 +171,19 @@ def analyze_video(video_url: str):
             "behavioral_scores": behavioral_scores,
             "communication_analysis": communication_analysis,
             "emotion_results": emotion_results,
-            # "main_themes": main_themes
+            "enthusiasm_timestamps": enthusiasm_timestamps
         }
     except Exception as e:
         print(f"Error in analyze_video: {str(e)}")
-        # Return a minimal response with the error message
         return {
             "summary": f"Error analyzing video: {str(e)}",
             "filename": "",
             "transcript": "",
             "behavioral_scores": {},
             "communication_analysis": {},
-            "emotion_results": {}
+            "emotion_results": {},
+            "enthusiasm_timestamps": []
         }
-
 
 def clean_address(addr: str) -> str:
     ADDR_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")

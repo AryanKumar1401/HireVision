@@ -565,7 +565,7 @@ export default function Candidates() {
                     </svg>
                     <span>
                       Question {currentQuestionIndex + 1} of{" "}
-                      {isQuestionsLoading ? "..." : questions.length}
+                        {isQuestionsLoading ? "..." : questions.length} 
                     </span>
                   </div>
                   <h2 className="text-2xl text-white/90 font-medium">

@@ -664,7 +664,7 @@ export default function CandidateDashboard() {
                     </section>
 
                     {/* emotions */}
-                    <section className="p-6">
+                    {/* <section className="p-6">
                       <h6 className="text-sm font-medium text-gray-300 mb-4">
                         Detected Emotions <span className="text-gray-500">(top 3)</span>
                       </h6>
@@ -685,7 +685,7 @@ export default function CandidateDashboard() {
                             ))}
                         </div>
                       )}
-                    </section>
+                    </section> */}
 
                     {/* collapsible transcript */}
                     <details className="p-6 bg-gray-800/50 border-t border-gray-700 group">
