@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import RoleSwitchModal from "./RoleSwitchModal";
+import RoleSwitchModal from "./role-switch-modal";
 
 export default function RoleSwitchProvider({
   children,
