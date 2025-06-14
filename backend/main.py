@@ -5,7 +5,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import os
 import time
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 import spacy
@@ -18,6 +18,7 @@ import re
 from email.utils import parseaddr
 import librosa
 import numpy as np
+import shutil
 
 # Function to generate placeholder emotion data instead of using facial recognition
 def generate_placeholder_emotion_data():
@@ -337,6 +338,47 @@ async def analyze_video_endpoint(video: VideoURL):
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "service": "HireVision API"}
+
+ACCEPTED_RESUME_TYPES = [
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/msword",
+    "text/rtf"
+]
+MAX_RESUME_SIZE_MB = 5
+
+@app.post("/upload-resume")
+async def upload_resume(file: UploadFile = File(...), user_id: str = Form(...)):
+    # Validate file type
+    if file.content_type not in ACCEPTED_RESUME_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only PDF, DOCX, and RTF are allowed.")
+    # Validate file size
+    contents = await file.read()
+    if len(contents) > MAX_RESUME_SIZE_MB * 1024 * 1024:
+        raise HTTPException(status_code=400, detail=f"File too large. Max size is {MAX_RESUME_SIZE_MB}MB.")
+    # Upload to Supabase Storage
+    filename = f"{user_id}_{int(time.time())}_{file.filename}"
+    try:
+        # Upload file to Supabase Storage bucket 'resumes'
+        storage_response = supabase.storage.from_('resumes').upload(filename, contents, {"content-type": file.content_type})
+        # Get public URL
+        public_url = supabase.storage.from_('resumes').get_public_url(filename)
+        # Insert record into Supabase
+        result = supabase.table("resumes").insert({
+            "user_id": user_id,
+            "filename": filename,
+            "file_path": public_url,
+            "original_name": file.filename,
+            "mime_type": file.content_type,
+            "uploaded_at": datetime.utcnow().isoformat()
+        }).execute()
+        if hasattr(result, 'data') and result.data:
+            db_record = result.data[0]
+        else:
+            db_record = None
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload resume: {str(e)}")
+    return {"success": True, "file_path": public_url, "filename": filename, "db_record": db_record}
 
 if __name__ == "__main__":
     import uvicorn
