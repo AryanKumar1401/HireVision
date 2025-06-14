@@ -75,23 +75,20 @@ class VideoURL(BaseModel):
     user_id: str = None
     question_index: int = None
     question_text: str = None
- 
+
 def extract_main_themes(transcript: str, num_themes: int = 4) -> list:
-    import openai
     prompt = (
         f"Extract {num_themes} main themes from the following transcript. "
         "Make sure each theme is a short descriptive phrase.\n\n"
         f"Transcript: {transcript}\n\n"
         "Themes (comma-separated):"
     )
-    
-    response = openai.Completion.create(
-        engine="text-davinci-003",  # or another suitable engine
-        prompt=prompt,
-        max_tokens=100,
-        temperature=0.5,
-    )
-    
+
+    response = client.completions.create(engine="text-davinci-003",  # or another suitable engine
+    prompt=prompt,
+    max_tokens=100,
+    temperature=0.5)
+
     raw_themes = response.choices[0].text.strip()
     # Split and clean the themes
     themes = [theme.strip() for theme in raw_themes.split(",") if theme.strip()]
@@ -104,18 +101,18 @@ def detect_enthusiasm(audio_file: str, sr: int = 22050, energy_threshold: float 
     """
     # Load the audio file
     y, sr = librosa.load(audio_file, sr=sr)
-    
+
     # Compute RMS energy for short frames
     hop_length = 512
     frame_length = 1024
     rms = librosa.feature.rms(y=y, frame_length=frame_length, hop_length=hop_length)[0]
-    
+
     # Normalize energy to 0-1 range
     rms_norm = (rms - np.min(rms)) / (np.max(rms) - np.min(rms) + 1e-6)
-    
+
     # Identify frames where normalized energy exceeds the threshold
     enthusiastic_frames = np.where(rms_norm > energy_threshold)[0]
-    
+
     # Convert frame indices to timestamps
     timestamps = librosa.frames_to_time(enthusiastic_frames, sr=sr, hop_length=hop_length)
     # Optionally, filter out timestamps that are close together
@@ -133,18 +130,18 @@ def analyze_video(video_url: str):
         # Check if URL is accessible
         if not video_url or not video_url.startswith('http'):
             raise ValueError("Invalid video URL format")
-            
+
         # Transcribe the video file
         transcript = transcriber.transcribe(video_url)
-        
+
         # Check if transcript exists and has text
         if not transcript or not hasattr(transcript, 'text') or not transcript.text:
             # Return a partial analysis without transcript-dependent parts
             print("Transcription failed or returned empty result")
-            
+
             # Replace emotion analysis with placeholder data
             emotion_results = generate_placeholder_emotion_data()
-            
+
             return {
                 "summary": "Transcription could not be completed. Only basic analysis is available.",
                 "filename": f"summary_{abs(hash(video_url))}.txt",
@@ -153,30 +150,30 @@ def analyze_video(video_url: str):
                 "communication_analysis": {},
                 "emotion_results": emotion_results
             }
-            
+
         print(f"Transcription successful. Length: {len(transcript.text)}")
         print(f"Transcription text: {transcript.text[:100]}...")  # Print first 100 characters for debugging
-        
+
         # Get transcript text etc.
         transcript_text = transcript.text
-        
+
         summary = summarize_text(transcript_text)
         behavioral_scores = generate_behavioral_scores(summary)
         communication_analysis = analyze_communication(summary)
-        
+
         # Replace emotion analysis with placeholder data
         emotion_results = generate_placeholder_emotion_data()
-        
+
         # Extract main themes from the transcript
-        main_themes = extract_main_themes(transcript_text, num_themes=4)
-        
+        #main_themes = extract_main_themes(transcript_text, num_themes=4)
+
         # Create txt_files directory if it doesn't exist
         os.makedirs("txt_files", exist_ok=True)
-        
+
         # Generate a unique filename
         filename = f"summary_{abs(hash(video_url))}.txt"
         file_path = os.path.join("txt_files", filename)
-        
+
         # Write the summary to a file
         with open(file_path, "w") as file:
             file.write(summary)
@@ -225,7 +222,7 @@ def send_invite_email(invite: Invite):
 
         sender = clean_address(email_user)
         recipient = clean_address(invite.email)
-        
+
         msg = EmailMessage()
         msg['Subject'] = "HireVision Assessment Invite"
         msg['From'] = sender
@@ -241,12 +238,12 @@ def send_invite_email(invite: Invite):
             "HireVision Team"
         )
         msg.set_content(email_content)
-        
+
         with smtplib.SMTP(email_host, email_port) as server:
             server.starttls()  # Secure the connection
             server.login(email_user, email_pswd)  # Log in to your email account
             server.send_message(msg)
-        
+
         # Optionally, store the invite record in the database if needed.
         supabase.table("candidate_invites").insert(
             {
@@ -254,7 +251,7 @@ def send_invite_email(invite: Invite):
                 "status": "sent",
             }
         ).execute()
-        
+
         return {"success": True, "message": f"Invitation sent to {recipient}"}
     except smtplib.SMTPException as e:
         print(f"SMTP error occurred: {str(e)}")
@@ -277,7 +274,7 @@ async def invite_cand(invite: Invite):
                 "status": "sent",
             }
         ).execute()
-        
+
         return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -287,11 +284,11 @@ async def analyze_video_endpoint(video: VideoURL):
     try:
         print(f"Received request to analyze video: {video.video_url}")
         result = analyze_video(video.video_url)
-        
+
         # If result is None, return an appropriate error
         if not result:
             return {"error": "Failed to analyze video", "details": "No result returned from analysis"}
-        
+
         # Store results in Supabase if user_id is provided
         if video.user_id and result:
             try:
@@ -310,7 +307,7 @@ async def analyze_video_endpoint(video: VideoURL):
                         'emotion_results': json.dumps(result.get('emotion_results', {})),
                         'created_at': datetime.now().isoformat()
                     }).execute()
-                    
+
                     print(f"Analysis results stored for user {video.user_id}, question {video.question_index}")
                 else:
                     # Legacy single-question mode - store in analysis_results
@@ -323,12 +320,12 @@ async def analyze_video_endpoint(video: VideoURL):
                         'emotion_results': json.dumps(result.get('emotion_results', {})),
                         'updated_at': datetime.now().isoformat()
                     }).execute()
-                    
+
                     print(f"Analysis results stored for user {video.user_id}")
             except Exception as e:
                 print(f"Error storing analysis results: {str(e)}")
                 # Continue anyway to return results
-        
+
         return result
     except ValueError as ve:
         print(f"Value error in endpoint: {str(ve)}")

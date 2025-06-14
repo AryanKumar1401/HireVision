@@ -581,7 +581,7 @@ const Navbar = () => {
                     Sign Up
                   </button>
                   <button
-                    onClick={() => router.push("/companies/signin")}
+                    onClick={() => router.push("/companies/login")}
                     className="px-4 py-1 text-sm text-white/80 hover:text-white transition-colors border border-gray-600 rounded-md"
                   >
                     Companies

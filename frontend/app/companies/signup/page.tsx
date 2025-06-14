@@ -244,7 +244,7 @@ const LoginPage = () => {
             <p className="text-center text-sm text-gray-400">
               Already have a company account?{" "}
               <Link
-                href="/companies/signin"
+                href="/companies/login"
                 className="text-blue-400 hover:underline"
               >
                 Sign In
