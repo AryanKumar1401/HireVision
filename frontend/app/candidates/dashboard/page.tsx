@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import NavigationMenu from "./components/NavigationMenu";
 import PendingInterviews from "./components/PendingInterviews";
 import InterviewDetailsModal from "./components/InterviewDetailsModal";
+import { useProfile } from "@/hooks/useProfile";
+import { ProfileForm } from "../components/ProfileForm";
+import { useCandidateOnboardingStep } from '@/hooks/useCandidateOnboardingStep';
 
 export default function CandidateDashboard() {
   const [activeTab, setActiveTab] = useState("pending");
@@ -12,6 +15,8 @@ export default function CandidateDashboard() {
   const [completed, setCompleted] = useState<any[]>([]);
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const supabase = createClient();
+  const { isLoading, showProfileForm, profileData, updateProfile } = useProfile();
+  const { loading, step, redirectIfNeeded } = useCandidateOnboardingStep();
 
   interface FloatingElement {
     id: number;
@@ -49,6 +54,14 @@ export default function CandidateDashboard() {
     fetchCompleted();
   }, []);
 
+  useEffect(() => {
+    redirectIfNeeded('dashboard');
+  }, [loading, step]);
+
+  if (loading || step !== 'dashboard') {
+    return <LoadingFallback />;
+  }
+
   // For demonstration, using dummy pending interview data:
   const pendingInterviews = [
     {
@@ -66,6 +79,20 @@ export default function CandidateDashboard() {
       logo: "D",
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-black text-white">
+        Loading Dashboard...
+      </div>
+    );
+  }
+
+  if (showProfileForm) {
+    return (
+      <ProfileForm onSubmit={updateProfile} profileData={profileData || undefined} />
+    );
+  }
 
   return (
     <Suspense fallback={<LoadingFallback />}>

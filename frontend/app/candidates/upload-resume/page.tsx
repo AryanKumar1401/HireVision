@@ -1,13 +1,16 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/auth";
 import { getBackendUrl } from "@/utils/env";
+import { useCandidateOnboardingStep } from '@/hooks/useCandidateOnboardingStep';
 
 const ACCEPTED_TYPES = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword", "text/rtf"];
 const MAX_SIZE_MB = 5;
 
 export default function UploadResumePage() {
+    // All hooks must be called unconditionally
+    const { loading, step, profile, redirectIfNeeded, refresh } = useCandidateOnboardingStep();
     const [file, setFile] = useState<File | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
@@ -15,7 +18,13 @@ export default function UploadResumePage() {
     const [success, setSuccess] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
-    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+    useEffect(() => {
+        redirectIfNeeded('resume');
+    }, [loading, step]);
+    if (loading || step !== 'resume') {
+        return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-black text-white">Loading...</div>;
+    }
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selected = e.target.files?.[0];
@@ -43,7 +52,11 @@ export default function UploadResumePage() {
     };
 
     const handleUpload = async () => {
-        if (!file) return;
+        console.log("Upload button clicked");
+        if (!file) {
+            console.log("No file selected");
+            return;
+        }
         setUploading(true);
         setError(null);
         setProgress(0);
@@ -54,6 +67,7 @@ export default function UploadResumePage() {
             if (userError || !user) {
                 setError("Could not get user ID. Please log in again.");
                 setUploading(false);
+                console.error("User error or no user", userError, user);
                 return;
             }
             const userId = user.id;
@@ -63,6 +77,7 @@ export default function UploadResumePage() {
             formData.append("file", file);
             formData.append("user_id", userId);
 
+            console.log("Uploading to backend...");
             // Upload to backend
             const response = await fetch(`${getBackendUrl()}/upload-resume`, {
                 method: "POST",
@@ -73,10 +88,12 @@ export default function UploadResumePage() {
                 const res = await response.json();
                 setError(res.detail || "Upload failed. Please try again.");
                 setUploading(false);
+                console.error("Backend upload failed", res);
                 return;
             }
 
             const res = await response.json();
+            console.log("Backend upload complete", res);
             // Optionally, show progress (simulate for now)
             await new Promise((resolve) => {
                 let prog = 0;
@@ -90,10 +107,15 @@ export default function UploadResumePage() {
                 }, 30);
             });
 
+            // No need to update profiles table. Just refresh onboarding state.
+            console.log("Refreshing onboarding after resume upload...");
+            await refresh();
+
             setSuccess(true);
-            setTimeout(() => router.push("/candidates/dashboard"), 1000);
+            console.log("Upload flow complete, success set to true");
         } catch (err) {
             setError("Upload failed. Please try again.");
+            console.error("Upload error:", err);
         } finally {
             setUploading(false);
         }
@@ -102,6 +124,16 @@ export default function UploadResumePage() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-900">
             <div className="max-w-md w-full p-8 bg-gray-800 rounded-xl shadow-lg">
+                {/* Progress UI: Step 2 of 3 */}
+                <div className="mb-6">
+                    <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm text-gray-400">Step 2 of 3</span>
+                        <span className="text-sm text-gray-400">Upload Resume</span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" style={{ width: '66%' }}></div>
+                    </div>
+                </div>
                 <h2 className="text-2xl font-bold text-center text-white mb-6">Welcome! Upload Your Resume</h2>
                 <p className="text-gray-300 text-center mb-6">To complete your profile, please upload your resume. Supported formats: PDF, DOCX, RTF. Max size: 5MB.</p>
                 <div
@@ -126,59 +158,6 @@ export default function UploadResumePage() {
                         <div className="text-gray-400">Drag and drop your resume here, or <span className="text-blue-400 underline">browse</span></div>
                     )}
                 </div>
-                {/* Resume Preview Section */}
-                {file && (
-                    <div className="mb-4">
-                        <div className="font-medium text-white mb-2">Preview:</div>
-                        <div
-                            className="cursor-pointer group"
-                            onClick={() => setIsPreviewOpen(true)}
-                        >
-                            {file.type === "application/pdf" ? (
-                                <iframe
-                                    src={URL.createObjectURL(file)}
-                                    title="PDF Preview"
-                                    className="w-full h-32 border rounded group-hover:ring-2 group-hover:ring-blue-400 transition"
-                                />
-                            ) : (
-                                <div className="text-gray-300">
-                                    {file.name} <br />
-                                    <span className="text-xs text-gray-400">
-                                        Preview not available for this file type. Click to expand.
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                        {/* Modal Popup for Large Preview */}
-                        {isPreviewOpen && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
-                                <div className="relative bg-gray-900 rounded-lg shadow-xl max-w-3xl w-full mx-4 p-6 flex flex-col items-center">
-                                    <button
-                                        onClick={() => setIsPreviewOpen(false)}
-                                        className="absolute top-3 right-3 text-gray-300 hover:text-white text-2xl font-bold"
-                                        aria-label="Close preview"
-                                    >
-                                        &times;
-                                    </button>
-                                    <div className="w-full flex flex-col items-center">
-                                        {file.type === "application/pdf" ? (
-                                            <iframe
-                                                src={URL.createObjectURL(file)}
-                                                title="PDF Large Preview"
-                                                className="w-full h-[70vh] border rounded"
-                                            />
-                                        ) : (
-                                            <div className="text-gray-200 text-lg text-center">
-                                                <div className="mb-2 font-semibold">{file.name}</div>
-                                                <div className="text-gray-400 text-base">Preview not available for this file type.<br />Download to view.</div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
                 {error && <div className="mb-4 p-2 bg-red-900/50 text-red-200 rounded">{error}</div>}
                 {file && !success && (
                     <button
@@ -198,7 +177,15 @@ export default function UploadResumePage() {
                     </div>
                 )}
                 {success && (
-                    <div className="mb-4 p-2 bg-green-900/50 text-green-200 rounded text-center">Upload successful! Redirecting...</div>
+                    <>
+                        <div className="mb-4 p-2 bg-green-900/50 text-green-200 rounded text-center">Upload successful!</div>
+                        <button
+                            className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 mb-4"
+                            onClick={() => redirectIfNeeded('dashboard')}
+                        >
+                            Continue
+                        </button>
+                    </>
                 )}
             </div>
         </div>
