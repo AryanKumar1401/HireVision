@@ -12,6 +12,7 @@ import spacy
 import json
 # Removed emotion_recognition import
 from services.sentiment import summarize_text, generate_behavioral_scores_rule_based, analyze_communication, generate_behavioral_scores
+from services.resume_parser import ResumeParser
 from email.message import EmailMessage
 import smtplib
 import re
@@ -76,6 +77,10 @@ class VideoURL(BaseModel):
     user_id: str = None
     question_index: int = None
     question_text: str = None
+
+class ResumeText(BaseModel):
+    resume_text: str
+    user_id: str = None
 
 def extract_main_themes(transcript: str, num_themes: int = 4) -> list:
     prompt = (
@@ -346,6 +351,41 @@ async def analyze_video_endpoint(video: VideoURL):
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         print(f"Error in endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/generate-resume-questions")
+async def generate_resume_questions(resume_data: ResumeText):
+    """
+    Generate hyper-specific questions from resume experiences
+    """
+    try:
+        parser = ResumeParser()
+        result = parser.parse_resume_and_generate_questions(resume_data.resume_text)
+        
+        # Store the generated questions in the database if user_id is provided
+        if resume_data.user_id and result.get('experiences'):
+            try:
+                # Store in a new table for resume questions
+                for i, experience in enumerate(result['experiences']):
+                    supabase.table('resume_questions').insert({
+                        'user_id': resume_data.user_id,
+                        'experience_index': i,
+                        'company': experience['company'],
+                        'title': experience['title'],
+                        'dates': experience['dates'],
+                        'bullets': json.dumps(experience['bullets']),
+                        'questions': json.dumps(experience['questions']),
+                        'created_at': datetime.now().isoformat()
+                    }).execute()
+                
+                print(f"Resume questions stored for user {resume_data.user_id}")
+            except Exception as e:
+                print(f"Error storing resume questions: {str(e)}")
+                # Continue anyway to return results
+        
+        return result
+    except Exception as e:
+        print(f"Error generating resume questions: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")

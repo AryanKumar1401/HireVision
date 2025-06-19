@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/auth';
 
-export function useCandidateOnboardingStep() {
+export function useCandidateOnboardingStep() { 
     const [loading, setLoading] = useState(true);
     const [step, setStep] = useState<'profile' | 'resume' | 'dashboard'>('profile');
     const [profile, setProfile] = useState<any>(null);

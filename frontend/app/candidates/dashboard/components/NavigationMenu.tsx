@@ -1,6 +1,7 @@
 import { useRouter } from "next/navigation";
 import HomeIcon from "@mui/icons-material/Home";
 import PersonIcon from "@mui/icons-material/Person";
+import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
 
 interface NavigationMenuProps {
     activeTab: string;
@@ -12,6 +13,10 @@ export default function NavigationMenu({ activeTab, setActiveTab }: NavigationMe
 
     const handleNavigateToProfile = () => {
         router.push("/candidates/profile");
+    };
+
+    const handleNavigateToQuestions = () => {
+        router.push("/candidates/generate-questions");
     };
 
     return (
@@ -48,6 +53,15 @@ export default function NavigationMenu({ activeTab, setActiveTab }: NavigationMe
                 </div>
 
                 <div className="flex space-x-2">
+                    <button
+                        onClick={handleNavigateToQuestions}
+                        className={`px-3 py-2 md:px-4 md:py-2 text-sm rounded-xl transition-all duration-300 
+              text-gray-300 hover:bg-gray-700/70 flex items-center gap-1`}
+                    >
+                        <QuestionAnswerIcon className="h-4 w-4" />
+                        <span>Generate Questions</span>
+                    </button>
+
                     <button
                         onClick={() => router.push("/")}
                         className={`px-3 py-2 md:px-4 md:py-2 text-sm rounded-xl transition-all duration-300 
