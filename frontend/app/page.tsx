@@ -1,18 +1,18 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import Navbar from "../components/Navbar";
-import Hero from "../components/landing/Hero";
-import Features from "../components/landing/Features";
-import HowItWorks from "../components/landing/HowItWorks";
-import Testimonials from "../components/landing/Testimonials";
-import Faq from "../components/landing/Faq";
-import Cta from "../components/landing/Cta";
-import Footer from "../components/landing/Footer";
-import ScrollToTop from "../components/landing/ScrollToTop";
-import { createClient } from "@/utils/auth";
-import { isRecruiter } from "@/utils/auth";
+import React from "react";
+import Navbar from "@/components/navbar";
+import Hero from "@/components/landing/hero";
+import Features from "@/components/landing/features";
+import HowItWorks from "@/components/landing/how-it-works";
+import Testimonials from "@/components/landing/testimonials";
+import Faq from "@/components/landing/faq";
+import Cta from "@/components/landing/cta";
+import Footer from "@/components/landing/footer";
+import ScrollToTop from "@/components/landing/scroll-to-top";
+import { Suspense } from "react";
+import Loading from "./loading";
+import Error from "./error";
 
-const Home = () => {
+export default async function Home() {
   return (
     <div className="min-h-screen bg-[#0D1321] text-white overflow-hidden">
       {/* Background effects */}
@@ -43,32 +43,23 @@ const Home = () => {
 
       {/* Add padding to account for fixed navbar */}
       <div className="pt-24">
-        {/* Hero Section */}
-        <Hero />
-
-        {/* Features Section */}
-        <Features />
-
-        {/* How It Works */}
-        <HowItWorks />
-
-        {/* Testimonials */}
-        <Testimonials />
-
-        {/* FAQ Section */}
-        <Faq />
-
-        {/* Final CTA */}
-        <Cta />
-
-        {/* Footer */}
-        <Footer />
+        <Suspense fallback={<Loading />}>
+          <Error>
+            <Hero />
+            <Features />
+            <HowItWorks />
+            <Testimonials />
+            <Faq />
+            <Cta />
+          </Error>
+        </Suspense>
       </div>
+
+      {/* Footer */}
+      <Footer />
 
       {/* Scroll to top button */}
       <ScrollToTop />
     </div>
   );
-};
-
-export default Home;
+}

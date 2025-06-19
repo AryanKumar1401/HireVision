@@ -4,8 +4,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeRegistry } from "./theme-registry";
-import RoleSwitchProvider from "@/components/RoleSwitchProvider";
-import { Providers } from "@/components/Providers";
+import RoleSwitchProvider from "@/components/role-switch-provider";
+import { Providers } from "@/components/providers";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -35,7 +35,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body
-        suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>

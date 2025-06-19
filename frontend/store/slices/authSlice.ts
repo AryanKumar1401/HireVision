@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { createClient } from '@/utils/auth';
+import { User } from '@supabase/supabase-js';
 
 interface AuthState {
     user: {
@@ -30,7 +31,17 @@ export const loginUser = createAsyncThunk(
             });
 
             if (error) throw error;
-            return data.user;
+
+            // Extract roles from user metadata
+            const roles = data.user?.user_metadata?.roles ||
+                data.user?.app_metadata?.roles ||
+                [];
+
+            return {
+                id: data.user?.id || null,
+                email: data.user?.email || null,
+                roles: roles
+            };
         } catch (error) {
             return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
         }

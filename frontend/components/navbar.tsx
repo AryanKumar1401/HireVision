@@ -255,11 +255,10 @@ const Navbar = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
-          scrolled
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${scrolled
             ? "h-16 bg-[#0D1321]/70 backdrop-blur-md shadow-sm"
             : "h-20 bg-transparent"
-        }`}
+          }`}
       >
         <div className="max-w-screen-xl mx-auto h-full px-6 flex items-center justify-between">
           {/* Logo */}
@@ -283,11 +282,10 @@ const Navbar = () => {
                 <button
                   key={item.key}
                   onClick={() => scrollToSection(item.key)}
-                  className={`relative px-4 py-2 text-sm transition-colors duration-200 ${
-                    activeItem === item.key
+                  className={`relative px-4 py-2 text-sm transition-colors duration-200 ${activeItem === item.key
                       ? "text-white"
                       : "text-gray-400 hover:text-gray-200"
-                  }`}
+                    }`}
                 >
                   {activeItem === item.key && (
                     <motion.span
@@ -334,18 +332,17 @@ const Navbar = () => {
                         {isCompanyUser
                           ? "Company"
                           : isRecruiterUser
-                          ? "Recruiter"
-                          : "Candidate"}
+                            ? "Recruiter"
+                            : "Candidate"}
                       </p>
                     </div>
 
                     <div className="px-4 py-2 border-b border-gray-700">
                       <div
-                        className={`text-sm flex items-center ${
-                          hasCompletedProfile
+                        className={`text-sm flex items-center ${hasCompletedProfile
                             ? "text-green-400"
                             : "text-yellow-400"
-                        }`}
+                          }`}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -382,8 +379,8 @@ const Navbar = () => {
                           isCompanyUser
                             ? "/companies"
                             : isRecruiterUser
-                            ? "/recruiters"
-                            : "/candidates"
+                              ? "/recruiters"
+                              : "/candidates"
                         }
                         className="block px-4 py-2 text-sm text-white hover:bg-gray-700 rounded-md transition-colors"
                       >
@@ -459,19 +456,16 @@ const Navbar = () => {
           >
             <div className="w-5 h-5 flex flex-col justify-between items-center">
               <span
-                className={`w-5 h-0.5 bg-white rounded-full transform transition-all duration-300 origin-left ${
-                  mobileMenuOpen ? "rotate-45 translate-x-px" : ""
-                }`}
+                className={`w-5 h-0.5 bg-white rounded-full transform transition-all duration-300 origin-left ${mobileMenuOpen ? "rotate-45 translate-x-px" : ""
+                  }`}
               />
               <span
-                className={`w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${
-                  mobileMenuOpen ? "opacity-0" : "opacity-100"
-                }`}
+                className={`w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${mobileMenuOpen ? "opacity-0" : "opacity-100"
+                  }`}
               />
               <span
-                className={`w-5 h-0.5 bg-white rounded-full transform transition-all duration-300 origin-left ${
-                  mobileMenuOpen ? "-rotate-45 translate-x-px" : ""
-                }`}
+                className={`w-5 h-0.5 bg-white rounded-full transform transition-all duration-300 origin-left ${mobileMenuOpen ? "-rotate-45 translate-x-px" : ""
+                  }`}
               />
             </div>
           </button>
@@ -524,8 +518,8 @@ const Navbar = () => {
                         {isCompanyUser
                           ? "Company"
                           : isRecruiterUser
-                          ? "Recruiter"
-                          : "Candidate"}
+                            ? "Recruiter"
+                            : "Candidate"}
                       </p>
                     </div>
                   </div>
@@ -535,8 +529,8 @@ const Navbar = () => {
                       isCompanyUser
                         ? "/companies"
                         : isRecruiterUser
-                        ? "/recruiters"
-                        : "/candidates"
+                          ? "/recruiters"
+                          : "/candidates"
                     }
                     className="block w-full py-2 bg-gray-700/50 hover:bg-gray-700 text-white text-sm rounded-md transition-colors text-center mb-2"
                   >
@@ -587,7 +581,7 @@ const Navbar = () => {
                     Sign Up
                   </button>
                   <button
-                    onClick={() => router.push("/companies/signin")}
+                    onClick={() => router.push("/companies/login")}
                     className="px-4 py-1 text-sm text-white/80 hover:text-white transition-colors border border-gray-600 rounded-md"
                   >
                     Companies

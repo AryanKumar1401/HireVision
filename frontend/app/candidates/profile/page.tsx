@@ -136,6 +136,10 @@ export default function ProfilePage() {
       setSuccessMessage("Profile updated successfully!");
       setTimeout(() => setSuccessMessage(""), 3000);
       setIsEditing(false);
+
+      // On successful profile save, redirect to /candidates/upload-resume
+      // Show progress UI: Step 1 of 3
+      router.push("/candidates/upload-resume");
     } catch (error) {
       console.error(
         "Error updating profile:",
@@ -175,22 +179,10 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black relative overflow-hidden">
-      {/* Decorative background elements */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.6 }}
-        transition={{ duration: 2 }}
-        className="absolute top-0 right-0 w-96 h-96 bg-blue-600/20 rounded-full filter blur-3xl"
-      />
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.4 }}
-        transition={{ duration: 2, delay: 0.5 }}
-        className="absolute bottom-0 left-0 w-96 h-96 bg-purple-600/20 rounded-full filter blur-3xl"
-      />
+    <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="max-w-md w-full p-8 bg-gray-800 rounded-xl shadow-lg">
+        {/* Progress UI: Step 1 of 3 */}
 
-      <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header with back button */}
         <motion.div
           initial={{ y: -20, opacity: 0 }}
@@ -302,9 +294,8 @@ export default function ProfilePage() {
                       <button
                         onClick={handleSaveProfile}
                         disabled={isSaving}
-                        className={`bg-green-600/70 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm flex items-center transition-colors ${
-                          isSaving ? "opacity-50 cursor-not-allowed" : ""
-                        }`}
+                        className={`bg-green-600/70 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm flex items-center transition-colors ${isSaving ? "opacity-50 cursor-not-allowed" : ""
+                          }`}
                       >
                         {isSaving ? (
                           <>
@@ -491,9 +482,8 @@ export default function ProfilePage() {
                     <button
                       onClick={handleSaveProfile}
                       disabled={isSaving}
-                      className={`bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center transition-colors ${
-                        isSaving ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+                      className={`bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center transition-colors ${isSaving ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
                     >
                       {isSaving ? (
                         <>
