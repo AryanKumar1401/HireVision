@@ -4,7 +4,6 @@
 
 export interface ProfileFormData {
   full_name: string;
-  email: string;
   phone: string;
   experience: string;
   linkedin: string;

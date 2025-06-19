@@ -18,7 +18,6 @@ export const ProfileForm = ({ onSubmit, profileData }: ProfileFormProps) => {
       phone: formData.get("phone") as string,
       experience: formData.get("experience") as string,
       linkedin: formData.get("linkedin") as string,
-      email: formData.get("email") as string,
     };
     onSubmit(data);
 
@@ -89,7 +88,7 @@ export const ProfileForm = ({ onSubmit, profileData }: ProfileFormProps) => {
               type="url"
               required
               defaultValue={profileData?.linkedin}
-              className="mt-1 block text-black w-full rounded-md border border-gray-300 px-3 py-2"
+              className="mt-1 block w-full text-black rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
 

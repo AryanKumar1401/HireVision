@@ -24,8 +24,8 @@ export function useCandidateOnboardingStep() {
 
         setProfile(profileData);
 
-        // All fields required: full_name, phone, experience, linkedin, email
-        if (!profileData?.full_name || !profileData?.phone || !profileData?.experience || !profileData?.linkedin || !profileData?.email) {
+        // All fields required: full_name, phone, experience, linkedin
+        if (!profileData?.full_name || !profileData?.phone || !profileData?.experience || !profileData?.linkedin) {
             setStep('profile');
         } else {
             // Check for at least one resume in resumes table

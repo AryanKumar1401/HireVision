@@ -9,7 +9,6 @@ export default function OnboardingProfilePage() {
         phone: "",
         experience: "",
         linkedin: "",
-        email: "",
     });
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -95,10 +94,6 @@ export default function OnboardingProfilePage() {
                     <div>
                         <label className="block text-sm font-medium text-gray-300">LinkedIn URL</label>
                         <input name="linkedin" type="url" required value={form.linkedin} onChange={handleChange} className="mt-1 block text-black w-full rounded-md border border-gray-300 px-3 py-2" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300">Email</label>
-                        <input name="email" type="email" required value={form.email} onChange={handleChange} className="mt-1 block text-black w-full rounded-md border border-gray-300 px-3 py-2" />
                     </div>
                     <button type="submit" className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700" disabled={loading}>
                         {loading ? "Saving..." : "Save & Continue"}
