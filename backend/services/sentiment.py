@@ -50,6 +50,8 @@ def generate_behavioral_scores(summary):
     )
     print("Behavioral Scores:", response.choices[0].message.content)
     return json.loads(response.choices[0].message.content)
+
+
 def generate_behavioral_scores_rule_based(summary):
     doc = nlp(summary)
     
@@ -93,3 +95,30 @@ def analyze_communication(summary):
     )
     print("Communication Analysis:", response.choices[0].message.content)
     return json.loads(response.choices[0].message.content)
+
+def generate_behavioral_insights(summary):
+    prompt = (
+        "You are a talent scout reviewing an interview summary. "
+        "Your goal is to pull out 2-4 of the most interesting, impressive, or quirky facts about the candidate that would catch a recruiter's eye. "
+        "These should be positive and highlight unique aspects of their personality or experience. "
+        "Present them as short, punchy statements. Add a relevant emoji at the start of each statement.\n\n"
+        f"Here is the summary:\n{summary}\n\n"
+        "Format the output as a JSON object with a single key 'insights' which is an array of strings. For example:\n"
+        '{"insights": ["🎤 Presented at a major conference", "🎸 Plays in a band on weekends"]}'
+    )
+
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a creative talent scout."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=200,
+        temperature=0.8
+    )
+    print("Behavioral Insights:", response.choices[0].message.content)
+    try:
+        return json.loads(response.choices[0].message.content)
+    except json.JSONDecodeError:
+        print("Error parsing JSON in behavioral insights:", response.choices[0].message.content)
+        return {"insights": []}

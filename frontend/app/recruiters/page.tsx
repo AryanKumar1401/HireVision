@@ -37,6 +37,7 @@ export default function RecruitersPage() {
   );
   const { analysis, isAnalyzing, analyzeVideo, analyzeAnswer } =
     useVideoAnalysis();
+  console.log("analysis in recruiters page from useVideoAnalysis", analysis);
   const INVITE_API = `${getBackendUrl()}/invite`;
 
   const sendInvite = async () => {
@@ -90,6 +91,7 @@ export default function RecruitersPage() {
 
       // Set the first answer as the selected one and analyze it
       const firstAnswer = candidateInterview.answers[0];
+      console.log("firstAnswer in recruiters page", firstAnswer);
       setSelectedAnswer(firstAnswer);
       await analyzeAnswer(firstAnswer);
     } else {
@@ -249,6 +251,7 @@ export default function RecruitersPage() {
               behavioral_scores: answer.behavioral_scores,
               communication_analysis: answer.communication_analysis,
               emotion_results: answer.emotion_results,
+              
             };
 
             return {
@@ -262,6 +265,7 @@ export default function RecruitersPage() {
               transcript: answer.transcript,
               behavioral_scores: answer.behavioral_scores,
               communication_analysis: answer.communication_analysis,
+              behavioral_insights: answer.behavioral_insights,
               emotion_results: answer.emotion_results,
               created_at: answer.created_at,
               analysis: analysis,

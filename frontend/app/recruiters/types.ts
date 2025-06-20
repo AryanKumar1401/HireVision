@@ -40,6 +40,7 @@ export interface InterviewAnswer {
   transcript?: string; // Added to match DB column
   behavioral_scores?: any; // Using any for jsonb type
   communication_analysis?: any; // Using any for jsonb type
+  behavioral_insights?: any; // Using any for jsonb type
   emotion_results?: any; // Using any for jsonb type
   created_at: string;
   analysis?: Analysis | null; // Virtual property computed from the above fields
@@ -95,6 +96,9 @@ export interface Analysis {
   communication_analysis?: {
     strengths: string[];
     improvements: string[];
+  };
+  behavioral_insights?: {
+    insights: string[];
   };
   emotional_analysis?: {
     summary: EmotionSummary;

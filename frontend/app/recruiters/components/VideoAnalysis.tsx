@@ -61,11 +61,10 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({
                 <button
                   key={answer.id}
                   onClick={() => handleAnswerChange(index)}
-                  className={`px-4 py-2 rounded-full text-md transition-all font-semibold ${
-                    index === selectedAnswerIndex
-                      ? "bg-blue-500 text-white hover:bg-blue-600 shadow-lg"
-                      : "bg-white bg-opacity-10 text-gray-300 hover:bg-white hover:bg-opacity-20"
-                  }`}
+                  className={`px-4 py-2 rounded-full text-md transition-all font-semibold ${index === selectedAnswerIndex
+                    ? "bg-blue-500 text-white hover:bg-blue-600 shadow-lg"
+                    : "bg-white bg-opacity-10 text-gray-300 hover:bg-white hover:bg-opacity-20"
+                    }`}
                 >
                   Question {answer.question_index + 1}
                 </button>
@@ -232,34 +231,27 @@ const AnalysisColumn: React.FC<{
 const BehavioralAnalysis: React.FC<{ analysis: Analysis | null }> = ({
   analysis,
 }) => {
+  const insights = analysis?.behavioral_insights?.insights || [];
+  console.log("Behavioral analsys:", analysis);
   return (
     <div className="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl p-6 shadow-lg">
-    <h3 className="text-2xl font-bold text-white mb-6 tracking-wide text-center">
-      🌟 Behavioral Analysis 🌟
-    </h3>
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-6">
-        <div className="bg-white bg-opacity-20 p-5 rounded-2xl text-center hover:scale-105 transition-transform">
-          <div className="text-lg font-semibold text-yellow-300">🎤 TEDx Speaker</div>
-        </div>
-        <div className="bg-white bg-opacity-20 p-5 rounded-2xl text-center hover:scale-105 transition-transform">
-          <div className="text-lg font-semibold text-pink-300">
-            🐶 Built an app to feed his dog
+      <h3 className="text-2xl font-bold text-white mb-6 tracking-wide text-center">
+        🌟 Behavioral Analysis 🌟
+      </h3>
+      <div className="space-y-4">
+        {insights.length > 0 ? (
+          insights.map((insight, index) => (
+            <div key={index} className="bg-white bg-opacity-20 p-4 rounded-xl text-center hover:scale-105 transition-transform">
+              <div className="text-lg font-semibold text-gray-200">{insight}</div>
+            </div>
+          ))
+        ) : (
+          <div className="bg-white bg-opacity-20 p-5 rounded-2xl text-center">
+            <div className="text-lg font-semibold text-gray-400">No behavioral insights available.</div>
           </div>
-        </div>
-        <div className="bg-white bg-opacity-20 p-5 rounded-2xl text-center hover:scale-105 transition-transform">
-          <div className="text-lg font-semibold text-green-300">
-            🌾 Passionate about ML in agri spaces
-          </div>
-        </div>
-        <div className="bg-white bg-opacity-20 p-5 rounded-2xl text-center hover:scale-105 transition-transform">
-          <div className="text-lg font-semibold text-blue-300">
-            🤝 Enjoys volunteering
-          </div>
-        </div>
+        )}
       </div>
     </div>
-  </div>
   );
 };
 

@@ -11,7 +11,7 @@ from pydantic import BaseModel, EmailStr
 import spacy
 import json
 # Removed emotion_recognition import
-from services.sentiment import summarize_text, generate_behavioral_scores_rule_based, analyze_communication, generate_behavioral_scores
+from services.sentiment import summarize_text, generate_behavioral_scores_rule_based, analyze_communication, generate_behavioral_scores, generate_behavioral_insights
 from services.resume_parser import ResumeParser
 from email.message import EmailMessage
 import smtplib
@@ -161,7 +161,8 @@ def analyze_video(video_url: str):
                 "behavioral_scores": {},
                 "communication_analysis": {},
                 "emotion_results": emotion_results,
-                "enthusiasm_timestamps": []
+                "enthusiasm_timestamps": [],
+                "behavioral_insights": {}
             }
 
         print(f"Transcription successful. Length: {len(transcript.text)}")
@@ -172,6 +173,7 @@ def analyze_video(video_url: str):
         summary = summarize_text(transcript_text)
         behavioral_scores = generate_behavioral_scores(summary)
         communication_analysis = analyze_communication(summary)
+        behavioral_insights = generate_behavioral_insights(summary)
 
         # Replace emotion analysis with placeholder data
         emotion_results = generate_placeholder_emotion_data()
@@ -205,7 +207,8 @@ def analyze_video(video_url: str):
             "behavioral_scores": behavioral_scores,
             "communication_analysis": communication_analysis,
             "emotion_results": emotion_results,
-            "enthusiasm_timestamps": enthusiasm_timestamps
+            "enthusiasm_timestamps": enthusiasm_timestamps,
+            "behavioral_insights": behavioral_insights
         }
     except Exception as e:
         print(f"Error in analyze_video: {str(e)}")
@@ -216,7 +219,8 @@ def analyze_video(video_url: str):
             "behavioral_scores": {},
             "communication_analysis": {},
             "emotion_results": {},
-            "enthusiasm_timestamps": []
+            "enthusiasm_timestamps": [],
+            "behavioral_insights": {}
         }
 
 def clean_address(addr: str) -> str:
@@ -323,6 +327,7 @@ async def analyze_video_endpoint(video: VideoURL):
                         'transcript': result.get('transcript', ''),
                         'behavioral_scores': json.dumps(result.get('behavioral_scores', {})),
                         'communication_analysis': json.dumps(result.get('communication_analysis', {})),
+                        'behavioral_insights': json.dumps(result.get('behavioral_insights', {})),
                         'emotion_results': json.dumps(result.get('emotion_results', {})),
                         'created_at': datetime.now().isoformat()
                     }).execute()
