@@ -52,6 +52,7 @@ export default function Candidates() {
   const [isAnalysisComplete, setIsAnalysisComplete] = useState<boolean>(false);
   const [processingStatus, setProcessingStatus] = useState<string>("");
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState<boolean>(false);
   const [questions, setQuestions] = useState<string[]>([]);
   const [isQuestionsLoading, setIsQuestionsLoading] = useState<boolean>(true);
 
@@ -130,32 +131,25 @@ export default function Candidates() {
 
   const handleStopAnswerRecording = async () => {
     const videoBlob = await stopRecording();
-
-    // Store this answer in the recordedAnswers object
     setRecordedAnswers((prev) => ({
       ...prev,
       [currentQuestionIndex]: videoBlob,
     }));
-
-    // Mark that the current answer has been recorded
     setIsAnswerRecorded(true);
-
-    // Store the most recent recording URL for preview
     const { signedUrl: newSignedUrl } = await uploadVideo(videoBlob);
     if (newSignedUrl) {
       setSignedUrl(newSignedUrl);
+      setTimeout(() => setShowPreview(true), 300); // Add a short delay
+      console.log("Preview video URL:", newSignedUrl);
+
     }
   };
 
   const handleNextQuestion = () => {
-    // Move to the next question
     setCurrentQuestionIndex((prev) => prev + 1);
-    // Reset answer recording state
     setIsAnswerRecorded(false);
-
-    // Just clear the signedUrl to reveal the camera feed
-    // Don't re-initialize the camera to maintain continuous stream
     setSignedUrl(null);
+    setShowPreview(false);
   };
 
   const handleFinishInterview = async () => {
@@ -192,8 +186,7 @@ export default function Candidates() {
           if (response.ok) {
             completedUploads++;
             setProcessingStatus(
-              `Processed ${completedUploads} of ${
-                Object.keys(recordedAnswers).length
+              `Processed ${completedUploads} of ${Object.keys(recordedAnswers).length
               } responses...`
             );
           }
@@ -339,12 +332,11 @@ export default function Candidates() {
                     className="absolute h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
                     style={{
                       width: isInterviewStarted
-                        ? `${
-                            ((currentQuestionIndex +
-                              (isAnswerRecorded ? 1 : 0)) /
-                              questions.length) *
-                            100
-                          }%`
+                        ? `${((currentQuestionIndex +
+                          (isAnswerRecorded ? 1 : 0)) /
+                          questions.length) *
+                        100
+                        }%`
                         : "5%",
                     }}
                   />
@@ -354,9 +346,8 @@ export default function Candidates() {
                   <span>Setup</span>
                   <span>
                     {isInterviewStarted
-                      ? `Question ${currentQuestionIndex + 1} of ${
-                          questions.length
-                        }`
+                      ? `Question ${currentQuestionIndex + 1} of ${questions.length
+                      }`
                       : "Interview"}
                   </span>
                   <span>Complete</span>
@@ -566,7 +557,7 @@ export default function Candidates() {
                     </svg>
                     <span>
                       Question {currentQuestionIndex + 1} of{" "}
-                        {isQuestionsLoading ? "..." : questions.length} 
+                      {isQuestionsLoading ? "..." : questions.length}
                     </span>
                   </div>
                   <h2 className="text-2xl text-white/90 font-medium">
@@ -580,7 +571,7 @@ export default function Candidates() {
 
                 <VideoPreview
                   stream={streamRef.current}
-                  recordedUrl={signedUrl}
+                  recordedUrl={showPreview ? signedUrl : null}
                   isLoading={cameraLoading && isCameraActive}
                   error={cameraError}
                 />
@@ -656,6 +647,17 @@ export default function Candidates() {
                       </motion.button>
                     </div>
                   </motion.div>
+                )}
+
+                {isAnswerRecorded && signedUrl && !isRecording && !isUploading && (
+                  <div className="flex justify-center mt-4">
+                    <button
+                      className="px-4 py-2 rounded bg-blue-600 text-white mr-2"
+                      onClick={() => setShowPreview((prev) => !prev)}
+                    >
+                      {showPreview ? "Show Camera" : "View Preview"}
+                    </button>
+                  </div>
                 )}
               </div>
             )}
