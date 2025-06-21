@@ -359,129 +359,137 @@ export default function Candidates() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-[800px] rounded-2xl overflow-hidden shadow-2xl bg-gray-900/50 backdrop-blur-sm p-10"
+                className="w-full max-w-[1200px] rounded-2xl overflow-hidden shadow-2xl bg-gray-900/50 backdrop-blur-sm p-10"
               >
-                <h2 className="text-2xl text-white/90 font-medium mb-4 text-center">
-                  You're about to start your interview
-                </h2>
+                <div
+                  className={`grid ${isCameraActive ? "md:grid-cols-2 gap-10 items-start" : ""
+                    }`}
+                >
+                  <div>
+                    <h2 className="text-2xl text-white/90 font-medium mb-4 text-center">
+                      You're about to start your interview
+                    </h2>
 
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-8">
-                  <h3 className="text-blue-300 font-medium flex items-center text-lg mb-2">
-                    <svg
-                      className="w-5 h-5 mr-2"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    Important Tips:
-                  </h3>
-                  <ul className="text-white/70 space-y-2 pl-7 list-disc">
-                    <li>Find a quiet place with good lighting.</li>
-                    <li>Test your camera and microphone.</li>
-                    <li>Speak clearly and maintain good posture.</li>
-                    <li>
-                      You'll answer {questions.length} questions one at a time.
-                    </li>
-                    <li>
-                      You can review each recording before moving to the next
-                      question.
-                    </li>
-                  </ul>
-                </div>
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-8">
+                      <h3 className="text-blue-300 font-medium flex items-center text-lg mb-2">
+                        <svg
+                          className="w-5 h-5 mr-2"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        Important Tips:
+                      </h3>
+                      <ul className="text-white/70 space-y-2 pl-7 list-disc">
+                        <li>Find a quiet place with good lighting.</li>
+                        <li>Test your camera and microphone.</li>
+                        <li>Speak clearly and maintain good posture.</li>
+                        <li>
+                          You'll answer {questions.length} questions one at a
+                          time.
+                        </li>
+                        <li>
+                          You can review each recording before moving to the
+                          next question.
+                        </li>
+                      </ul>
+                    </div>
 
-                <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={activateCamera}
-                    className="px-8 py-3 rounded-lg font-medium text-lg transition-all duration-200 bg-blue-500/20 text-blue-500 border-2 border-blue-500/50 hover:bg-blue-500/30 flex items-center justify-center"
-                  >
-                    <svg
-                      className="w-5 h-5 mr-2"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                      />
-                    </svg>
-                    Test Camera & Mic
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={startInterview}
-                    className="px-8 py-3 rounded-lg font-medium text-lg bg-gradient-to-r from-blue-600/90 to-purple-600/90 text-white hover:from-blue-600 hover:to-purple-600 transition-all duration-200 flex items-center justify-center shadow-lg"
-                  >
-                    <svg
-                      className="w-5 h-5 mr-2"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    Begin Interview
-                  </motion.button>
-                </div>
-
-                {isCameraActive && (
-                  <div className="mt-8 bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
-                    <h3 className="text-white/90 text-lg mb-3 font-medium">
-                      Camera Preview
-                    </h3>
-                    <VideoPreview
-                      stream={streamRef.current}
-                      recordedUrl={null}
-                      isLoading={cameraLoading}
-                      error={cameraError}
-                    />
-
-                    {streamRef.current && !cameraError && !cameraLoading && (
-                      <AudioLevelMeter stream={streamRef.current} />
-                    )}
-
-                    <DeviceSelector
-                      onVideoDeviceChange={handleVideoDeviceChange}
-                      onAudioDeviceChange={handleAudioDeviceChange}
-                      selectedVideoDeviceId={selectedVideoDeviceId}
-                      selectedAudioDeviceId={selectedAudioDeviceId}
-                    />
-
-                    <div className="mt-4 text-center text-white/70 bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
-                      <h4 className="text-blue-300 font-medium mb-1">
-                        Testing Tips
-                      </h4>
-                      <p>Speak normally to test your microphone levels.</p>
-                      <p className="mt-1 text-sm">
-                        The meter should move as you speak. If it doesn't,
-                        select a different microphone.
-                      </p>
+                    <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={activateCamera}
+                        className="px-8 py-3 rounded-lg font-medium text-lg transition-all duration-200 bg-blue-500/20 text-blue-500 border-2 border-blue-500/50 hover:bg-blue-500/30 flex items-center justify-center"
+                      >
+                        <svg
+                          className="w-5 h-5 mr-2"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          />
+                        </svg>
+                        Test Camera & Mic
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={startInterview}
+                        className="px-8 py-3 rounded-lg font-medium text-lg bg-gradient-to-r from-blue-600/90 to-purple-600/90 text-white hover:from-blue-600 hover:to-purple-600 transition-all duration-200 flex items-center justify-center shadow-lg"
+                      >
+                        <svg
+                          className="w-5 h-5 mr-2"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        Begin Interview
+                      </motion.button>
                     </div>
                   </div>
-                )}
+
+                  {isCameraActive && (
+                    <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
+                      <h3 className="text-white/90 text-lg mb-3 font-medium">
+                        Camera Preview
+                      </h3>
+                      <VideoPreview
+                        stream={streamRef.current}
+                        recordedUrl={null}
+                        isLoading={cameraLoading}
+                        error={cameraError}
+                      />
+
+                      {streamRef.current && !cameraError && !cameraLoading && (
+                        <AudioLevelMeter stream={streamRef.current} />
+                      )}
+
+                      <DeviceSelector
+                        onVideoDeviceChange={handleVideoDeviceChange}
+                        onAudioDeviceChange={handleAudioDeviceChange}
+                        selectedVideoDeviceId={selectedVideoDeviceId}
+                        selectedAudioDeviceId={selectedAudioDeviceId}
+                      />
+
+                      <div className="mt-4 text-center text-white/70 bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                        <h4 className="text-blue-300 font-medium mb-1">
+                          Testing Tips
+                        </h4>
+                        <p>Speak normally to test your microphone levels.</p>
+                        <p className="mt-1 text-sm">
+                          The meter should move as you speak. If it doesn't,
+                          select a different microphone.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </motion.div>
             ) : isInterviewFinished ? (
               // Show processing/completion status after interview
@@ -533,132 +541,150 @@ export default function Candidates() {
               </motion.div>
             ) : (
               // Interview in progress - display current question and recording UI
-              <div className="w-full max-w-[1400px] rounded-2xl overflow-hidden shadow-2xl bg-gray-900/50 backdrop-blur-sm p-6">
-                {/* Question card with styling */}
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  key={currentQuestionIndex}
-                  className="mb-6 bg-gradient-to-r from-blue-600/5 to-purple-600/5 p-6 rounded-xl border border-blue-500/20"
-                >
-                  <div className="flex items-center text-blue-400 font-medium mb-2">
-                    <svg
-                      className="w-5 h-5 mr-2"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <span>
-                      Question {currentQuestionIndex + 1} of{" "}
-                      {isQuestionsLoading ? "..." : questions.length}
-                    </span>
+              <div className="w-full max-w-7xl rounded-2xl overflow-hidden shadow-2xl bg-gray-900/50 backdrop-blur-sm p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                  <div className="lg:col-span-3">
+                    <VideoPreview
+                      stream={streamRef.current}
+                      recordedUrl={showPreview ? signedUrl : null}
+                      isLoading={cameraLoading && isCameraActive}
+                      error={cameraError}
+                    />
                   </div>
-                  <h2 className="text-2xl text-white/90 font-medium">
-                    {isQuestionsLoading ? (
-                      <div className="h-8 bg-gray-700/50 rounded animate-pulse w-3/4"></div>
-                    ) : (
-                      questions[currentQuestionIndex]
-                    )}
-                  </h2>
-                </motion.div>
 
-                <VideoPreview
-                  stream={streamRef.current}
-                  recordedUrl={showPreview ? signedUrl : null}
-                  isLoading={cameraLoading && isCameraActive}
-                  error={cameraError}
-                />
-
-                <RecordingControls
-                  isRecording={isRecording}
-                  recordingTime={recordingTime}
-                  isUploading={isUploading}
-                  uploadProgress={uploadProgress}
-                  onStartRecording={startRecording}
-                  onStopRecording={handleStopAnswerRecording}
-                  onGoBack={() => router.push("/candidates/dashboard")}
-                />
-
-                {/* Next/Finish button - only visible when answer is recorded */}
-                {isAnswerRecorded && !isRecording && !isUploading && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex justify-center mt-8"
-                  >
-                    <div className="bg-gray-800/50 backdrop-blur-sm p-4 rounded-lg border border-gray-700/50 text-center max-w-2xl">
-                      <p className="text-white/80 mb-4">
-                        {currentQuestionIndex === questions.length - 1
-                          ? "Great job! You've answered all questions. Ready to finish your interview?"
-                          : "Ready to continue to the next question?"}
-                      </p>
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={
-                          currentQuestionIndex === questions.length - 1
-                            ? handleFinishInterview
-                            : handleNextQuestion
-                        }
-                        className="px-8 py-3 rounded-lg font-medium text-lg bg-gradient-to-r from-blue-600/90 to-purple-600/90 text-white hover:from-blue-600 hover:to-purple-600 transition-all duration-200 shadow-lg flex items-center"
+                  <div className="lg:col-span-2 flex flex-col justify-between">
+                    <div>
+                      {/* Question card with styling */}
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        key={currentQuestionIndex}
+                        className="mb-6 bg-gradient-to-r from-blue-600/5 to-purple-600/5 p-6 rounded-xl border border-blue-500/20"
                       >
-                        {currentQuestionIndex === questions.length - 1 ? (
-                          <>
-                            <svg
-                              className="w-5 h-5 mr-2"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
-                            Complete Interview
-                          </>
-                        ) : (
-                          <>
-                            <svg
-                              className="w-5 h-5 mr-2"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M13 5l7 7-7 7M5 5l7 7-7 7"
-                              />
-                            </svg>
-                            Next Question
-                          </>
-                        )}
-                      </motion.button>
+                        <div className="flex items-center text-blue-400 font-medium mb-2">
+                          <svg
+                            className="w-5 h-5 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          <span>
+                            Question {currentQuestionIndex + 1} of{" "}
+                            {isQuestionsLoading ? "..." : questions.length}
+                          </span>
+                        </div>
+                        <h2 className="text-2xl text-white/90 font-medium">
+                          {isQuestionsLoading ? (
+                            <div className="h-8 bg-gray-700/50 rounded animate-pulse w-3/4"></div>
+                          ) : (
+                            questions[currentQuestionIndex]
+                          )}
+                        </h2>
+                      </motion.div>
                     </div>
-                  </motion.div>
-                )}
 
-                {isAnswerRecorded && signedUrl && !isRecording && !isUploading && (
-                  <div className="flex justify-center mt-4">
-                    <button
-                      className="px-4 py-2 rounded bg-blue-600 text-white mr-2"
-                      onClick={() => setShowPreview((prev) => !prev)}
-                    >
-                      {showPreview ? "Show Camera" : "View Preview"}
-                    </button>
+                    <div className="mt-auto">
+                      <RecordingControls
+                        isRecording={isRecording}
+                        recordingTime={recordingTime}
+                        isUploading={isUploading}
+                        uploadProgress={uploadProgress}
+                        onStartRecording={startRecording}
+                        onStopRecording={handleStopAnswerRecording}
+                        onGoBack={() => router.push("/candidates/dashboard")}
+                      />
+
+                      {/* Next/Finish button - only visible when answer is recorded */}
+                      {isAnswerRecorded &&
+                        !isRecording &&
+                        !isUploading && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex justify-center mt-8"
+                          >
+                            <div className="bg-gray-800/50 backdrop-blur-sm p-4 rounded-lg border border-gray-700/50 text-center max-w-2xl">
+                              <p className="text-white/80 mb-4">
+                                {currentQuestionIndex ===
+                                  questions.length - 1
+                                  ? "Great job! You've answered all questions. Ready to finish your interview?"
+                                  : "Ready to continue to the next question?"}
+                              </p>
+                              <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={
+                                  currentQuestionIndex ===
+                                    questions.length - 1
+                                    ? handleFinishInterview
+                                    : handleNextQuestion
+                                }
+                                className="px-8 py-3 rounded-lg font-medium text-lg bg-gradient-to-r from-blue-600/90 to-purple-600/90 text-white hover:from-blue-600 hover:to-purple-600 transition-all duration-200 shadow-lg flex items-center"
+                              >
+                                {currentQuestionIndex ===
+                                  questions.length - 1 ? (
+                                  <>
+                                    <svg
+                                      className="w-5 h-5 mr-2"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                    Complete Interview
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg
+                                      className="w-5 h-5 mr-2"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M13 5l7 7-7 7M5 5l7 7-7 7"
+                                      />
+                                    </svg>
+                                    Next Question
+                                  </>
+                                )}
+                              </motion.button>
+                            </div>
+                          </motion.div>
+                        )}
+
+                      {isAnswerRecorded &&
+                        signedUrl &&
+                        !isRecording &&
+                        !isUploading && (
+                          <div className="flex justify-center mt-4">
+                            <button
+                              className="px-4 py-2 rounded bg-blue-600 text-white mr-2"
+                              onClick={() => setShowPreview((prev) => !prev)}
+                            >
+                              {showPreview ? "Show Camera" : "View Preview"}
+                            </button>
+                          </div>
+                        )}
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
             )}
           </div>
