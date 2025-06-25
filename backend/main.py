@@ -72,6 +72,12 @@ app.add_middleware(
 class Invite(BaseModel):
     email: EmailStr
 
+class InterviewInvite(BaseModel):
+    email: EmailStr
+    invite_code: str
+    interview_title: str
+    recruiter_name: str
+
 class VideoURL(BaseModel):
     video_url: str
     user_id: str = None
@@ -233,16 +239,13 @@ def clean_address(addr: str) -> str:
     return email
 
 def send_invite_email(invite: Invite):
-    """
-    Function for sending an invite email for a candidate to complete a HireVision assessment using SMTP.
-    """
     try:
+        # Email configuration
         email_host = "smtp.gmail.com"
         email_port = 587
         email_user = "pradhipakk@gmail.com"
         email_pswd = "ilbsk4me"
         # sender_email = "pradhipakk@gmail.com"
-
         sender = clean_address(email_user)
         recipient = clean_address(invite.email)
 
@@ -282,6 +285,52 @@ def send_invite_email(invite: Invite):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+def send_interview_invite_email(invite: InterviewInvite):
+    try:
+        # Email configuration
+        email_host = "smtp.gmail.com"
+        email_port = 587
+        email_user = "pradhipakk@gmail.com"
+        email_pswd = "ilbsk4me"
+
+        if not email_user or not email_pswd:
+            raise HTTPException(status_code=500, detail="Email configuration not found")
+
+        sender = clean_address(email_user)
+        recipient = clean_address(invite.email)
+
+        msg = EmailMessage()
+        msg['Subject'] = f"Interview Invitation: {invite.interview_title}"
+        msg['From'] = sender
+        msg['To'] = recipient
+
+        email_content = (
+            f"Hello,\n\n"
+            f"You have been invited to participate in an interview: {invite.interview_title}\n\n"
+            f"Your unique interview code is: {invite.invite_code}\n\n"
+            f"To access your interview:\n"
+            f"1. Visit: http://localhost:3000/candidates\n"
+            f"2. If you have an account, log in and use the 'Add Interview' button\n"
+            f"3. If you don't have an account, sign up and then use the 'Add Interview' button\n"
+            f"4. Enter your interview code: {invite.invite_code}\n\n"
+            f"Please complete your interview within the specified timeframe.\n\n"
+            f"Best regards,\n"
+            f"{invite.recruiter_name}"
+        )
+        msg.set_content(email_content)
+
+        with smtplib.SMTP(email_host, email_port) as server:
+            server.starttls()  # Secure the connection
+            server.login(email_user, email_pswd)  # Log in to your email account
+            server.send_message(msg)
+
+        return {"success": True, "message": f"Interview invitation sent to {recipient}"}
+    except smtplib.SMTPException as e:
+        print(f"SMTP error occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to send email")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/invite")
 async def invite_cand(invite: Invite):
     """
@@ -299,6 +348,17 @@ async def invite_cand(invite: Invite):
         ).execute()
 
         return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/send-interview-invite")
+async def send_interview_invite(invite: InterviewInvite):
+    """
+    Endpoint for sending interview invites with 6-digit codes
+    """
+    try:
+        send_interview_invite_email(invite)
+        return {"success": True, "message": f"Interview invitation sent to {invite.email}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

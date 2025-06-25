@@ -356,6 +356,17 @@ export default function RecruitersPage() {
     fetchCandidateInterviews();
   }, []);
 
+  // Get current user ID
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    };
+    getUser();
+  }, []);
+
   // Show loading state while profile data is being fetched
   if (isLoading) {
     return (
@@ -447,7 +458,7 @@ export default function RecruitersPage() {
       {newInterviewOpen && (
         <NewInterview
           onClose={() => setNewInterviewOpen(false)}
-          recruiterId={(await supabase.auth.getUser()).data.user?.id || ""}
+          recruiterId={currentUserId}
           companyNumber={profileData?.company_number || ""}
         />
       )}

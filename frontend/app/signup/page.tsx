@@ -1,16 +1,20 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/utils/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 export default function SignUpPage() {
   const supabase = createClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Get interview code from URL if present
+  const interviewCode = searchParams.get('code');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -76,7 +80,12 @@ export default function SignUpPage() {
           console.log("Redirecting to recruiter dashboard");
           router.push("/recruiters");
         } else {
-          router.push("/candidates/upload-resume");
+          // If there's an interview code, redirect to dashboard with code
+          if (interviewCode) {
+            router.push(`/candidates/dashboard?code=${interviewCode}`);
+          } else {
+            router.push("/candidates/upload-resume");
+          }
         }
       } catch (err) {
         console.error("Unexpected error after signup:", err);

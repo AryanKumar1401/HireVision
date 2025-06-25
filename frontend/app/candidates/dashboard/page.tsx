@@ -2,21 +2,29 @@
 import { useState, useEffect, Suspense } from "react";
 import { createClient } from "@/utils/auth";
 import { motion } from "framer-motion";
+import { useRouter, useSearchParams } from "next/navigation";
 import NavigationMenu from "./components/NavigationMenu";
 import PendingInterviews from "./components/PendingInterviews";
 import InterviewDetailsModal from "./components/InterviewDetailsModal";
 import { useProfile } from "@/hooks/useProfile";
 import { ProfileForm } from "../components/ProfileForm";
 import { useCandidateOnboardingStep } from '@/hooks/useCandidateOnboardingStep';
+import AddInterviewModal from "../components/AddInterviewModal";
 
 export default function CandidateDashboard() {
   const [activeTab, setActiveTab] = useState("pending");
   const [floatingElements, setFloatingElements] = useState<FloatingElement[]>([]);
   const [completed, setCompleted] = useState<any[]>([]);
   const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const [addInterviewOpen, setAddInterviewOpen] = useState(false);
   const supabase = createClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { isLoading, showProfileForm, profileData, updateProfile } = useProfile();
   const { loading, step, redirectIfNeeded } = useCandidateOnboardingStep();
+
+  // Get interview code from URL if present
+  const interviewCode = searchParams.get('code');
 
   interface FloatingElement {
     id: number;
@@ -57,6 +65,27 @@ export default function CandidateDashboard() {
   useEffect(() => {
     redirectIfNeeded('dashboard');
   }, [loading, step]);
+
+  // Auto-open AddInterviewModal if code is in URL
+  useEffect(() => {
+    if (interviewCode && !addInterviewOpen) {
+      setAddInterviewOpen(true);
+    }
+  }, [interviewCode, addInterviewOpen]);
+
+  const refreshDashboard = () => {
+    // Refresh completed interviews
+    const fetchCompleted = async () => {
+      const { data, error } = await supabase
+        .from("interview_answers")
+        .select("*")
+        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+        .order("created_at", { ascending: false });
+      if (error) console.error("completed‑fetch", error);
+      else setCompleted(data || []);
+    };
+    fetchCompleted();
+  };
 
   if (loading || step !== 'dashboard') {
     return <LoadingFallback />;
@@ -143,6 +172,29 @@ export default function CandidateDashboard() {
             >
               Candidate Dashboard
             </motion.h1>
+            <motion.button
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              onClick={() => setAddInterviewOpen(true)}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all shadow-lg hover:shadow-xl font-medium flex items-center space-x-2"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              <span>Add Interview</span>
+            </motion.button>
           </div>
 
           {/* Navigation Menu */}
@@ -344,6 +396,15 @@ export default function CandidateDashboard() {
           />
         )}
       </div>
+
+      {/* Add Interview Modal */}
+      {addInterviewOpen && (
+        <AddInterviewModal
+          onClose={() => setAddInterviewOpen(false)}
+          onSuccess={refreshDashboard}
+          initialCode={interviewCode || undefined}
+        />
+      )}
     </Suspense>
   );
 }
