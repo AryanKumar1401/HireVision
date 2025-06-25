@@ -107,14 +107,12 @@ export default function NewInterview({ onClose, recruiterId, companyNumber }: Ne
     try {
       // Create interview record
       const { data: interview, error: interviewError } = await supabase
-        .from("interviews")
+        .from("interview")
         .insert({
-          title: interviewTitle,
-          description: interviewDescription,
           recruiter_id: recruiterId,
-          company_number: companyNumber,
-          status: "active",
           created_at: new Date().toISOString(),
+          // title: interviewTitle, // Uncomment if you add this column
+          // description: interviewDescription, // Uncomment if you add this column
         })
         .select()
         .single();
@@ -125,7 +123,8 @@ export default function NewInterview({ onClose, recruiterId, companyNumber }: Ne
       const questionsToInsert = questions.map(q => ({
         interview_id: interview.id,
         question: q.question,
-        order: q.order,
+        // order: q.order, // Only if you add this column
+        // company_number: companyNumber, // If you want to associate with company
       }));
 
       const { error: questionsError } = await supabase
@@ -135,45 +134,18 @@ export default function NewInterview({ onClose, recruiterId, companyNumber }: Ne
       if (questionsError) throw questionsError;
 
       // Send invites to candidates
-      for (const email of inviteEmails) {
-        const inviteCode = generateInviteCode();
-        
-        // Store invite in database
-        const { error: inviteError } = await supabase
-          .from("interview_invites")
-          .insert({
+      await Promise.all(
+        inviteEmails.map(email => {
+          const inviteCode = generateInviteCode();
+          return supabase.from('candidate_invites').insert({
             interview_id: interview.id,
-            email: email,
-            invite_code: inviteCode,
-            status: "pending",
-            created_at: new Date().toISOString(),
+            email,
+            invite_code: Number(inviteCode),
+            status: 'pending',
+            created_st: new Date().toISOString(),
           });
-
-        if (inviteError) {
-          console.error(`Error creating invite for ${email}:`, inviteError);
-          continue;
-        }
-
-        // Send email invite
-        try {
-          const response = await fetch(`${getBackendUrl()}/send-interview-invite`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: email,
-              invite_code: inviteCode,
-              interview_title: interviewTitle,
-              recruiter_name: "HireVision Team", // You can get this from profile
-            }),
-          });
-
-          if (!response.ok) {
-            console.error(`Failed to send email to ${email}`);
-          }
-        } catch (error) {
-          console.error(`Error sending email to ${email}:`, error);
-        }
-      }
+        })
+      );
 
       setMessage({ type: "success", text: "Interview created successfully! Invites have been sent to candidates." });
       
@@ -184,6 +156,7 @@ export default function NewInterview({ onClose, recruiterId, companyNumber }: Ne
 
     } catch (error) {
       console.error("Error creating interview:", error);
+      console.log(error);
       setMessage({ type: "error", text: "Failed to create interview. Please try again." });
     } finally {
       setIsLoading(false);
