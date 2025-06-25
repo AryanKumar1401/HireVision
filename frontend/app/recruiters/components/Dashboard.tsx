@@ -31,7 +31,8 @@ interface DashboardProps {
   topApplicants: string[];
   onVideoSelect: (video: Video) => void;
   onBackClick: () => void;
-  onOpenInvite: () => void; // Add this prop
+  onOpenInvite: () => void;
+  onNewInterview: () => void;
   recruiterName?: string;
   recruiterEmail?: string;
 }
@@ -127,6 +128,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   onVideoSelect,
   onBackClick,
   onOpenInvite,
+  onNewInterview,
   recruiterName,
   recruiterEmail,
 }) => {
@@ -206,29 +208,48 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="text-gray-400 text-sm">{recruiterEmail}</div>
             </div>
           )}
-          {/* 🔹 Invite Candidate button */}
-          {
-            <button
-              onClick={onOpenInvite}
-              className="px-5 py-2 bg-green-600/20 hover:bg-green-600/30 text-green-300 rounded-lg transition-all shadow-md hover:shadow-lg font-medium flex items-center"
+          {/* 🔹 New Interview button */}
+          <button
+            onClick={onNewInterview}
+            className="px-5 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 rounded-lg transition-all shadow-md hover:shadow-lg font-medium flex items-center"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              Invite Candidate
-            </button>
-          }
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+              />
+            </svg>
+            New Interview
+          </button>
+          {/* 🔹 Invite Candidate button */}
+          <button
+            onClick={onOpenInvite}
+            className="px-5 py-2 bg-green-600/20 hover:bg-green-600/30 text-green-300 rounded-lg transition-all shadow-md hover:shadow-lg font-medium flex items-center"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            Invite Candidate
+          </button>
           <button
             onClick={onBackClick}
             className="px-5 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-all shadow-md hover:shadow-lg font-medium flex items-center"

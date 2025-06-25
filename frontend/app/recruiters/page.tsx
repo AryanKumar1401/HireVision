@@ -16,6 +16,7 @@ import {
 } from "./types";
 import { useVideoAnalysis } from "./hooks/useVideoAnalysis";
 import { getBackendUrl } from "@/utils/env";
+import NewInterview from "./components/NewInterview";
 
 const supabase = createClient();
 
@@ -35,6 +36,8 @@ export default function RecruitersPage() {
   const [selectedAnswer, setSelectedAnswer] = useState<InterviewAnswer | null>(
     null
   );
+  const [newInterviewOpen, setNewInterviewOpen] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
   const { analysis, isAnalyzing, analyzeVideo, analyzeAnswer } =
     useVideoAnalysis();
   console.log("analysis in recruiters page from useVideoAnalysis", analysis);
@@ -441,6 +444,14 @@ export default function RecruitersPage() {
         </div>
       )}
 
+      {newInterviewOpen && (
+        <NewInterview
+          onClose={() => setNewInterviewOpen(false)}
+          recruiterId={(await supabase.auth.getUser()).data.user?.id || ""}
+          companyNumber={profileData?.company_number || ""}
+        />
+      )}
+
       {selectedVideo ? (
         <VideoAnalysis
           video={selectedVideo}
@@ -457,6 +468,7 @@ export default function RecruitersPage() {
             topApplicants={topApplicants}
             onVideoSelect={handleVideoSelect}
             onOpenInvite={() => setInviteOpen(true)}
+            onNewInterview={() => setNewInterviewOpen(true)}
             onBackClick={() => router.push("/")}
             recruiterName={profileData?.full_name}
             recruiterEmail={userEmail || undefined}
