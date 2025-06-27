@@ -37,10 +37,8 @@ export default function NewInterview({ onClose, recruiterId, companyNumber }: Ne
   const [interviewTitle, setInterviewTitle] = useState("");
   const [interviewDescription, setInterviewDescription] = useState("");
 
-  // Generate a 6-digit invite code
-  const generateInviteCode = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  };
+  // Generate a 6-digit invite code (as a number)
+  const generateInviteCode = () => Math.floor(100000 + Math.random() * 900000);
 
   // Add a new question
   const addQuestion = () => {
@@ -105,44 +103,58 @@ export default function NewInterview({ onClose, recruiterId, companyNumber }: Ne
     setMessage(null);
 
     try {
+      // Generate a unique invite code for the interview
+      const interviewInviteCode = generateInviteCode();
       // Create interview record
       const { data: interview, error: interviewError } = await supabase
         .from("interview")
         .insert({
           recruiter_id: recruiterId,
           created_at: new Date().toISOString(),
-          // title: interviewTitle, // Uncomment if you add this column
-          // description: interviewDescription, // Uncomment if you add this column
+          title: interviewTitle,
+          description: interviewDescription,
+          invite_code: interviewInviteCode,
         })
         .select()
         .single();
 
-      if (interviewError) throw interviewError;
+      if (interviewError) {
+        console.error("Interview insert error:", interviewError);
+        setMessage({ type: "error", text: interviewError.message || "Failed to create interview." });
+        setIsLoading(false);
+        return;
+      }
 
-      // Insert questions
+      // Insert questions (use order_index)
       const questionsToInsert = questions.map(q => ({
         interview_id: interview.id,
         question: q.question,
-        // order: q.order, // Only if you add this column
-        // company_number: companyNumber, // If you want to associate with company
+        order_index: q.order,
       }));
+
+      console.log("Inserting questions:", questionsToInsert);
 
       const { error: questionsError } = await supabase
         .from("interview_questions")
         .insert(questionsToInsert);
 
-      if (questionsError) throw questionsError;
+      if (questionsError) {
+        console.error("Questions insert error:", questionsError);
+        setMessage({ type: "error", text: questionsError.message || "Failed to add questions." });
+        setIsLoading(false);
+        return;
+      }
 
-      // Send invites to candidates
+      // Send invites to candidates (each with their own invite_code)
       await Promise.all(
         inviteEmails.map(email => {
-          const inviteCode = generateInviteCode();
-          return supabase.from('candidate_invites').insert({
+          const candidateInviteCode = generateInviteCode().toString();
+          return supabase.from('interview_invites').insert({
             interview_id: interview.id,
             email,
-            invite_code: Number(inviteCode),
+            invite_code: candidateInviteCode,
             status: 'pending',
-            created_st: new Date().toISOString(),
+            created_at: new Date().toISOString(),
           });
         })
       );
