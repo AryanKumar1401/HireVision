@@ -38,11 +38,40 @@ export default function AddInterviewModal({ onClose, onSuccess, initialCode }: A
         .from("interview_invites")
         .select("*, interviews(*)")
         .eq("invite_code", inviteCode.trim())
-        .eq("status", "pending")
         .single();
 
       if (inviteError || !invite) {
-        setMessage({ type: "error", text: "Invalid or expired interview code." });
+        setMessage({ type: "error", text: "Invalid interview code. Please check the code and try again." });
+        return;
+      }
+
+      // Check if the invite is still pending (not expired or already used)
+      if (invite.status !== "pending") {
+        if (invite.status === "expired") {
+          setMessage({ type: "error", text: "This interview code has expired. Please contact the recruiter for a new invitation." });
+        } else if (invite.status === "accepted") {
+          setMessage({ type: "error", text: "This interview code has already been used. Please contact the recruiter if you need access." });
+        } else if (invite.status === "completed") {
+          setMessage({ type: "error", text: "This interview has already been completed." });
+        } else {
+          setMessage({ type: "error", text: "This interview code is no longer valid. Please contact the recruiter for assistance." });
+        }
+        return;
+      }
+
+      // Check if the invite is older than 30 days (expired)
+      const inviteDate = new Date(invite.created_at);
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      if (inviteDate < thirtyDaysAgo) {
+        // Update the invite status to expired
+        await supabase
+          .from("interview_invites")
+          .update({ status: "expired" })
+          .eq("id", invite.id);
+        
+        setMessage({ type: "error", text: "This interview code has expired. Please contact the recruiter for a new invitation." });
         return;
       }
 

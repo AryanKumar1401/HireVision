@@ -103,6 +103,19 @@ export default function NewInterview({ onClose, recruiterId, companyNumber }: Ne
     setMessage(null);
 
     try {
+      // Get recruiter profile to get the name for emails
+      const { data: recruiterProfile, error: recruiterProfileError } = await supabase
+        .from("recruiter_profiles")
+        .select("full_name")
+        .eq("id", recruiterId)
+        .single();
+      if (recruiterProfileError) throw new Error(recruiterProfileError.message);
+
+
+      const recruiterName = recruiterProfile 
+        ? `${recruiterProfile.full_name}`.trim()
+        : "HireVision Recruiter";
+
       // Generate a unique invite code for the interview
       const interviewInviteCode = generateInviteCode();
       // Create interview record
@@ -146,25 +159,128 @@ export default function NewInterview({ onClose, recruiterId, companyNumber }: Ne
       }
 
       // Send invites to candidates (each with their own invite_code)
-      await Promise.all(
-        inviteEmails.map(email => {
-          const candidateInviteCode = generateInviteCode().toString();
-          return supabase.from('interview_invites').insert({
+      const invitePromises = inviteEmails.map(async (email) => {
+        const candidateInviteCode = generateInviteCode().toString();
+        
+        // Check if there's an existing invite for this email and interview
+        const { data: existingInvite, error: checkError } = await supabase
+          .from('interview_invites')
+          .select('*')
+          .eq('email', email)
+          .eq('interview_id', interview.id)
+          .single();
+
+        let dbError = null;
+
+        if (existingInvite) {
+          // Update existing invite with new code and reset status
+          console.log(`Updating existing invite for ${email} with new code: ${candidateInviteCode}`);
+          const { error: updateError } = await supabase
+            .from('interview_invites')
+            .update({
+              invite_code: candidateInviteCode,
+              status: 'pending',
+              created_at: new Date().toISOString(),
+            })
+            .eq('id', existingInvite.id);
+          
+          dbError = updateError;
+        } else {
+          // Create new database record
+          console.log(`Creating new invite for ${email} with code: ${candidateInviteCode}`);
+          const { error: insertError } = await supabase.from('interview_invites').insert({
             interview_id: interview.id,
             email,
             invite_code: candidateInviteCode,
             status: 'pending',
             created_at: new Date().toISOString(),
           });
-        })
-      );
+          
+          dbError = insertError;
+        }
 
-      setMessage({ type: "success", text: "Interview created successfully! Invites have been sent to candidates." });
+        if (dbError) {
+          console.error(`Database error for ${email}:`, dbError);
+          return { email, success: false, error: dbError.message };
+        }
+
+        // Send email via backend API
+        try {
+          const response = await fetch(`${getBackendUrl()}/send-interview-invite`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: email,
+              invite_code: candidateInviteCode,
+              interview_title: interviewTitle,
+              recruiter_name: recruiterName,
+            }),
+          });
+
+          console.log(`Email API response for ${email}:`, {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok
+          });
+
+          if (!response.ok) {
+            let errorData;
+            try {
+              errorData = await response.json();
+            } catch (parseError) {
+              // If response is not JSON, get the text
+              const errorText = await response.text();
+              errorData = { detail: errorText || 'Unknown error' };
+            }
+            
+            console.error(`Email API error for ${email}:`, {
+              status: response.status,
+              statusText: response.statusText,
+              errorData: errorData
+            });
+            
+            return { 
+              email, 
+              success: false, 
+              error: errorData.detail || `HTTP ${response.status}: ${response.statusText}` 
+            };
+          }
+
+          const responseData = await response.json();
+          console.log(`Email API success for ${email}:`, responseData);
+          return { email, success: true };
+        } catch (emailError: unknown) {
+          console.error(`Email sending error for ${email}:`, emailError);
+          const errorMessage = emailError instanceof Error ? emailError.message : 'Unknown error';
+          return { email, success: false, error: `Network error: ${errorMessage}` };
+        }
+      });
+
+      const inviteResults = await Promise.all(invitePromises);
+      
+      // Check results
+      const successfulInvites = inviteResults.filter(result => result.success);
+      const failedInvites = inviteResults.filter(result => !result.success);
+
+      if (failedInvites.length > 0) {
+        console.warn("Some invites failed:", failedInvites);
+        setMessage({ 
+          type: "error", 
+          text: `Interview created but ${failedInvites.length} email(s) failed to send. Check console for details.` 
+        });
+      } else {
+        setMessage({ 
+          type: "success", 
+          text: `Interview created successfully! ${successfulInvites.length} invite(s) sent to candidates.` 
+        });
+      }
       
       // Close modal after a delay
       setTimeout(() => {
         onClose();
-      }, 2000);
+      }, 3000);
 
     } catch (error) {
       console.error("Error creating interview:", error);

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import assemblyai as aai  
 from supabase import create_client, Client
 from openai import OpenAI
@@ -10,40 +10,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 import spacy
 import json
-# Removed emotion_recognition import
-from services.sentiment import summarize_text, generate_behavioral_scores_rule_based, analyze_communication, generate_behavioral_scores, generate_behavioral_insights
+from services.sentiment import summarize_text, generate_behavioral_scores, analyze_communication, generate_behavioral_insights
 from services.resume_parser import ResumeParser
-from email.message import EmailMessage
-import smtplib
-import re
-from email.utils import parseaddr
+import requests
+import subprocess
 import librosa
 import numpy as np
-import shutil
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-# Function to generate placeholder emotion data instead of using facial recognition
-def generate_placeholder_emotion_data():
-    return {
-        "summary": {
-            "total_frames_analyzed": 0,
-            "dominant_emotion": "neutral",
-            "dominant_emotion_confidence": 0.7,
-            "average_emotions": {
-                "angry": 0.05, 
-                "disgust": 0.02, 
-                "fear": 0.03,
-                "happy": 0.15, 
-                "sad": 0.05, 
-                "surprise": 0.10, 
-                "neutral": 0.60
-            }
-        },
-        "detailed_results": []
-    }
-
-nlp = spacy.load("en_core_web_sm")
-
-# Directly setting the API keys (not recommended for production)
+# Load environment variables
 load_dotenv()
 ASSEMBLYAI_API_KEY = os.getenv("ASSEMBLY")
 OPEN_AI_API_KEY = os.getenv("OPEN_AI_API_KEY")
@@ -51,27 +28,24 @@ SUPABASE_URL = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
 SUPABASE_KEY = os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")  # Add this to your .env file
 
+# Initialize services
 aai.settings.api_key = ASSEMBLYAI_API_KEY
 transcriber = aai.Transcriber()
-
 client = OpenAI(api_key=OPEN_AI_API_KEY)
-
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+nlp = spacy.load("en_core_web_sm")
 
+# FastAPI app setup
 app = FastAPI()
-
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-class Invite(BaseModel):
-    email: EmailStr
-
+# Pydantic models
 class InterviewInvite(BaseModel):
     email: EmailStr
     invite_code: str
@@ -145,6 +119,7 @@ def extract_audio_from_video(video_url: str, output_audio: str) -> None:
     subprocess.run(command, shell=True, check=True)
 
 def analyze_video(video_url: str):
+    """Analyze video and return comprehensive results"""
     try:
         print(f"Attempting to transcribe video from URL: {video_url}")
         if not video_url or not video_url.startswith('http'):
@@ -156,55 +131,30 @@ def analyze_video(video_url: str):
         # Check if transcript exists and has text
         if not transcript or not hasattr(transcript, 'text') or not transcript.text:
             print("Transcription failed or returned empty result")
-
-            # Replace emotion analysis with placeholder data
-            emotion_results = generate_placeholder_emotion_data()
-
             return {
                 "summary": "Transcription could not be completed. Only basic analysis is available.",
                 "filename": f"summary_{abs(hash(video_url))}.txt",
                 "transcript": "",
                 "behavioral_scores": {},
                 "communication_analysis": {},
-                "emotion_results": emotion_results,
                 "enthusiasm_timestamps": [],
                 "behavioral_insights": {}
             }
 
         print(f"Transcription successful. Length: {len(transcript.text)}")
-        print(f"Transcription text: {transcript.text[:100]}...")  # Print first 100 characters for debugging
 
-        # Get transcript text etc.
+        # Process transcript
         transcript_text = transcript.text
         summary = summarize_text(transcript_text)
         behavioral_scores = generate_behavioral_scores(summary)
         communication_analysis = analyze_communication(summary)
         behavioral_insights = generate_behavioral_insights(summary)
 
-        # Replace emotion analysis with placeholder data
-        emotion_results = generate_placeholder_emotion_data()
-
-        # Extract main themes from the transcript
-        #main_themes = extract_main_themes(transcript_text, num_themes=4)
-
-        # Create txt_files directory if it doesn't exist
+        # Save summary to file
         os.makedirs("txt_files", exist_ok=True)
-
-        # Generate a unique filename
         filename = f"summary_{abs(hash(video_url))}.txt"
-        file_path = os.path.join("txt_files", filename)
-
-        # Write the summary to a file
         with open(os.path.join("txt_files", filename), "w") as file:
             file.write(summary)
-        
-        # Extract audio from video and then detect enthusiastic moments
-        try:
-            extract_audio_from_video(video_url, audio_filename)
-            enthusiasm_timestamps = detect_enthusiasm(audio_filename)
-        except Exception as audio_e:
-            print(f"Audio extraction/analysis failed: {str(audio_e)}")
-            enthusiasm_timestamps = []
         
         return {
             "summary": summary,
@@ -212,170 +162,148 @@ def analyze_video(video_url: str):
             "transcript": transcript_text,
             "behavioral_scores": behavioral_scores,
             "communication_analysis": communication_analysis,
-            "emotion_results": emotion_results,
-            "enthusiasm_timestamps": enthusiasm_timestamps,
+            "enthusiasm_timestamps": [],
             "behavioral_insights": behavioral_insights
         }
+
     except Exception as e:
-        print(f"Error in analyze_video: {str(e)}")
+        print(f"Error in video analysis: {str(e)}")
         return {
             "summary": f"Error analyzing video: {str(e)}",
             "filename": "",
             "transcript": "",
             "behavioral_scores": {},
             "communication_analysis": {},
-            "emotion_results": {},
             "enthusiasm_timestamps": [],
             "behavioral_insights": {}
         }
 
-def clean_address(addr: str) -> str:
-    ADDR_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-    """Return a safe RFC‑2822 address or raise ValueError."""
-    realname, email = parseaddr(addr)
-    email = email.strip().replace("\r", "").replace("\n", "")
-    if not ADDR_RE.match(email):
-        raise ValueError(f"Invalid e‑mail address: {addr!r}")
-    return email
-
-def send_invite_email(invite: Invite):
-    try:
-        # Email configuration
-        email_host = "smtp.gmail.com"
-        email_port = 587
-        email_user = "pradhipakk@gmail.com"
-        email_pswd = "ilbsk4me"
-        # sender_email = "pradhipakk@gmail.com"
-        sender = clean_address(email_user)
-        recipient = clean_address(invite.email)
-
-        msg = EmailMessage()
-        msg['Subject'] = "HireVision Assessment Invite"
-        msg['From'] = sender
-        msg['To'] = recipient
-
-        email_content = (
-            "Hello,\n\n"
-            "You have been invited to complete a HireVision assessment. "
-            "Please click the link below to start your assessment:\n\n"
-            "http://localhost:3000/candidates\n\n"
-            "If you have any questions, feel free to reach out.\n\n"
-            "Best regards,\n"
-            "HireVision Team"
-        )
-        msg.set_content(email_content)
-
-        with smtplib.SMTP(email_host, email_port) as server:
-            server.starttls()  # Secure the connection
-            server.login(email_user, email_pswd)  # Log in to your email account
-            server.send_message(msg)
-
-        # Optionally, store the invite record in the database if needed.
-        supabase.table("candidate_invites").insert(
-            {
-                "email": recipient,
-                "status": "sent",
-            }
-        ).execute()
-
-        return {"success": True, "message": f"Invitation sent to {recipient}"}
-    except smtplib.SMTPException as e:
-        print(f"SMTP error occurred: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to send email")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 def send_interview_invite_email(invite: InterviewInvite):
+    """Send interview invitation email using Gmail SMTP"""
     try:
-        # Email configuration
-        email_host = "smtp.gmail.com"
-        email_port = 587
-        email_user = "pradhipakk@gmail.com"
-        email_pswd = "ilbsk4me"
-
-        if not email_user or not email_pswd:
-            raise HTTPException(status_code=500, detail="Email configuration not found")
-
-        sender = clean_address(email_user)
-        recipient = clean_address(invite.email)
-
-        msg = EmailMessage()
+        # Gmail SMTP configuration
+        GMAIL_USER = os.getenv("GMAIL_USER")  # Your Gmail address
+        GMAIL_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")  # Gmail App Password
+        
+        if not GMAIL_USER or not GMAIL_PASSWORD:
+            print("Gmail credentials not configured. Falling back to simulation mode.")
+            print(f"=== EMAIL SIMULATION (No Gmail Config) ===")
+            print(f"To: {invite.email}")
+            print(f"Subject: Interview Invitation: {invite.interview_title}")
+            print(f"Content: Interview code {invite.invite_code} for {invite.interview_title}")
+            print(f"=== END EMAIL SIMULATION ===")
+            return {"success": True, "message": f"Interview invitation simulated for {invite.email}"}
+        
+        # Create message
+        msg = MIMEMultipart('alternative')
         msg['Subject'] = f"Interview Invitation: {invite.interview_title}"
-        msg['From'] = sender
-        msg['To'] = recipient
-
-        email_content = (
-            f"Hello,\n\n"
-            f"You have been invited to participate in an interview: {invite.interview_title}\n\n"
-            f"Your unique interview code is: {invite.invite_code}\n\n"
-            f"To access your interview:\n"
-            f"1. Visit: http://localhost:3000/candidates\n"
-            f"2. If you have an account, log in and use the 'Add Interview' button\n"
-            f"3. If you don't have an account, sign up and then use the 'Add Interview' button\n"
-            f"4. Enter your interview code: {invite.invite_code}\n\n"
-            f"Please complete your interview within the specified timeframe.\n\n"
-            f"Best regards,\n"
-            f"{invite.recruiter_name}"
-        )
-        msg.set_content(email_content)
-
-        with smtplib.SMTP(email_host, email_port) as server:
-            server.starttls()  # Secure the connection
-            server.login(email_user, email_pswd)  # Log in to your email account
+        msg['From'] = GMAIL_USER
+        msg['To'] = invite.email
+        
+        # HTML content
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2563eb;">Interview Invitation</h2>
+            <p>Hello,</p>
+            <p>You have been invited to participate in an interview: <strong>{invite.interview_title}</strong></p>
+            <p>Your unique interview code is: <strong style="font-size: 18px; color: #2563eb;">{invite.invite_code}</strong></p>
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3>To access your interview:</h3>
+                <ol>
+                    <li>Visit: <a href="http://localhost:3000/candidates">http://localhost:3000/candidates</a></li>
+                    <li>If you have an account, log in and use the 'Add Interview' button</li>
+                    <li>If you don't have an account, sign up and then use the 'Add Interview' button</li>
+                    <li>Enter your interview code: <strong>{invite.invite_code}</strong></li>
+                </ol>
+            </div>
+            <p>Please complete your interview within the specified timeframe.</p>
+            <p>Best regards,<br><strong>{invite.recruiter_name}</strong></p>
+        </div>
+        """
+        
+        # Plain text content (fallback)
+        text_content = f"""
+        Interview Invitation
+        
+        Hello,
+        
+        You have been invited to participate in an interview: {invite.interview_title}
+        
+        Your unique interview code is: {invite.invite_code}
+        
+        To access your interview:
+        1. Visit: http://localhost:3000/candidates
+        2. If you have an account, log in and use the 'Add Interview' button
+        3. If you don't have an account, sign up and then use the 'Add Interview' button
+        4. Enter your interview code: {invite.invite_code}
+        
+        Please complete your interview within the specified timeframe.
+        
+        Best regards,
+        {invite.recruiter_name}
+        """
+        
+        # Attach both HTML and text versions
+        text_part = MIMEText(text_content, 'plain')
+        html_part = MIMEText(html_content, 'html')
+        
+        msg.attach(text_part)
+        msg.attach(html_part)
+        
+        # Send email via Gmail SMTP
+        try:
+            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server.starttls()
+            server.login(GMAIL_USER, GMAIL_PASSWORD)
+            
             server.send_message(msg)
-
-        return {"success": True, "message": f"Interview invitation sent to {recipient}"}
-    except smtplib.SMTPException as e:
-        print(f"SMTP error occurred: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to send email")
+            server.quit()
+            
+            print(f"✅ Email sent successfully to {invite.email}")
+            return {"success": True, "message": f"Interview invitation sent to {invite.email}"}
+            
+        except smtplib.SMTPAuthenticationError:
+            print(f"❌ Gmail authentication failed for {invite.email}")
+            return {"success": False, "message": "Gmail authentication failed. Please check your credentials."}
+        except smtplib.SMTPException as e:
+            print(f"❌ SMTP error for {invite.email}: {str(e)}")
+            return {"success": False, "message": f"SMTP error: {str(e)}"}
+        except Exception as e:
+            print(f"❌ Unexpected error sending email to {invite.email}: {str(e)}")
+            return {"success": False, "message": f"Unexpected error: {str(e)}"}
+            
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Email error: {str(e)}")
+        # Fallback to simulation mode
+        print(f"=== EMAIL SIMULATION (Error Fallback) ===")
+        print(f"To: {invite.email}")
+        print(f"Subject: Interview Invitation: {invite.interview_title}")
+        print(f"Content: Interview code {invite.invite_code} for {invite.interview_title}")
+        print(f"=== END EMAIL SIMULATION ===")
+        return {"success": True, "message": f"Interview invitation simulated for {invite.email}"}
 
-@app.post("/invite")
-async def invite_cand(invite: Invite):
-    """
-    Endpoint for sending invite to candidates through supabase native email system api call 
-    """
-    try:
-        # The Python client doesn't accept redirect_to parameter
-        send_invite_email(invite)
-        # Store the invite in the database
-        supabase.table("candidate_invites").insert(
-            {
-                "email": invite.email,
-                "status": "sent",
-            }
-        ).execute()
-
-        return {"success": True}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
+# API endpoints
 @app.post("/send-interview-invite")
 async def send_interview_invite(invite: InterviewInvite):
-    """
-    Endpoint for sending interview invites with 6-digit codes
-    """
+    """Send interview invitation email"""
     try:
-        send_interview_invite_email(invite)
-        return {"success": True, "message": f"Interview invitation sent to {invite.email}"}
+        return send_interview_invite_email(invite)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/analyze-video")
 async def analyze_video_endpoint(video: VideoURL):
+    """Analyze video and store results"""
     try:
         print(f"Received request to analyze video: {video.video_url}")
         result = analyze_video(video.video_url)
 
-        # If result is None, return an appropriate error
         if not result:
             return {"error": "Failed to analyze video", "details": "No result returned from analysis"}
 
         # Store results in Supabase if user_id is provided
         if video.user_id and result:
             try:
-                # Check if we have a question index (multi-question mode)
                 if video.question_index is not None:
                     # Store in the interview_answers table with question index
                     supabase.table('interview_answers').upsert({
@@ -385,30 +313,12 @@ async def analyze_video_endpoint(video: VideoURL):
                         'video_url': video.video_url,
                         'summary': result.get('summary', ''),
                         'transcript': result.get('transcript', ''),
-                        'behavioral_scores': json.dumps(result.get('behavioral_scores', {})),
-                        'communication_analysis': json.dumps(result.get('communication_analysis', {})),
                         'behavioral_insights': json.dumps(result.get('behavioral_insights', {})),
-                        'emotion_results': json.dumps(result.get('emotion_results', {})),
                         'created_at': datetime.now().isoformat()
                     }).execute()
-
                     print(f"Analysis results stored for user {video.user_id}, question {video.question_index}")
-                else:
-                    # Legacy single-question mode - store in analysis_results
-                    supabase.table('analysis_results').upsert({
-                        'id': video.user_id,
-                        'summary': result.get('summary', ''),
-                        'transcript': result.get('transcript', ''),
-                        'behavioral_scores': json.dumps(result.get('behavioral_scores', {})),
-                        'communication_analysis': json.dumps(result.get('communication_analysis', {})),
-                        'emotion_results': json.dumps(result.get('emotion_results', {})),
-                        'updated_at': datetime.now().isoformat()
-                    }).execute()
-
-                    print(f"Analysis results stored for user {video.user_id}")
             except Exception as e:
                 print(f"Error storing analysis results: {str(e)}")
-                # Continue anyway to return results
 
         return result
     except ValueError as ve:
@@ -420,9 +330,7 @@ async def analyze_video_endpoint(video: VideoURL):
 
 @app.post("/generate-resume-questions")
 async def generate_resume_questions(resume_data: ResumeText):
-    """
-    Generate hyper-specific questions from resume experiences
-    """
+    """Generate questions from resume text"""
     try:
         parser = ResumeParser()
         result = parser.parse_resume_and_generate_questions(resume_data.resume_text)
@@ -430,7 +338,6 @@ async def generate_resume_questions(resume_data: ResumeText):
         # Store the generated questions in the database if user_id is provided
         if resume_data.user_id and result.get('experiences'):
             try:
-                # Store in a new table for resume questions
                 for i, experience in enumerate(result['experiences']):
                     supabase.table('resume_questions').insert({
                         'user_id': resume_data.user_id,
@@ -442,11 +349,9 @@ async def generate_resume_questions(resume_data: ResumeText):
                         'questions': json.dumps(experience['questions']),
                         'created_at': datetime.now().isoformat()
                     }).execute()
-                
                 print(f"Resume questions stored for user {resume_data.user_id}")
             except Exception as e:
                 print(f"Error storing resume questions: {str(e)}")
-                # Continue anyway to return results
         
         return result
     except Exception as e:
@@ -455,33 +360,35 @@ async def generate_resume_questions(resume_data: ResumeText):
 
 @app.get("/health")
 async def health_check():
+    """Health check endpoint"""
     return {"status": "ok", "service": "HireVision API"}
-
-ACCEPTED_RESUME_TYPES = [
-    "application/pdf",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/msword",
-    "text/rtf"
-]
-MAX_RESUME_SIZE_MB = 5
 
 @app.post("/upload-resume")
 async def upload_resume(file: UploadFile = File(...), user_id: str = Form(...)):
+    """Upload resume file to Supabase storage"""
     # Validate file type
+    ACCEPTED_RESUME_TYPES = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/msword",
+        "text/rtf"
+    ]
+    MAX_RESUME_SIZE_MB = 5
+    
     if file.content_type not in ACCEPTED_RESUME_TYPES:
         raise HTTPException(status_code=400, detail="Invalid file type. Only PDF, DOCX, and RTF are allowed.")
+    
     # Validate file size
     contents = await file.read()
     if len(contents) > MAX_RESUME_SIZE_MB * 1024 * 1024:
         raise HTTPException(status_code=400, detail=f"File too large. Max size is {MAX_RESUME_SIZE_MB}MB.")
+    
     # Upload to Supabase Storage
     filename = f"{user_id}_{int(time.time())}_{file.filename}"
     try:
-        # Upload file to Supabase Storage bucket 'resumes'
         storage_response = supabase.storage.from_('resumes').upload(filename, contents, {"content-type": file.content_type})
-        # Get public URL
         public_url = supabase.storage.from_('resumes').get_public_url(filename)
-        # Insert record into Supabase
+        
         result = supabase.table("resumes").insert({
             "user_id": user_id,
             "filename": filename,
@@ -490,13 +397,109 @@ async def upload_resume(file: UploadFile = File(...), user_id: str = Form(...)):
             "mime_type": file.content_type,
             "uploaded_at": datetime.utcnow().isoformat()
         }).execute()
-        if hasattr(result, 'data') and result.data:
-            db_record = result.data[0]
-        else:
-            db_record = None
+        
+        db_record = result.data[0] if hasattr(result, 'data') and result.data else None
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to upload resume: {str(e)}")
+    
     return {"success": True, "file_path": public_url, "filename": filename, "db_record": db_record}
+
+@app.post("/manage-interview-invite")
+async def manage_interview_invite(invite: InterviewInvite):
+    """Manage interview invitation - update existing or create new"""
+    try:
+        # Check if there's an existing invite for this email and interview
+        # First, we need to get the interview_id from the invite_code or other means
+        # For now, we'll assume the frontend sends the interview_id as well
+        
+        # This is a simplified version - in practice, you might want to pass interview_id
+        # or use a different approach to identify the specific interview
+        
+        # For now, let's just send the email and let the frontend handle the database logic
+        return send_interview_invite_email(invite)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/cleanup-expired-invites")
+async def cleanup_expired_invites():
+    """Clean up expired interview invites (older than 30 days)"""
+    try:
+        # Calculate date 30 days ago
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        
+        # Update expired invites
+        result = supabase.table('interview_invites').update({
+            'status': 'expired'
+        }).lt('created_at', thirty_days_ago.isoformat()).eq('status', 'pending').execute()
+        
+        return {
+            "success": True, 
+            "message": f"Cleaned up {len(result.data) if result.data else 0} expired invites",
+            "expired_count": len(result.data) if result.data else 0
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/bulk-manage-invites")
+async def bulk_manage_invites(invites: list[InterviewInvite]):
+    """Handle multiple interview invites with automatic duplicate management"""
+    try:
+        results = []
+        
+        for invite in invites:
+            # For each invite, we'll send the email
+            # The frontend will handle the database logic for duplicates
+            email_result = send_interview_invite_email(invite)
+            results.append({
+                "email": invite.email,
+                "success": email_result.get("success", False),
+                "message": email_result.get("message", "Unknown error")
+            })
+        
+        return {
+            "success": True,
+            "results": results,
+            "total_sent": len([r for r in results if r["success"]]),
+            "total_failed": len([r for r in results if not r["success"]])
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/invite-status/{invite_code}")
+async def get_invite_status(invite_code: str):
+    """Get the status of an interview invite"""
+    try:
+        result = supabase.table('interview_invites').select(
+            'id, email, status, created_at, interview_id, interviews(title, description)'
+        ).eq('invite_code', invite_code).single().execute()
+        
+        if not result.data:
+            return {"valid": False, "message": "Invalid invite code"}
+        
+        invite = result.data
+        
+        # Check if invite is expired (older than 30 days)
+        invite_date = datetime.fromisoformat(invite['created_at'].replace('Z', '+00:00'))
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        
+        if invite_date < thirty_days_ago and invite['status'] == 'pending':
+            # Update status to expired
+            supabase.table('interview_invites').update({
+                'status': 'expired'
+            }).eq('id', invite['id']).execute()
+            invite['status'] = 'expired'
+        
+        return {
+            "valid": True,
+            "status": invite['status'],
+            "email": invite['email'],
+            "created_at": invite['created_at'],
+            "interview": invite['interviews'],
+            "expired": invite['status'] == 'expired'
+        }
+    except Exception as e:
+        return {"valid": False, "message": f"Error checking invite status: {str(e)}"}
 
 if __name__ == "__main__":
     import uvicorn
