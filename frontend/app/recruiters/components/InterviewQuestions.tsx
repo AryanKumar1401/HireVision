@@ -4,17 +4,17 @@ import { createClient } from "@/utils/auth";
 
 interface Question {
   id: string;
-  company_number: string;
   question: string;
+  order_index: number;
+  interview_id: string;
+  interview?: { recruiter_id: string };
 }
 
 interface InterviewQuestionsProps {
-  company_number: string;
+  recruiterId: string;
 }
 
-export default function InterviewQuestions({
-  company_number,
-}: InterviewQuestionsProps) {
+export default function InterviewQuestions({ recruiterId }: InterviewQuestionsProps) {
   const supabase = createClient();
 
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -22,36 +22,72 @@ export default function InterviewQuestions({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  //At this point, we will fetch the list of questions for the company
-
   useEffect(() => {
     async function fetchQuestions() {
+      setLoading(true);
+      // Fetch all interview questions for interviews created by this recruiter
       const { data, error } = await supabase
         .from("interview_questions")
-        .select("*")
-        .eq("company_number", company_number);
+        .select("*, interview:interview_id(recruiter_id)")
+        .order("order_index");
       if (error) {
         setError(error.message);
       } else {
-        setQuestions(data || []);
+        // Filter in JS in case Supabase join filter is not working
+        const filtered = (data || []).filter(q => q.interview && q.interview.recruiter_id === recruiterId);
+        setQuestions(filtered);
       }
       setLoading(false);
     }
-    fetchQuestions();
-  }, [company_number]);
+    if (recruiterId) fetchQuestions();
+  }, [recruiterId]);
 
   const addQuestion = async () => {
     if (!newQuestion.trim()) return;
-    const { data, error } = await supabase
+    setLoading(true);
+    setError(null);
+    // Find or create an interview for this recruiter (for demo, just use the first found or create a new one)
+    let interviewId: string | null = null;
+    // Try to find an existing interview for this recruiter
+    const { data: interviews, error: interviewError } = await supabase
+      .from("interview")
+      .select("id")
+      .eq("recruiter_id", recruiterId)
+      .limit(1);
+    if (interviewError) {
+      setError(interviewError.message);
+      setLoading(false);
+      return;
+    }
+    if (interviews && interviews.length > 0) {
+      interviewId = interviews[0].id;
+    } else {
+      // Create a new interview for this recruiter
+      const { data: newInterview, error: createError } = await supabase
+        .from("interview")
+        .insert({ recruiter_id: recruiterId, invite_code: Math.floor(Math.random() * 1000000000) })
+        .select()
+        .single();
+      if (createError) {
+        setError(createError.message);
+        setLoading(false);
+        return;
+      }
+      interviewId = newInterview.id;
+    }
+    // Insert the new question
+    const { data: questionData, error: questionError } = await supabase
       .from("interview_questions")
-      .insert([{ company_number: company_number, question: newQuestion }])
+      .insert([{ interview_id: interviewId, question: newQuestion }])
+      .select()
       .single();
-    if (error) {
-      setError(error.message);
-    } else if (data) {
-      setQuestions([...questions, data]);
+    if (questionError) {
+      setError(questionError.message);
+    } else if (questionData) {
+      setQuestions([...questions, questionData]);
       setNewQuestion("");
     }
+    setLoading(false);
   };
 
   return (
