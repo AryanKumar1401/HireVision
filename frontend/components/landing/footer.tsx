@@ -86,7 +86,7 @@ const Footer = () => {
       </div>
       <div className="max-w-6xl mx-auto mt-12 pt-6 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
         <p className="text-gray-500 text-sm">
-          © {new Date().getFullYear()} HireVision. All rights reserved.
+          © {new Date().getFullYear()} GalacticHire. All rights reserved.
         </p>
 
         <div className="flex space-x-4 mt-4 md:mt-0">
