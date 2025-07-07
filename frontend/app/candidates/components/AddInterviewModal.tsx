@@ -7,7 +7,7 @@ const supabase = createClient();
 
 interface AddInterviewModalProps {
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (interview?: any) => void; // Accepts the interview object
   initialCode?: string;
 }
 
@@ -36,9 +36,12 @@ export default function AddInterviewModal({ onClose, onSuccess, initialCode }: A
       // Check if the invite code exists and is valid
       const { data: invite, error: inviteError } = await supabase
         .from("interview_invites")
-        .select("*, interviews(*)")
+        .select("*, interview(*)")
         .eq("invite_code", inviteCode.trim())
         .single();
+
+      console.log("🔍 Debug - Invite Code:", inviteCode.trim());
+      console.log("🔍 Debug - Invite Data:", invite);
 
       if (inviteError || !invite) {
         setMessage({ type: "error", text: "Invalid interview code. Please check the code and try again." });
@@ -63,14 +66,14 @@ export default function AddInterviewModal({ onClose, onSuccess, initialCode }: A
       const inviteDate = new Date(invite.created_at);
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
+
       if (inviteDate < thirtyDaysAgo) {
         // Update the invite status to expired
         await supabase
           .from("interview_invites")
           .update({ status: "expired" })
           .eq("id", invite.id);
-        
+
         setMessage({ type: "error", text: "This interview code has expired. Please contact the recruiter for a new invitation." });
         return;
       }
@@ -113,14 +116,15 @@ export default function AddInterviewModal({ onClose, onSuccess, initialCode }: A
       }
 
       setMessage({ type: "success", text: "Interview added successfully! You can now access it from your dashboard." });
-      
+
       // Close modal after a delay
       setTimeout(() => {
-        onSuccess();
+        onSuccess(invite.interview); // Pass the interview object to the parent
         onClose();
       }, 2000);
 
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error adding interview:", error);
       setMessage({ type: "error", text: "Failed to add interview. Please try again." });
     } finally {
@@ -176,9 +180,8 @@ export default function AddInterviewModal({ onClose, onSuccess, initialCode }: A
             </div>
 
             {message && (
-              <div className={`p-4 rounded-lg ${
-                message.type === "success" ? "bg-green-900/50 text-green-300" : "bg-red-900/50 text-red-300"
-              }`}>
+              <div className={`p-4 rounded-lg ${message.type === "success" ? "bg-green-900/50 text-green-300" : "bg-red-900/50 text-red-300"
+                }`}>
                 {message.text}
               </div>
             )}
