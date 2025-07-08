@@ -111,6 +111,26 @@ export default function UploadResumePage() {
             console.log("Refreshing onboarding after resume upload...");
             await refresh();
 
+            // Call backend to generate personalized questions
+            try {
+                const genRes = await fetch(`${getBackendUrl()}/generate-resume-questions-from-db`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ user_id: userId }),
+                });
+                const genData = await genRes.json();
+                if (!genRes.ok || !genData.questions) {
+                    setError(genData.error || "Failed to generate personalized questions. Please try again.");
+                    setUploading(false);
+                    return;
+                }
+                console.log("Personalized questions generated", genData.questions);
+            } catch (err) {
+                setError("Failed to generate personalized questions. Please try again.");
+                setUploading(false);
+                return;
+            }
+
             setSuccess(true);
             console.log("Upload flow complete, success set to true");
         } catch (err) {
