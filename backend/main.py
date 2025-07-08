@@ -66,6 +66,9 @@ class ResumeText(BaseModel):
 class ResumeQuestionsRequest(BaseModel):
     user_id: str
 
+class GetPersonalizedQuestionsRequest(BaseModel):
+    user_id: str
+
 def extract_main_themes(transcript: str, num_themes: int = 4) -> list:
     prompt = (
         f"Extract {num_themes} main themes from the following transcript. "
@@ -621,6 +624,27 @@ async def get_invite_status(invite_code: str):
         }
     except Exception as e:
         return {"valid": False, "message": f"Error checking invite status: {str(e)}"}
+
+@app.post("/get-personalized-questions")
+async def get_personalized_questions(request: GetPersonalizedQuestionsRequest):
+    """Fetch the latest 3 personalized resume questions for a user"""
+    try:
+        user_id = request.user_id
+        # Query resume_questions for the latest 3 questions for the user
+        result = supabase.table("resume_questions") \
+            .select("question_index, question_text, created_at") \
+            .eq("user_id", user_id) \
+            .order("created_at", desc="desc") \
+            .order("question_index", desc="asc") \
+            .limit(3) \
+            .execute()
+        questions = result.data if result and hasattr(result, 'data') and result.data else []
+        # Format for frontend: list of {"question": ...}
+        formatted = [{"question": q["question_text"]} for q in sorted(questions, key=lambda x: x["question_index"])]
+        return {"questions": formatted}
+    except Exception as e:
+        print(f"Error in get_personalized_questions: {str(e)}")
+        return {"error": str(e)}
 
 if __name__ == "__main__":
     import uvicorn
