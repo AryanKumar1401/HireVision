@@ -162,6 +162,8 @@ export default function NewInterview({ onClose, recruiterId, companyNumber }: Ne
       const invitePromises = inviteEmails.map(async (email) => {
         const candidateInviteCode = generateInviteCode().toString();
         
+        console.log(`🔍 Checking for existing invite for email: ${email} and interview: ${interview.id}`);
+        
         // Check if there's an existing invite for this email and interview
         const { data: existingInvite, error: checkError } = await supabase
           .from('interview_invites')
@@ -174,7 +176,13 @@ export default function NewInterview({ onClose, recruiterId, companyNumber }: Ne
 
         if (existingInvite) {
           // Update existing invite with new code and reset status
-          console.log(`Updating existing invite for ${email} with new code: ${candidateInviteCode}`);
+          console.log(`🔄 DUPLICATE FOUND! Updating existing invite for ${email}`);
+          console.log(`   - Old invite ID: ${existingInvite.id}`);
+          console.log(`   - Old invite code: ${existingInvite.invite_code}`);
+          console.log(`   - Old status: ${existingInvite.status}`);
+          console.log(`   - New invite code: ${candidateInviteCode}`);
+          console.log(`   - Resetting status to: pending`);
+          
           const { error: updateError } = await supabase
             .from('interview_invites')
             .update({
@@ -185,9 +193,18 @@ export default function NewInterview({ onClose, recruiterId, companyNumber }: Ne
             .eq('id', existingInvite.id);
           
           dbError = updateError;
+          
+          if (updateError) {
+            console.error(`❌ Failed to update existing invite for ${email}:`, updateError);
+          } else {
+            console.log(`✅ Successfully updated existing invite for ${email}`);
+          }
         } else {
           // Create new database record
-          console.log(`Creating new invite for ${email} with code: ${candidateInviteCode}`);
+          console.log(`🆕 No existing invite found. Creating new invite for ${email}`);
+          console.log(`   - New invite code: ${candidateInviteCode}`);
+          console.log(`   - Interview ID: ${interview.id}`);
+          
           const { error: insertError } = await supabase.from('interview_invites').insert({
             interview_id: interview.id,
             email,
@@ -197,12 +214,20 @@ export default function NewInterview({ onClose, recruiterId, companyNumber }: Ne
           });
           
           dbError = insertError;
+          
+          if (insertError) {
+            console.error(`❌ Failed to create new invite for ${email}:`, insertError);
+          } else {
+            console.log(`✅ Successfully created new invite for ${email}`);
+          }
         }
 
         if (dbError) {
-          console.error(`Database error for ${email}:`, dbError);
+          console.error(`❌ Database error for ${email}:`, dbError);
           return { email, success: false, error: dbError.message };
         }
+
+        console.log(`📧 Sending email to ${email} with code: ${candidateInviteCode}`);
 
         // Send email via backend API
         try {
@@ -219,7 +244,7 @@ export default function NewInterview({ onClose, recruiterId, companyNumber }: Ne
             }),
           });
 
-          console.log(`Email API response for ${email}:`, {
+          console.log(`📨 Email API response for ${email}:`, {
             status: response.status,
             statusText: response.statusText,
             ok: response.ok
@@ -235,7 +260,7 @@ export default function NewInterview({ onClose, recruiterId, companyNumber }: Ne
               errorData = { detail: errorText || 'Unknown error' };
             }
             
-            console.error(`Email API error for ${email}:`, {
+            console.error(`❌ Email API error for ${email}:`, {
               status: response.status,
               statusText: response.statusText,
               errorData: errorData
@@ -249,10 +274,10 @@ export default function NewInterview({ onClose, recruiterId, companyNumber }: Ne
           }
 
           const responseData = await response.json();
-          console.log(`Email API success for ${email}:`, responseData);
+          console.log(`✅ Email API success for ${email}:`, responseData);
           return { email, success: true };
         } catch (emailError: unknown) {
-          console.error(`Email sending error for ${email}:`, emailError);
+          console.error(`❌ Email sending error for ${email}:`, emailError);
           const errorMessage = emailError instanceof Error ? emailError.message : 'Unknown error';
           return { email, success: false, error: `Network error: ${errorMessage}` };
         }

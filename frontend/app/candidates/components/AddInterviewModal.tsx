@@ -33,17 +33,32 @@ export default function AddInterviewModal({ onClose, onSuccess, initialCode }: A
         return;
       }
 
-      // Check if the invite code exists and is valid
-      const { data: invite, error: inviteError } = await supabase
-        .from("interview_invites")
-        .select("*, interviews(*)")
-        .eq("invite_code", inviteCode.trim())
-        .single();
+      console.log(`🔍 [ADD_INTERVIEW] Checking invite code: ${inviteCode.trim()}`);
 
-      if (inviteError || !invite) {
+      // Check if the invite code exists and is valid
+      const { data: invites, error: inviteError } = await supabase
+        .from("interview_invites")
+        .select("id, email, status, created_at, interview_id, invite_code")
+        .eq("invite_code", inviteCode.trim());
+
+      console.log('Supabase invite lookup:', { invites, inviteError });
+
+      if (inviteError) {
+        console.error(`❌ [ADD_INTERVIEW] Invite lookup error:`, inviteError);
+        setMessage({ type: "error", text: "Error checking invite code. Please try again." });
+        return;
+      }
+      if (!invites || invites.length === 0) {
         setMessage({ type: "error", text: "Invalid interview code. Please check the code and try again." });
         return;
       }
+      if (invites.length > 1) {
+        setMessage({ type: "error", text: "Duplicate invite codes found. Please contact support." });
+        return;
+      }
+      const invite = invites[0];
+
+      console.log(`✅ [ADD_INTERVIEW] Found invite:`, invite);
 
       // Check if the invite is still pending (not expired or already used)
       if (invite.status !== "pending") {
