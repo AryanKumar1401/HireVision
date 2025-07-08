@@ -19,6 +19,7 @@ import numpy as np
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import pdfplumber  # Add this import for PDF text extraction
 
 # Load environment variables
 load_dotenv()
@@ -61,6 +62,9 @@ class VideoURL(BaseModel):
 class ResumeText(BaseModel):
     resume_text: str
     user_id: str = None
+
+class ResumeQuestionsRequest(BaseModel):
+    user_id: str
 
 def extract_main_themes(transcript: str, num_themes: int = 4) -> list:
     prompt = (
@@ -359,6 +363,121 @@ async def generate_resume_questions(resume_data: ResumeText):
     except Exception as e:
         print(f"Error generating resume questions: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+def generate_personalized_questions_from_resume(resume_text: str, num_questions: int = 3) -> list:
+    """
+    Generate a list of personalized interview questions based on the resume text using OpenAI Chat API (gpt-4o).
+    Returns a list of dicts: [{"question": ...}], suitable for frontend use.
+    """
+    import re
+    import json
+    prompt = (
+        f"Given the following resume, generate {num_questions} personalized interview questions "
+        "that are specific to the candidate's background, experience, and skills. "
+        "Questions should be concise, relevant, and not generic.\n\n"
+        f"Resume:\n{resume_text}\n\n"
+        f"Return the questions as a JSON array of objects, each with a 'question' field. Example: [{{\"question\": \"...\"}}, ...]"
+    )
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": "You are an expert technical interviewer."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=512,
+        temperature=0.5
+    )
+    raw_content = response.choices[0].message.content.strip()
+    print("Raw content in generate_personalized_questions_from_resume: ", raw_content)
+
+    # Remove markdown code block markers if present
+    if raw_content.startswith('```json'):
+        raw_content = raw_content[7:]
+    if raw_content.startswith('```'):
+        raw_content = raw_content[3:]
+    if raw_content.endswith('```'):
+        raw_content = raw_content[:-3]
+    raw_content = raw_content.strip()
+
+    # Try to extract the first JSON array from the response
+    json_array_match = re.search(r'(\[.*?\])', raw_content, re.DOTALL)
+    if json_array_match:
+        json_str = json_array_match.group(1)
+    else:
+        json_str = raw_content
+
+    try:
+        questions = json.loads(json_str)
+        # Validate format: should be a list of dicts with 'question' key
+        if isinstance(questions, list) and all(isinstance(q, dict) and 'question' in q and isinstance(q['question'], str) and q['question'].strip() for q in questions):
+            return questions[:num_questions]
+        # If it's a list of strings, convert
+        if isinstance(questions, list) and all(isinstance(q, str) and q.strip() for q in questions):
+            return [{"question": q} for q in questions[:num_questions]]
+    except Exception:
+        # Fallback: try to extract questions from numbered or bulleted list
+        questions = []
+        for line in raw_content.split("\n"):
+            line = line.strip()
+            match = re.match(r'^[0-9]+[\).\-]?\s*(.*)', line)
+            if match:
+                q = match.group(1).strip()
+                if q:
+                    questions.append({"question": q})
+            elif line:
+                questions.append({"question": line})
+        # Filter out non-question artifacts
+        questions = [q for q in questions if q["question"] and len(q["question"]) > 5]
+        return questions[:num_questions]
+    return []
+
+@app.post("/generate-resume-questions-from-db")
+async def generate_resume_questions_from_db(request: ResumeQuestionsRequest):
+    """Generate questions from the latest resume PDF in Supabase for a user"""
+    try:
+        user_id = request.user_id
+        # 1. Fetch latest resume for user_id from Supabase
+        result = supabase.table("resumes").select("id, file_path, original_name, uploaded_at").eq("user_id", user_id).order("uploaded_at", desc=True).limit(1).execute()
+        if not result.data or len(result.data) == 0:
+            return {"error": "No resume found for this user."}
+        resume = result.data[0]
+        pdf_url = resume["file_path"]
+        
+        # 2. Download PDF from file_path
+        pdf_response = requests.get(pdf_url)
+        if pdf_response.status_code != 200:
+            return {"error": f"Failed to download PDF from storage. Status code: {pdf_response.status_code}"}
+        
+        # 3. Extract text from PDF
+        with open("temp_resume.pdf", "wb") as f:
+            f.write(pdf_response.content)
+        try:
+            with pdfplumber.open("temp_resume.pdf") as pdf:
+                text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+        finally:
+            os.remove("temp_resume.pdf")
+        if not text.strip():
+            return {"error": "Could not extract text from the PDF."}
+        
+        # 4. Generate questions using the new function
+        questions = generate_personalized_questions_from_resume(text, num_questions=3)
+        if not questions:
+            return {"error": "No questions could be generated from the resume."}
+        
+        # 5. Store questions in resume_questions table
+        for idx, question in enumerate(questions):
+            supabase.table('resume_questions').insert({
+                'user_id': user_id,
+                'question_index': idx,
+                'question_text': question['question'],
+                'created_at': datetime.now().isoformat()
+            }).execute()
+        
+        # 6. Return questions
+        return {"questions": questions}
+    except Exception as e:
+        print(f"Error in generate_resume_questions_from_db: {str(e)}")
+        return {"error": str(e)}
 
 @app.get("/health")
 async def health_check():
