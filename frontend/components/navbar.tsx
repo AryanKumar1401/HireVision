@@ -249,6 +249,16 @@ const Navbar = () => {
     };
   }, [userDropdownOpen]);
 
+  // 1. Add Spinner component for loading state
+  const Spinner = () => (
+    <div className="flex items-center justify-center w-8 h-8">
+      <svg className="animate-spin h-6 w-6 text-[#F48C06]" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+        <path className="opacity-75" fill="#F48C06" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+      </svg>
+    </div>
+  );
+
   return (
     <>
       <motion.nav
@@ -256,8 +266,8 @@ const Navbar = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${scrolled
-            ? "h-16 bg-[#0D1321]/70 backdrop-blur-md shadow-sm"
-            : "h-20 bg-transparent"
+          ? "h-16 bg-[#0D1321]/70 backdrop-blur-md shadow-sm"
+          : "h-20 bg-transparent"
           }`}
       >
         <div className="max-w-screen-xl mx-auto h-full px-6 flex items-center justify-between">
@@ -265,7 +275,7 @@ const Navbar = () => {
           <Link href="/" className="relative z-20">
             <div className="transition-all duration-300 flex items-center">
               <Image
-                src="/logo.png"
+                src="/logo_alt.png"
                 alt="HireVision Logo"
                 width={scrolled ? 110 : 130}
                 height={scrolled ? 28 : 33}
@@ -282,21 +292,21 @@ const Navbar = () => {
                 <button
                   key={item.key}
                   onClick={() => scrollToSection(item.key)}
-                  className={`relative px-4 py-2 text-sm transition-colors duration-200 ${activeItem === item.key
-                      ? "text-white"
-                      : "text-gray-400 hover:text-gray-200"
-                    }`}
+                  className={`relative px-4 py-2 text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F48C06] active:scale-95 ${activeItem === item.key
+                    ? "text-white font-semibold"
+                    : "text-gray-400 hover:text-gray-200"}
+                  `}
+                  aria-current={activeItem === item.key ? "page" : undefined}
                 >
                   {activeItem === item.key && (
                     <motion.span
                       layoutId="bubble"
-                      className="absolute inset-0 bg-[#F48C06]/10 rounded-full"
+                      className="absolute inset-0 bg-[#F48C06]/20 rounded-full"
                       style={{ borderRadius: 9999 }}
-                      transition={{
-                        type: "spring",
-                        bounce: 0.2,
-                        duration: 0.6,
-                      }}
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                      initial={{ scale: 0.9, opacity: 0.7 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.9, opacity: 0 }}
                     />
                   )}
                   <span className="relative z-10">{item.label}</span>
@@ -305,23 +315,44 @@ const Navbar = () => {
             </div>
 
             {/* User Avatar (Desktop) */}
-            {isLoggedIn && !loading && (
+            {loading ? (
+              <div className="ml-6"><Spinner /></div>
+            ) : isLoggedIn && !loading && (
               <div className="relative ml-6">
-                <button
-                  id="user-avatar"
-                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-[#F48C06]"
-                >
-                  <span className="text-white font-bold">
-                    {userEmail ? userEmail.charAt(0).toUpperCase() : "?"}
-                  </span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    id="user-avatar"
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center hover:bg-blue-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F48C06]"
+                    aria-haspopup="menu"
+                    aria-expanded={userDropdownOpen}
+                  >
+                    <span className="text-white font-bold">
+                      {userEmail ? userEmail.charAt(0).toUpperCase() : "?"}
+                    </span>
+                  </button>
+                  <svg
+                    className={`w-4 h-4 text-white/70 transition-transform duration-200 ${userDropdownOpen ? "rotate-180" : "rotate-0"}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
 
                 {/* User Dropdown */}
                 {userDropdownOpen && (
-                  <div
+                  <motion.div
                     id="user-dropdown"
-                    className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-700"
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.98 }}
+                    transition={{ duration: 0.18 }}
+                    className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-lg shadow-2xl py-2 z-50 border border-gray-700 focus:outline-none"
+                    tabIndex={-1}
+                    role="menu"
+                    aria-label="User menu"
                   >
                     <div className="px-4 py-2 border-b border-gray-700">
                       <p className="text-sm text-white font-medium truncate">
@@ -340,8 +371,8 @@ const Navbar = () => {
                     <div className="px-4 py-2 border-b border-gray-700">
                       <div
                         className={`text-sm flex items-center ${hasCompletedProfile
-                            ? "text-green-400"
-                            : "text-yellow-400"
+                          ? "text-green-400"
+                          : "text-yellow-400"
                           }`}
                       >
                         <svg
@@ -424,7 +455,7 @@ const Navbar = () => {
                         </div>
                       </button>
                     </div>
-                  </div>
+                  </motion.div>
                 )}
               </div>
             )}
@@ -482,6 +513,15 @@ const Navbar = () => {
             transition={{ duration: 0.2 }}
             className="md:hidden fixed inset-0 z-40 bg-gradient-to-b from-[#0D1321] to-[#1A2333]/95 backdrop-blur-lg flex flex-col pt-20"
           >
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="absolute top-6 right-6 text-white bg-gray-700/60 hover:bg-gray-700 rounded-full p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F48C06] transition-all"
+              aria-label="Close menu"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
             <div className="flex flex-col items-center gap-6 pt-10">
               {navItems.map((item) => (
                 <motion.button

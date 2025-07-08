@@ -22,6 +22,7 @@ export default function CandidateDashboard() {
   const searchParams = useSearchParams();
   const { isLoading, showProfileForm, profileData, updateProfile } = useProfile();
   const { loading, step, redirectIfNeeded } = useCandidateOnboardingStep();
+  const [pendingInterviews, setPendingInterviews] = useState<any[]>([]);
 
   // Get interview code from URL if present
   const interviewCode = searchParams.get('code');
@@ -73,6 +74,56 @@ export default function CandidateDashboard() {
     }
   }, [interviewCode, addInterviewOpen]);
 
+  useEffect(() => {
+    // Fetch pending interviews for the user
+    const fetchPending = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) return;
+      // Fetch interviews the user is a participant in and are not completed
+      const { data, error } = await supabase
+        .from("interview_participants")
+        .select("interview:interview_id(*), status")
+        .eq("user_id", userId)
+        .not("status", "eq", "completed");
+      if (error) {
+        console.error("pending‑fetch", error);
+        setPendingInterviews([
+          {
+            id: "sample-1",
+            title: "Sample Interview",
+            scheduledDate: "April 30, 2025",
+            company: "SampleCorp",
+            logo: "S",
+          },
+        ]);
+      } else {
+        // Map to PendingInterview shape
+        const mapped = (data || []).map((row: any) => {
+          const interview = row.interview;
+          return {
+            id: interview.id,
+            title: interview.title || "Interview",
+            scheduledDate: interview.scheduled_date || "TBD",
+            company: interview.company || "Unknown",
+            logo: (interview.company || "?").charAt(0).toUpperCase(),
+          };
+        });
+        setPendingInterviews([
+          {
+            id: "sample-1",
+            title: "Sample Interview",
+            scheduledDate: "April 30, 2025",
+            company: "SampleCorp",
+            logo: "S",
+          },
+          ...mapped,
+        ]);
+      }
+    };
+    fetchPending();
+  }, []);
+
   const refreshDashboard = () => {
     // Refresh completed interviews
     const fetchCompleted = async () => {
@@ -90,24 +141,6 @@ export default function CandidateDashboard() {
   if (loading || step !== 'dashboard') {
     return <LoadingFallback />;
   }
-
-  // For demonstration, using dummy pending interview data:
-  const pendingInterviews = [
-    {
-      id: "1",
-      title: "Interview: Frontend Developer",
-      scheduledDate: "April 15, 2025",
-      company: "TechInnovate",
-      logo: "T",
-    },
-    {
-      id: "2",
-      title: "Interview: UX Designer",
-      scheduledDate: "April 18, 2025",
-      company: "DesignCraft",
-      logo: "D",
-    },
-  ];
 
   if (isLoading) {
     return (
@@ -401,7 +434,23 @@ export default function CandidateDashboard() {
       {addInterviewOpen && (
         <AddInterviewModal
           onClose={() => setAddInterviewOpen(false)}
-          onSuccess={refreshDashboard}
+          onSuccess={(newInterview) => {
+            if (newInterview) {
+              // Add to pending interviews
+              setPendingInterviews((prev) => [
+                {
+                  id: newInterview.id,
+                  title: newInterview.title || "Interview",
+                  scheduledDate: newInterview.scheduled_date || "TBD",
+                  company: newInterview.company || "Unknown",
+                  logo: (newInterview.company || "?").charAt(0).toUpperCase(),
+                },
+                ...prev,
+              ]);
+            } else {
+              refreshDashboard();
+            }
+          }}
           initialCode={interviewCode || undefined}
         />
       )}

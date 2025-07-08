@@ -254,7 +254,7 @@ export default function RecruitersPage() {
               behavioral_scores: answer.behavioral_scores,
               communication_analysis: answer.communication_analysis,
               emotion_results: answer.emotion_results,
-              
+
             };
 
             return {
@@ -390,11 +390,11 @@ export default function RecruitersPage() {
   const topApplicants =
     candidateInterviews.length > 0
       ? candidateInterviews
-          .slice(0, 2)
-          .map((interview) => interview.candidate_details.full_name)
+        .slice(0, 2)
+        .map((interview) => interview.candidate_details.full_name)
       : legacyVideos
-          .slice(0, 2)
-          .map((video) => video.candidate_details?.full_name || "Unknown");
+        .slice(0, 2)
+        .map((video) => video.candidate_details?.full_name || "Unknown");
 
   // Choose which videos array to use based on whether we have new format data
   const videosToUse = legacyVideos; // Always use legacy format for Dashboard component compatibility
@@ -485,12 +485,11 @@ export default function RecruitersPage() {
             recruiterEmail={userEmail || undefined}
           />
           <div className="mt-8 max-w-7xl mx-auto px-4">
-            {profileData?.company_number ? (
-              <InterviewQuestions company_number={profileData.company_number} />
+            {currentUserId ? (
+              <InterviewQuestions recruiterId={currentUserId} />
             ) : (
               <div className="text-center text-white">
-                Please update your profile with your Company ID to manage
-                interview questions.
+                Please log in to manage interview questions.
               </div>
             )}
           </div>

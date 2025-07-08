@@ -336,6 +336,8 @@ async def generate_resume_questions(resume_data: ResumeText):
         result = parser.parse_resume_and_generate_questions(resume_data.resume_text)
         
         # Store the generated questions in the database if user_id is provided
+
+        #TODO Table resume_questions doesn't exist in Supabase, create it
         if resume_data.user_id and result.get('experiences'):
             try:
                 for i, experience in enumerate(result['experiences']):

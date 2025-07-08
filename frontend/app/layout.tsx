@@ -19,7 +19,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "HireVision | AI-Powered Interview Insights",
+  title: "GalacticHire | AI-Powered Interview Insights",
   description:
     "Smarter interviews. Faster hires. Get AI-powered insights for recruiters and instant feedback for applicants.",
   icons: {

@@ -19,7 +19,7 @@ const Cta = () => {
           </p>
 
           <button className="bg-[#F48C06] hover:bg-[#E07C00] text-white font-semibold py-4 px-10 text-lg rounded-lg shadow-lg shadow-[#F48C06]/30 transform hover:scale-105 transition-all duration-300">
-            Try HireVision Free
+            Try GalacticHire Free
           </button>
 
           <p className="mt-4 text-gray-400">No credit card required</p>

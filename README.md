@@ -1,8 +1,8 @@
-HireVision
+GalacticHire
 (Best Product Award at the hackathon)
 
 Welcome to our GitHub page! 
-HireVision is the first transparent video screening interview platform. .
+GalacticHire is the first transparent video screening interview platform. .
 We revolutionize the hiring process by using Intelligent analytics that allows recruiters to exponentially reduce the HireVue SLA
 By sharing the SAME feedback with candidates as well as recruiters, we benefit not only the candidate to help them practice, but also improve the HireVue experience, improving companies' NPS scores.
 

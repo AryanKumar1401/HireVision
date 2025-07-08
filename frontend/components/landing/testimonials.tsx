@@ -24,7 +24,7 @@ const Testimonials = () => {
   const testimonials: Testimonial[] = [
     {
       quote:
-        "HireVision cut our interview review time in half while improving our hiring decisions. The candidate feedback feature has dramatically improved our employer brand.",
+        "GalacticHire cut our interview review time in half while improving our hiring decisions. The candidate feedback feature has dramatically improved our employer brand.",
       name: "Sarah Chen",
       role: "Head of Talent, TechStartup",
       avatar: "/avatars/sarah.jpg",
