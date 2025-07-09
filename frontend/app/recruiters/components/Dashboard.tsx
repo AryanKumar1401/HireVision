@@ -229,27 +229,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </svg>
             New Interview
           </button>
-          {/* 🔹 Invite Candidate button */}
-          <button
-            onClick={onOpenInvite}
-            className="px-5 py-2 bg-green-600/20 hover:bg-green-600/30 text-green-300 rounded-lg transition-all shadow-md hover:shadow-lg font-medium flex items-center"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Invite Candidate
-          </button>
+          {/* Removed Invite Candidate button */}
           <button
             onClick={onBackClick}
             className="px-5 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-all shadow-md hover:shadow-lg font-medium flex items-center"
@@ -592,12 +572,12 @@ const JobDescriptionCard = () => (
   </div>
 );
 
-interface SkillsChartProps {}
+interface SkillsChartProps { }
 
 // Create a type based on the skillsData constant
 type SkillData = (typeof skillsData)[number];
 
-const SkillsChart = ({}: SkillsChartProps) => (
+const SkillsChart = ({ }: SkillsChartProps) => (
   <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg h-full">
     <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
       <svg
@@ -811,10 +791,9 @@ const ApplicationCard = ({
     onClick={onSelect}
     className={`
       w-full text-left rounded-xl overflow-hidden transition-all duration-200
-      ${
-        isTopApplicant
-          ? "bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 shadow-lg hover:shadow-xl"
-          : "bg-gray-700 hover:bg-gray-600 border border-gray-600"
+      ${isTopApplicant
+        ? "bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 shadow-lg hover:shadow-xl"
+        : "bg-gray-700 hover:bg-gray-600 border border-gray-600"
       }
     `}
   >
@@ -884,11 +863,10 @@ const ApplicationCard = ({
 
       <div className="mt-3 text-xs font-medium">
         <span
-          className={`inline-flex items-center rounded-full px-2.5 py-1 ${
-            isTopApplicant
+          className={`inline-flex items-center rounded-full px-2.5 py-1 ${isTopApplicant
               ? "bg-blue-800 text-blue-200"
               : "bg-gray-600 text-gray-300"
-          }`}
+            }`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
