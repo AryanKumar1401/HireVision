@@ -62,6 +62,10 @@ class ResumeText(BaseModel):
     resume_text: str
     user_id: str = None
 
+class ResumePDF(BaseModel):
+    pdf_url: str
+    user_id: str = None
+
 def extract_main_themes(transcript: str, num_themes: int = 4) -> list:
     prompt = (
         f"Extract {num_themes} main themes from the following transcript. "
@@ -333,31 +337,59 @@ async def generate_resume_questions(resume_data: ResumeText):
     """Generate questions from resume text"""
     try:
         parser = ResumeParser()
-        result = parser.parse_resume_and_generate_questions(resume_data.resume_text)
+        result = parser.parse_resume_and_generate_questions(resume_data.resume_text, is_pdf_url=False)
         
-        # Store the generated questions in the database if user_id is provided
-
-        #TODO Table resume_questions doesn't exist in Supabase, create it
+        # Store the generated questions in the profiles.questions field if user_id is provided
         if resume_data.user_id and result.get('experiences'):
             try:
-                for i, experience in enumerate(result['experiences']):
-                    supabase.table('resume_questions').insert({
-                        'user_id': resume_data.user_id,
-                        'experience_index': i,
-                        'company': experience['company'],
-                        'title': experience['title'],
-                        'dates': experience['dates'],
-                        'bullets': json.dumps(experience['bullets']),
-                        'questions': json.dumps(experience['questions']),
-                        'created_at': datetime.now().isoformat()
-                    }).execute()
-                print(f"Resume questions stored for user {resume_data.user_id}")
+                # Collect all questions from all experiences into a single array
+                all_questions = []
+                for experience in result['experiences']:
+                    all_questions.extend(experience['questions'])
+                
+                # Update the profiles table with the questions array
+                supabase.table('profiles').update({
+                    'questions': all_questions,
+                    'updated_at': datetime.now().isoformat()
+                }).eq('id', resume_data.user_id).execute()
+                
+                print(f"Resume questions stored in profiles for user {resume_data.user_id}")
             except Exception as e:
-                print(f"Error storing resume questions: {str(e)}")
+                print(f"Error storing resume questions in profiles: {str(e)}")
         
         return result
     except Exception as e:
         print(f"Error generating resume questions: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/generate-resume-questions-from-pdf")
+async def generate_resume_questions_from_pdf(resume_data: ResumePDF):
+    """Generate questions from resume PDF URL"""
+    try:
+        parser = ResumeParser()
+        result = parser.parse_resume_and_generate_questions(resume_data.pdf_url, is_pdf_url=True)
+        
+        # Store the generated questions in the profiles.questions field if user_id is provided
+        if resume_data.user_id and result.get('experiences'):
+            try:
+                # Collect all questions from all experiences into a single array
+                all_questions = []
+                for experience in result['experiences']:
+                    all_questions.extend(experience['questions'])
+                
+                # Update the profiles table with the questions array
+                supabase.table('profiles').update({
+                    'questions': all_questions,
+                    'updated_at': datetime.now().isoformat()
+                }).eq('id', resume_data.user_id).execute()
+                
+                print(f"Resume questions stored in profiles for user {resume_data.user_id}")
+            except Exception as e:
+                print(f"Error storing resume questions in profiles: {str(e)}")
+        
+        return result
+    except Exception as e:
+        print(f"Error generating resume questions from PDF: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")

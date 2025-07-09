@@ -1,9 +1,12 @@
 import re
 import json
+import requests
+import io
 from typing import List, Dict, Any
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+import PyPDF2
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPEN_AI_API_KEY"))
@@ -12,10 +15,46 @@ class ResumeParser:
     def __init__(self):
         self.client = client
     
-    def extract_experiences(self, resume_text: str) -> List[Dict[str, Any]]:
+    def extract_text_from_pdf(self, pdf_url: str) -> str:
         """
-        Extract work experiences from resume text using regex patterns
+        Download PDF from URL and extract text content
         """
+        try:
+            # Download the PDF from the URL
+            response = requests.get(pdf_url, timeout=30)
+            response.raise_for_status()
+            
+            # Read the PDF content
+            pdf_content = io.BytesIO(response.content)
+            
+            # Extract text from PDF
+            pdf_reader = PyPDF2.PdfReader(pdf_content)
+            text = ""
+            
+            for page in pdf_reader.pages:
+                text += page.extract_text() + "\n"
+            
+            return text.strip()
+            
+        except requests.RequestException as e:
+            raise Exception(f"Failed to download PDF from URL: {str(e)}")
+        except Exception as e:
+            raise Exception(f"Failed to extract text from PDF: {str(e)}")
+    
+    def extract_experiences(self, resume_input: str, is_pdf_url: bool = False) -> List[Dict[str, Any]]:
+        """
+        Extract work experiences from resume text or PDF URL using regex patterns
+        
+        Args:
+            resume_input: Either resume text or PDF URL
+            is_pdf_url: Boolean indicating if the input is a PDF URL
+        """
+        # If it's a PDF URL, extract text first
+        if is_pdf_url:
+            resume_text = self.extract_text_from_pdf(resume_input)
+        else:
+            resume_text = resume_input
+        
         experiences = []
         
         # Pattern to match job experiences
@@ -74,11 +113,10 @@ class ResumeParser:
         {chr(10).join([f"• {bullet}" for bullet in experience['bullets']])}
 
         Generate 3 questions that:
-        1. Are highly specific to the technologies, challenges, or achievements mentioned
+        1. Are highly specific to the technologies, company, challenges, or achievements mentioned
         2. Ask for concrete examples and specific instances
         3. Probe into technical decision-making and problem-solving processes
-        4. Are the type of questions a senior engineer or technical interviewer would ask
-
+        4. Are the type of questions a that make a candidate feel excited to answer, as it speaks to their personal experience
         Format each question as a separate line starting with "Q: "
         """
         
@@ -120,17 +158,30 @@ class ResumeParser:
                 f"What technical decisions did you make that had the biggest impact on your team's success?"
             ]
     
-    def parse_resume_and_generate_questions(self, resume_text: str) -> Dict[str, Any]:
+    def parse_resume_and_generate_questions(self, resume_input: str, is_pdf_url: bool = False) -> Dict[str, Any]:
         """
         Main function to parse resume and generate questions for each experience
+        
+        Args:
+            resume_input: Either resume text or PDF URL
+            is_pdf_url: Boolean indicating if the input is a PDF URL
         """
         try:
             # Extract experiences
-            experiences = self.extract_experiences(resume_text)
+            experiences = self.extract_experiences(resume_input, is_pdf_url)
             
             if not experiences:
                 # If regex extraction fails, try a more general approach
-                experiences = self.fallback_extract_experiences(resume_text)
+                # For fallback, we need to get the text first if it's a PDF URL
+                try:
+                    if is_pdf_url:
+                        resume_text = self.extract_text_from_pdf(resume_input)
+                    else:
+                        resume_text = resume_input
+                    experiences = self.fallback_extract_experiences(resume_text)
+                except Exception as fallback_error:
+                    print(f"Fallback extraction failed: {str(fallback_error)}")
+                    experiences = []
             
             # Generate questions for each experience
             result = {
