@@ -12,6 +12,7 @@ import { useSupabaseUpload } from "@/hooks/useSupabaseUpload";
 import { useProfile } from "@/hooks/useProfile";
 import { AudioLevelMeter } from "../components/AudioLevelMeter";
 import { DeviceSelector } from "../components/DeviceSelector";
+import React from "react";
 
 const supabase = createClient();
 
@@ -36,6 +37,9 @@ export default function InterviewSession() {
   const [questions, setQuestions] = useState<string[]>([]);
   const [isQuestionsLoading, setIsQuestionsLoading] = useState<boolean>(true);
   const [usedPersonalized, setUsedPersonalized] = useState<boolean>(false);
+  const [showConfirmFinishModal, setShowConfirmFinishModal] = useState(false);
+  const [hasConfirmedFinish, setHasConfirmedFinish] = useState(false);
+  const [showCameraDuringInterview, setShowCameraDuringInterview] = useState(true);
 
   // Fetch personalized questions on interview start
   const fetchPersonalizedQuestions = async (userId: string) => {
@@ -103,6 +107,18 @@ export default function InterviewSession() {
     }
     fetchQuestions();
   }, []);
+
+  useEffect(() => {
+    if (!isInterviewStarted) {
+      initializeCamera();
+    }
+    // Optionally, clean up camera on unmount
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [isInterviewStarted]);
 
   const {
     isRecording,
@@ -216,9 +232,27 @@ export default function InterviewSession() {
         console.error("Error updating interview completion status:", error);
       }
     }
+    if (streamRef.current) {
+      // Stop all tracks to turn off the camera
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
     setTimeout(() => {
       router.push("/candidates/thank-you");
     }, 3000);
+  };
+
+  const handleFinishClick = () => {
+    setShowConfirmFinishModal(true);
+  };
+
+  const handleConfirmFinish = async () => {
+    setShowConfirmFinishModal(false);
+    setHasConfirmedFinish(true);
+    await handleFinishInterview();
+  };
+
+  const handleCancelFinish = () => {
+    setShowConfirmFinishModal(false);
   };
 
   if (!interviewId) {
@@ -263,32 +297,7 @@ export default function InterviewSession() {
                   <li>You can review each recording before moving to the next question.</li>
                 </ul>
               </div>
-              <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center">
-                <button
-                  onClick={startInterview}
-                  className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all"
-                >
-                  Begin Interview
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div>
-              {isQuestionsLoading ? (
-                <div className="text-gray-400 text-center py-8">Loading questions...</div>
-              ) : (
-                <div className="mb-6">
-                  {usedPersonalized && (
-                    <div className="mb-2 text-green-400 text-sm text-center">These questions are personalized based on your resume.</div>
-                  )}
-                  <div className="text-lg font-semibold text-white mb-2">
-                    Question {currentQuestionIndex + 1} of {questions.length}
-                  </div>
-                  <div className="text-xl text-blue-300 font-bold mb-4">
-                    {questions[currentQuestionIndex]}
-                  </div>
-                </div>
-              )}
+              {/* Device/camera/mic check only before interview starts */}
               <div className="mb-6">
                 <DeviceSelector
                   selectedVideoDeviceId={selectedVideoDeviceId}
@@ -308,17 +317,65 @@ export default function InterviewSession() {
                   <AudioLevelMeter stream={streamRef.current} />
                 )}
               </div>
-              <RecordingControls
-                isRecording={isRecording}
-                recordingTime={recordingTime}
-                isUploading={isUploading}
-                uploadProgress={uploadProgress}
-                onStartRecording={startRecording}
-                onStopRecording={handleStopAnswerRecording}
-                onGoBack={() => router.push("/candidates")}
-              />
-              {/* Next/Finish button - only visible when answer is recorded */}
-              {isAnswerRecorded && !isRecording && !isUploading && (
+              {/* Only show Begin Interview button if not finished/confirmed */}
+              {(!hasConfirmedFinish && !isInterviewFinished) && (
+                <button
+                  onClick={startInterview}
+                  className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all"
+                >
+                  Begin Interview
+                </button>
+              )}
+            </div>
+          ) : (
+            <div>
+              {isQuestionsLoading ? (
+                <div className="text-gray-400 text-center py-8">Loading questions...</div>
+              ) : (
+                <div className="mb-6">
+                  {usedPersonalized && (
+                    <div className="mb-2 text-green-400 text-sm text-center">These questions are personalized based on your resume.</div>
+                  )}
+                  <div className="text-lg font-semibold text-white mb-2">
+                    Question {currentQuestionIndex + 1} of {questions.length}
+                  </div>
+                  <div className="text-xl text-blue-300 font-bold mb-4">
+                    {questions[currentQuestionIndex]}
+                  </div>
+                </div>
+              )}
+              {/* Camera preview and toggle during interview */}
+              <div className="mb-4 flex flex-col items-end">
+                {showCameraDuringInterview && (
+                  <VideoPreview
+                    stream={streamRef.current}
+                    recordedUrl={null}
+                    isLoading={cameraLoading}
+                    error={cameraError}
+                  />
+                )}
+                <button
+                  className="mt-2 px-4 py-1 text-xs rounded bg-gray-700 text-white hover:bg-gray-600 focus:outline-none"
+                  onClick={() => setShowCameraDuringInterview((prev) => !prev)}
+                >
+                  {showCameraDuringInterview ? "Hide Camera" : "Show Camera"}
+                </button>
+              </div>
+              {/* Only show RecordingControls and Back button if not finished/confirmed */}
+              {(!hasConfirmedFinish && !isInterviewFinished) && (
+                <>
+                  <RecordingControls
+                    isRecording={isRecording}
+                    recordingTime={recordingTime}
+                    isUploading={isUploading}
+                    uploadProgress={uploadProgress}
+                    onStartRecording={startRecording}
+                    onStopRecording={handleStopAnswerRecording}
+                    onGoBack={() => router.push("/candidates")}
+                  />
+                </>
+              )}
+              {isAnswerRecorded && !isRecording && !isUploading && !hasConfirmedFinish && !isInterviewFinished && (
                 <div className="flex justify-end mt-6">
                   {currentQuestionIndex < questions.length - 1 ? (
                     <button
@@ -329,7 +386,7 @@ export default function InterviewSession() {
                     </button>
                   ) : (
                     <button
-                      onClick={handleFinishInterview}
+                      onClick={handleFinishClick}
                       className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold shadow hover:bg-green-700 transition-all"
                     >
                       Finish Interview
@@ -337,9 +394,30 @@ export default function InterviewSession() {
                   )}
                 </div>
               )}
-              {isInterviewFinished && (
+              {showConfirmFinishModal && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
+                  <div className="bg-gray-900 rounded-xl p-8 shadow-xl text-center">
+                    <div className="text-white text-lg mb-4">Are you sure you want to finish and submit your interview? You won't be able to make changes after this.</div>
+                    <div className="flex justify-center gap-4">
+                      <button
+                        onClick={handleConfirmFinish}
+                        className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold shadow hover:bg-green-700 transition-all"
+                      >
+                        Yes, Submit
+                      </button>
+                      <button
+                        onClick={handleCancelFinish}
+                        className="px-6 py-2 bg-gray-600 text-white rounded-lg font-semibold shadow hover:bg-gray-700 transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {(hasConfirmedFinish || isInterviewFinished) && (
                 <div className="mt-8 text-center text-blue-300 font-medium animate-pulse">
-                  {processingStatus}
+                  {processingStatus || "Processing your interview. Please wait..."}
                 </div>
               )}
             </div>
