@@ -51,11 +51,12 @@ export default function CandidateDashboard() {
   useEffect(() => {
     const fetchCompleted = async () => {
       const { data, error } = await supabase
-        .from("interview_answers")
-        .select("*")
+        .from("interview_participants")
+        .select("*, interview:interview_id(*)")
         .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
-        .order("created_at", { ascending: false });
-      console.log("successfully retrieved supabase data");
+        .eq("completed", true)
+        .order("completed_at", { ascending: false });
+      console.log("successfully retrieved completed interviews data");
       if (error) console.error("completed‑fetch", error);
       else setCompleted(data || []);
     };
@@ -128,13 +129,16 @@ export default function CandidateDashboard() {
     // Refresh completed interviews
     const fetchCompleted = async () => {
       const { data, error } = await supabase
-        .from("interview_answers")
-        .select("*")
+        .from("interview_participants")
+        .select("*, interview:interview_id(*)")
         .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
-        .order("created_at", { ascending: false });
+        .eq("completed", true)
+        .order("completed_at", { ascending: false });
       if (error) console.error("completed‑fetch", error);
-      else setCompleted(data || []);
+      else setCompleted(data || []);        
+
     };
+      
     fetchCompleted();
   };
 
@@ -288,10 +292,10 @@ export default function CandidateDashboard() {
                         className="bg-gray-800/60 hover:bg-gray-700/70 border border-gray-700 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-blue-900/30"
                       >
                         <h4 className="text-white font-medium text-lg mb-1">
-                          {row.question_text || "Interview"}
+                          {row.interview.title || "Interview"}
                         </h4>
                         <p className="text-sm text-gray-400 mb-2">
-                          {new Date(row.created_at).toLocaleDateString()}
+                          {new Date(row.completed_at).toLocaleDateString()}
                         </p>
                         <div className="text-blue-400 text-xs">
                           Click to view details

@@ -17,7 +17,7 @@ export default function PendingInterviews({ pendingInterviews }: PendingIntervie
     const router = useRouter();
 
     const handleStartInterview = (interviewId: string) => {
-        router.push("/candidates");
+        router.push(`/candidates/interview?interview_id=${interviewId}`);
     };
 
     return (
