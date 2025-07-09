@@ -55,6 +55,61 @@ export default function Candidates() {
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [questions, setQuestions] = useState<string[]>([]);
   const [isQuestionsLoading, setIsQuestionsLoading] = useState<boolean>(true);
+  const [usedPersonalized, setUsedPersonalized] = useState<boolean>(false);
+
+  // Fetch personalized questions on interview start
+  const fetchPersonalizedQuestions = async (userId: string) => {
+    try {
+      const response = await fetch(`${getBackendUrl()}/get-personalized-questions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId }),
+      });
+      const data = await response.json();
+      if (response.ok && data.questions && data.questions.length > 0) {
+        setQuestions(data.questions.map((q: { question: string }) => q.question));
+        setUsedPersonalized(true);
+        setIsQuestionsLoading(false);
+        return true;
+      }
+    } catch (err) {
+      // Ignore and fallback
+    }
+    return false;
+  };
+
+  // Fetch generic questions from Supabase
+  const fetchGenericQuestions = async () => {
+    const { data, error } = await supabase
+      .from("interview_questions")
+      .select("question");
+    if (error) {
+      console.error("Error retrieving questions from supabase");
+    } else if (data) {
+      setQuestions(data.map((q) => q.question));
+    }
+    setIsQuestionsLoading(false);
+  };
+
+  // When interview starts, fetch personalized questions first, fallback to generic
+  const startInterview = async () => {
+    if (!isCameraActive) {
+      await activateCamera();
+    }
+    setIsInterviewStarted(true);
+    setIsQuestionsLoading(true);
+    const userId = (await supabase.auth.getUser()).data.user?.id;
+    if (userId) {
+      const gotPersonalized = await fetchPersonalizedQuestions(userId);
+      if (!gotPersonalized) {
+        await fetchGenericQuestions();
+        setUsedPersonalized(false);
+      }
+    } else {
+      await fetchGenericQuestions();
+      setUsedPersonalized(false);
+    }
+  };
 
   //Fetch the interview question from Supabase on mount
   useEffect(() => {
@@ -106,13 +161,6 @@ export default function Candidates() {
   const activateCamera = async () => {
     setIsCameraActive(true);
     await initializeCamera();
-  };
-
-  const startInterview = () => {
-    if (!isCameraActive) {
-      activateCamera();
-    }
-    setIsInterviewStarted(true);
   };
 
   const handleVideoDeviceChange = async (deviceId: string) => {
@@ -554,40 +602,22 @@ export default function Candidates() {
 
                   <div className="lg:col-span-2 flex flex-col justify-between">
                     <div>
-                      {/* Question card with styling */}
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        key={currentQuestionIndex}
-                        className="mb-6 bg-gradient-to-r from-blue-600/5 to-purple-600/5 p-6 rounded-xl border border-blue-500/20"
-                      >
-                        <div className="flex items-center text-blue-400 font-medium mb-2">
-                          <svg
-                            className="w-5 h-5 mr-2"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                          <span>
-                            Question {currentQuestionIndex + 1} of{" "}
-                            {isQuestionsLoading ? "..." : questions.length}
-                          </span>
-                        </div>
-                        <h2 className="text-2xl text-white/90 font-medium">
-                          {isQuestionsLoading ? (
-                            <div className="h-8 bg-gray-700/50 rounded animate-pulse w-3/4"></div>
-                          ) : (
-                            questions[currentQuestionIndex]
+                      {/* Question display section */}
+                      {isQuestionsLoading ? (
+                        <div className="text-gray-400 text-center py-8">Loading questions...</div>
+                      ) : (
+                        <div className="mb-6">
+                          {usedPersonalized && (
+                            <div className="mb-2 text-green-400 text-sm text-center">These questions are personalized based on your resume.</div>
                           )}
-                        </h2>
-                      </motion.div>
+                          <div className="text-lg font-semibold text-white mb-2">
+                            Question {currentQuestionIndex + 1} of {questions.length}
+                          </div>
+                          <div className="text-xl text-blue-300 font-bold mb-4">
+                            {questions[currentQuestionIndex]}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="mt-auto">
