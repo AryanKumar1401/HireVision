@@ -50,15 +50,27 @@ export default function CandidateDashboard() {
 
   useEffect(() => {
     const fetchCompleted = async () => {
-      const { data, error } = await supabase
-        .from("interview_participants")
-        .select("*, interview:interview_id(*)")
-        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
-        .eq("completed", true)
-        .order("completed_at", { ascending: false });
-      console.log("successfully retrieved completed interviews data");
-      if (error) console.error("completed‑fetch", error);
-      else setCompleted(data || []);
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id;
+        if (!userId) return;
+
+        const { data, error } = await supabase
+          .from("interview_participants")
+          .select("*, interview:interview_id(*)")
+          .eq("user_id", userId)
+          .eq("completed", true)
+          .order("joined_at", { ascending: false });
+        
+        console.log("successfully retrieved completed interviews data");
+        if (error) {
+          console.error("completed‑fetch", error);
+        } else {
+          setCompleted(data || []);
+        }
+      } catch (err) {
+        console.error("completed‑fetch error:", err);
+      }
     };
 
     fetchCompleted();
@@ -86,7 +98,7 @@ export default function CandidateDashboard() {
         .from("interview_participants")
         .select("interview:interview_id(*), status")
         .eq("user_id", userId)
-        .not("status", "eq", "completed");
+        .eq("completed", false);
       if (error) {
         console.error("pending‑fetch", error);
         setPendingInterviews([
@@ -128,15 +140,26 @@ export default function CandidateDashboard() {
   const refreshDashboard = () => {
     // Refresh completed interviews
     const fetchCompleted = async () => {
-      const { data, error } = await supabase
-        .from("interview_participants")
-        .select("*, interview:interview_id(*)")
-        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
-        .eq("completed", true)
-        .order("completed_at", { ascending: false });
-      if (error) console.error("completed‑fetch", error);
-      else setCompleted(data || []);        
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id;
+        if (!userId) return;
 
+        const { data, error } = await supabase
+          .from("interview_participants")
+          .select("*, interview:interview_id(*)")
+          .eq("user_id", userId)
+          .eq("completed", true)
+          .order("joined_at", { ascending: false });
+        
+        if (error) {
+          console.error("completed‑fetch", error);
+        } else {
+          setCompleted(data || []);
+        }
+      } catch (err) {
+        console.error("completed‑fetch error:", err);
+      }
     };
       
     fetchCompleted();
@@ -295,7 +318,7 @@ export default function CandidateDashboard() {
                           {row.interview.title || "Interview"}
                         </h4>
                         <p className="text-sm text-gray-400 mb-2">
-                          {new Date(row.completed_at).toLocaleDateString()}
+                          {new Date(row.joined_at).toLocaleDateString()}
                         </p>
                         <div className="text-blue-400 text-xs">
                           Click to view details

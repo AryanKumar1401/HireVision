@@ -219,7 +219,6 @@ export default function InterviewSession() {
           .from("interview_participants")
           .update({
             completed: true,
-            completed_at: new Date().toISOString(),
           })
           .eq("interview_id", interviewId)
           .eq("user_id", userId);
