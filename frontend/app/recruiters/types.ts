@@ -41,7 +41,6 @@ export interface InterviewAnswer {
   behavioral_scores?: any; // Using any for jsonb type
   communication_analysis?: any; // Using any for jsonb type
   behavioral_insights?: any; // Using any for jsonb type
-  emotion_results?: any; // Using any for jsonb type
   created_at: string;
   analysis?: Analysis | null; // Virtual property computed from the above fields
 }
@@ -53,36 +52,6 @@ export interface CandidateInterview {
   answers: InterviewAnswer[];
   created_at: string;
   latest_answer_date: string;
-}
-
-export interface EmotionSummary {
-  total_frames_analyzed: number;
-  dominant_emotion: string;
-  dominant_emotion_confidence: number;
-  average_emotions: {
-    angry: number;
-    disgust: number;
-    fear: number;
-    happy: number;
-    sad: number;
-    surprise: number;
-    neutral: number;
-  };
-}
-
-export interface EmotionFrame {
-  frame: number;
-  timestamp: number;
-  emotions: {
-    angry: number;
-    disgust: number;
-    fear: number;
-    happy: number;
-    sad: number;
-    surprise: number;
-    neutral: number;
-  };
-  box: number[];
 }
 
 export interface Analysis {
@@ -99,13 +68,6 @@ export interface Analysis {
   };
   behavioral_insights?: {
     insights: string[];
-  };
-  emotional_analysis?: {
-    summary: EmotionSummary;
-  };
-  emotion_results?: {
-    summary: EmotionSummary;
-    detailed_results: EmotionFrame[];
   };
 }
 

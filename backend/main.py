@@ -153,7 +153,7 @@ def analyze_video(video_url: str):
         # Process transcript
         transcript_text = transcript.text
         summary = summarize_text(transcript_text)
-        behavioral_scores = generate_behavioral_scores(summary)
+        # behavioral_scores = generate_behavioral_scores(summary)
         communication_analysis = analyze_communication(summary)
         behavioral_insights = generate_behavioral_insights(summary)
 
@@ -320,6 +320,7 @@ async def analyze_video_endpoint(video: VideoURL):
                         'video_url': video.video_url,
                         'summary': result.get('summary', ''),
                         'transcript': result.get('transcript', ''),
+                        'communication_analysis': json.dumps(result.get('communication_analysis', {})),
                         'behavioral_insights': json.dumps(result.get('behavioral_insights', {})),
                         'created_at': datetime.now().isoformat()
                     }).execute()

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Video, Analysis, InterviewAnswer } from "../types";
-import EmotionTimeline from "./EmotionTimeline";
 
 interface VideoAnalysisProps {
   video: Video;
