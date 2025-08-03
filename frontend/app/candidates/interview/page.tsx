@@ -180,6 +180,20 @@ export default function InterviewSession() {
     setShowPreview(false);
   };
 
+  const markInterviewCompleted = async (interviewId: string, userId: string) => {
+    const { error } = await supabase
+      .from("interview_participants")
+      .update({
+        completed: true,
+        completed_at: new Date().toISOString(),
+      })
+      .eq("interview_id", interviewId)
+      .eq("user_id", userId);
+    if (error) {
+      console.error("Error marking interview as completed:", error);
+    }
+  };
+
   const handleFinishInterview = async () => {
     setIsInterviewFinished(true);
     setProcessingStatus("Uploading and analyzing your interview responses...");
@@ -213,27 +227,11 @@ export default function InterviewSession() {
     }
     setIsAnalysisComplete(true);
     setProcessingStatus("All responses have been uploaded and sent for analysis!");
+    // Mark interview as completed in Supabase
     if (interviewId && userId) {
-      try {
-        const { error: updateError } = await supabase
-          .from("interview_participants")
-          .update({
-            completed: true,
-            completed_at: new Date().toISOString(),
-          })
-          .eq("interview_id", interviewId)
-          .eq("user_id", userId);
-        if (updateError) {
-          console.error(`Error updating interview ${interviewId}:`, updateError);
-        } else {
-          console.log(`Successfully marked interview ${interviewId} as completed`);
-        }
-      } catch (error) {
-        console.error("Error updating interview completion status:", error);
-      }
+      await markInterviewCompleted(interviewId, userId);
     }
     if (streamRef.current) {
-      // Stop all tracks to turn off the camera
       streamRef.current.getTracks().forEach(track => track.stop());
     }
     setTimeout(() => {

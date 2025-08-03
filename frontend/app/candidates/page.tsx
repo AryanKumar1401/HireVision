@@ -49,18 +49,49 @@ export default function CandidateDashboard() {
   }, []);
 
   useEffect(() => {
-    const fetchCompleted = async () => {
-      const { data, error } = await supabase
+    const fetchInterviews = async () => {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) return;
+      // Fetch pending interviews
+      const { data: pendingData, error: pendingError } = await supabase
+        .from("interview_participants")
+        .select("interview:interview_id(*), status, completed")
+        .eq("user_id", userId)
+        .eq("completed", false);
+      if (pendingError && Object.keys(pendingError).length > 0) console.error("pending-fetch", pendingError);
+      else {
+        const mapped = (pendingData || []).map((row: any) => {
+          const interview = row.interview;
+          return {
+            id: interview.id,
+            title: interview.title || "Interview",
+            scheduledDate: interview.scheduled_date || "TBD",
+            company: interview.company || "Unknown",
+            logo: (interview.company || "?").charAt(0).toUpperCase(),
+          };
+        });
+        setPendingInterviews([
+          {
+            id: "sample-1",
+            title: "Sample Interview",
+            scheduledDate: "April 30, 2025",
+            company: "SampleCorp",
+            logo: "S",
+          },
+          ...mapped,
+        ]);
+      }
+      // Fetch completed interviews
+      const { data: completedData, error: completedError } = await supabase
         .from("interview_participants")
         .select("*, interview:interview_id(*)")
-        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+        .eq("user_id", userId)
         .eq("completed", true)
         .order("completed_at", { ascending: false });
-      console.log("successfully retrieved completed interviews data");
-      if (error && Object.keys(error).length > 0) console.error("completed-fetch", error);
-      else setCompleted(data || []);
+      if (completedError && Object.keys(completedError).length > 0) console.error("completed-fetch", completedError);
+      else setCompleted(completedData || []);
     };
-    fetchCompleted();
+    fetchInterviews();
   }, []);
 
   useEffect(() => {
@@ -125,18 +156,49 @@ export default function CandidateDashboard() {
   }, []);
 
   const refreshDashboard = () => {
-    // Refresh completed interviews
-    const fetchCompleted = async () => {
-      const { data, error } = await supabase
+    const fetchInterviews = async () => {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) return;
+      // Fetch pending interviews
+      const { data: pendingData, error: pendingError } = await supabase
+        .from("interview_participants")
+        .select("interview:interview_id(*), status, completed")
+        .eq("user_id", userId)
+        .eq("completed", false);
+      if (pendingError && Object.keys(pendingError).length > 0) console.error("pending-fetch", pendingError);
+      else {
+        const mapped = (pendingData || []).map((row: any) => {
+          const interview = row.interview;
+          return {
+            id: interview.id,
+            title: interview.title || "Interview",
+            scheduledDate: interview.scheduled_date || "TBD",
+            company: interview.company || "Unknown",
+            logo: (interview.company || "?").charAt(0).toUpperCase(),
+          };
+        });
+        setPendingInterviews([
+          {
+            id: "sample-1",
+            title: "Sample Interview",
+            scheduledDate: "April 30, 2025",
+            company: "SampleCorp",
+            logo: "S",
+          },
+          ...mapped,
+        ]);
+      }
+      // Fetch completed interviews
+      const { data: completedData, error: completedError } = await supabase
         .from("interview_participants")
         .select("*, interview:interview_id(*)")
-        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+        .eq("user_id", userId)
         .eq("completed", true)
         .order("completed_at", { ascending: false });
-      if (error && Object.keys(error).length > 0) console.error("completed-fetch", error);
-      else setCompleted(data || []);        
+      if (completedError && Object.keys(completedError).length > 0) console.error("completed-fetch", completedError);
+      else setCompleted(completedData || []);
     };
-    fetchCompleted();
+    fetchInterviews();
   };
 
   if (loading || step !== 'dashboard') {
