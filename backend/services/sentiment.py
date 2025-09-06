@@ -49,7 +49,30 @@ def generate_behavioral_scores(summary):
         temperature=0.7
     )
     print("Behavioral Scores:", response.choices[0].message.content)
-    return json.loads(response.choices[0].message.content)
+    
+    # Clean the response content to handle markdown formatting
+    content = response.choices[0].message.content.strip()
+    
+    # Remove markdown code block markers if present
+    if content.startswith('```json'):
+        content = content[7:]
+    elif content.startswith('```'):
+        content = content[3:]
+    if content.endswith('```'):
+        content = content[:-3]
+    content = content.strip()
+    
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        print("Error parsing JSON in behavioral scores:", content)
+        # Return default scores if parsing fails
+        return {
+            "confidence": {"score": 50, "explanation": "Unable to parse confidence score"},
+            "clarity": {"score": 50, "explanation": "Unable to parse clarity score"},
+            "enthusiasm": {"score": 50, "explanation": "Unable to parse enthusiasm score"},
+            "leadership": {"score": 50, "explanation": "Unable to parse leadership score"}
+        }
 
 
 def generate_behavioral_scores_rule_based(summary):
@@ -94,7 +117,28 @@ def analyze_communication(summary):
         max_tokens=200
     )
     print("Communication Analysis:", response.choices[0].message.content)
-    return json.loads(response.choices[0].message.content)
+    
+    # Clean the response content to handle markdown formatting
+    content = response.choices[0].message.content.strip()
+    
+    # Remove markdown code block markers if present
+    if content.startswith('```json'):
+        content = content[7:]
+    elif content.startswith('```'):
+        content = content[3:]
+    if content.endswith('```'):
+        content = content[:-3]
+    content = content.strip()
+    
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        print("Error parsing JSON in communication analysis:", content)
+        # Return default analysis if parsing fails
+        return {
+            "strengths": ["Unable to parse communication strengths"],
+            "improvements": ["Unable to parse communication improvements"]
+        }
 
 def generate_behavioral_insights(summary):
     prompt = (
@@ -117,8 +161,36 @@ def generate_behavioral_insights(summary):
         temperature=0.8
     )
     print("Behavioral Insights:", response.choices[0].message.content)
+    
+    # Clean the response content to handle markdown formatting
+    content = response.choices[0].message.content.strip()
+    
+    # Remove markdown code block markers if present
+    if content.startswith('```json'):
+        content = content[7:]
+    elif content.startswith('```'):
+        content = content[3:]
+    if content.endswith('```'):
+        content = content[:-3]
+    content = content.strip()
+    
     try:
-        return json.loads(response.choices[0].message.content)
+        return json.loads(content)
     except json.JSONDecodeError:
-        print("Error parsing JSON in behavioral insights:", response.choices[0].message.content)
-        return {"insights": []}
+        print("Error parsing JSON in behavioral insights:", content)
+        # Fallback: try to extract insights from the text
+        import re
+        insights = []
+        lines = content.split('\n')
+        for line in lines:
+            line = line.strip()
+            # Look for lines that start with emojis or have bullet points
+            if re.match(r'^[🎤🎸💡🛠️📚⚠️🎯🚀💪🌟🔥]', line) or line.startswith('- ') or line.startswith('• '):
+                # Clean up the line
+                clean_line = re.sub(r'^[-•\s]+', '', line)
+                if clean_line:
+                    insights.append(clean_line)
+            elif line and len(line) > 10:  # Any substantial line
+                insights.append(line)
+        
+        return {"insights": insights[:4]}  # Return max 4 insights

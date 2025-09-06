@@ -17,7 +17,7 @@ export default function InterviewDetailsModal({ interview, onClose }: InterviewD
             try {
                 // Get the user ID from the interview participant record
                 const userId = interview.user_id;
-                
+
                 // Fetch all interview answers for this user
                 const { data: answers, error } = await supabase
                     .from("interview_answers")
@@ -78,8 +78,8 @@ export default function InterviewDetailsModal({ interview, onClose }: InterviewD
                             {interview.interview?.title || "Interview"}
                         </h5>
                         <p className="text-sm text-gray-400">
-                            Completed&nbsp;
-                            {new Date(interview.completed_at).toLocaleString(undefined, {
+                            Joined&nbsp;
+                            {new Date(interview.joined_at).toLocaleString(undefined, {
                                 year: "numeric",
                                 month: "short",
                                 day: "numeric",
@@ -109,7 +109,7 @@ export default function InterviewDetailsModal({ interview, onClose }: InterviewD
                                                 {new Date(answer.created_at).toLocaleDateString()}
                                             </span>
                                         </div>
-                                        
+
                                         <div className="mb-3">
                                             <p className="text-sm text-gray-300 mb-2">
                                                 <strong>Question:</strong> {answer.question_text}
@@ -129,8 +129,8 @@ export default function InterviewDetailsModal({ interview, onClose }: InterviewD
                                             <div className="mb-3">
                                                 <div className="text-xs font-medium text-gray-400 mb-1">Behavioral Insights</div>
                                                 <div className="text-sm text-gray-100">
-                                                    {typeof answer.behavioral_insights === 'string' 
-                                                        ? answer.behavioral_insights 
+                                                    {typeof answer.behavioral_insights === 'string'
+                                                        ? answer.behavioral_insights
                                                         : JSON.stringify(answer.behavioral_insights, null, 2)}
                                                 </div>
                                             </div>

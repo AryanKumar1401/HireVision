@@ -229,7 +229,22 @@ export default function InterviewSession() {
     setProcessingStatus("All responses have been uploaded and sent for analysis!");
     // Mark interview as completed in Supabase
     if (interviewId && userId) {
-      await markInterviewCompleted(interviewId, userId);
+      try {
+        const { error: updateError } = await supabase
+          .from("interview_participants")
+          .update({
+            completed: true,
+          })
+          .eq("interview_id", interviewId)
+          .eq("user_id", userId);
+        if (updateError) {
+          console.error(`Error updating interview ${interviewId}:`, updateError);
+        } else {
+          console.log(`Successfully marked interview ${interviewId} as completed`);
+        }
+      } catch (error) {
+        console.error("Error updating interview completion status:", error);
+      }
     }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());

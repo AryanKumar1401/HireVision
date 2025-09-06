@@ -11,7 +11,7 @@ from pydantic import BaseModel, EmailStr
 import spacy
 import json
 from services.sentiment import summarize_text, generate_behavioral_scores, analyze_communication, generate_behavioral_insights
-from services.resume_parser import ResumeParser
+# from services.resume_parser import ResumeParser
 import requests
 import subprocess
 import librosa
@@ -153,7 +153,7 @@ def analyze_video(video_url: str):
         # Process transcript
         transcript_text = transcript.text
         summary = summarize_text(transcript_text)
-        behavioral_scores = generate_behavioral_scores(summary)
+        # behavioral_scores = generate_behavioral_scores(summary)
         communication_analysis = analyze_communication(summary)
         behavioral_insights = generate_behavioral_insights(summary)
 
@@ -320,6 +320,7 @@ async def analyze_video_endpoint(video: VideoURL):
                         'video_url': video.video_url,
                         'summary': result.get('summary', ''),
                         'transcript': result.get('transcript', ''),
+                        'communication_analysis': json.dumps(result.get('communication_analysis', {})),
                         'behavioral_insights': json.dumps(result.get('behavioral_insights', {})),
                         'created_at': datetime.now().isoformat()
                     }).execute()
@@ -335,35 +336,35 @@ async def analyze_video_endpoint(video: VideoURL):
         print(f"Error in endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/generate-resume-questions")
-async def generate_resume_questions(resume_data: ResumeText):
-    """Generate questions from resume text"""
-    try:
-        parser = ResumeParser()
-        result = parser.parse_resume_and_generate_questions(resume_data.resume_text, is_pdf_url=False)
+# @app.post("/generate-resume-questions")
+# async def generate_resume_questions(resume_data: ResumeText):
+#     """Generate questions from resume text"""
+#     try:
+#         parser = ResumeParser()
+#         result = parser.parse_resume_and_generate_questions(resume_data.resume_text, is_pdf_url=False)
         
-        # Store the generated questions in the profiles.questions field if user_id is provided
-        if resume_data.user_id and result.get('experiences'):
-            try:
-                # Collect all questions from all experiences into a single array
-                all_questions = []
-                for experience in result['experiences']:
-                    all_questions.extend(experience['questions'])
+#         # Store the generated questions in the profiles.questions field if user_id is provided
+#         if resume_data.user_id and result.get('experiences'):
+#             try:
+#                 # Collect all questions from all experiences into a single array
+#                 all_questions = []
+#                 for experience in result['experiences']:
+#                     all_questions.extend(experience['questions'])
                 
-                # Update the profiles table with the questions array
-                supabase.table('profiles').update({
-                    'questions': all_questions,
-                    'updated_at': datetime.now().isoformat()
-                }).eq('id', resume_data.user_id).execute()
+#                 # Update the profiles table with the questions array
+#                 supabase.table('profiles').update({
+#                     'questions': all_questions,
+#                     'updated_at': datetime.now().isoformat()
+#                 }).eq('id', resume_data.user_id).execute()
                 
-                print(f"Resume questions stored in profiles for user {resume_data.user_id}")
-            except Exception as e:
-                print(f"Error storing resume questions in profiles: {str(e)}")
+#                 print(f"Resume questions stored in profiles for user {resume_data.user_id}")
+#             except Exception as e:
+#                 print(f"Error storing resume questions in profiles: {str(e)}")
         
-        return result
-    except Exception as e:
-        print(f"Error generating resume questions: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+#         return result
+#     except Exception as e:
+#         print(f"Error generating resume questions: {str(e)}")
+#         raise HTTPException(status_code=500, detail=str(e))
 
 def generate_personalized_questions_from_resume(resume_text: str, num_questions: int = 3) -> list:
     """

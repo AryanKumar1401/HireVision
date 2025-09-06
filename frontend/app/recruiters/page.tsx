@@ -253,8 +253,6 @@ export default function RecruitersPage() {
               summary: answer.summary || "",
               behavioral_scores: answer.behavioral_scores,
               communication_analysis: answer.communication_analysis,
-              emotion_results: answer.emotion_results,
-
             };
 
             return {
@@ -269,7 +267,6 @@ export default function RecruitersPage() {
               behavioral_scores: answer.behavioral_scores,
               communication_analysis: answer.communication_analysis,
               behavioral_insights: answer.behavioral_insights,
-              emotion_results: answer.emotion_results,
               created_at: answer.created_at,
               analysis: analysis,
             };

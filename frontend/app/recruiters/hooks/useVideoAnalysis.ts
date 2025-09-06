@@ -79,26 +79,22 @@ export const useVideoAnalysis = () => {
       console.log("Retrieved answer data types:", {
         summary: typeof relevantAnswer.summary,
         behavioral_scores: typeof relevantAnswer.behavioral_scores,
-        communication_analysis: typeof relevantAnswer.communication_analysis,
-        emotion_results: typeof relevantAnswer.emotion_results
+        communication_analysis: typeof relevantAnswer.communication_analysis
       });
 
       // Ensure JSON fields are properly parsed
       const behavioralScores = safeParseJSON(relevantAnswer.behavioral_scores);
       const communicationAnalysis = safeParseJSON(relevantAnswer.communication_analysis);
-      const emotionResults = safeParseJSON(relevantAnswer.emotion_results);
       const behavioralInsights = safeParseJSON(relevantAnswer.behavioral_insights);
       console.log("Parsed behavioral_insight in useVideoAnalysis:", behavioralInsights);
       console.log("Parsed behavioral_scores:", behavioralScores);
       console.log("Parsed communication_analysis:", communicationAnalysis);
-      console.log("Parsed emotion_results:", emotionResults);
 
       // Create Analysis object from the answer data
       const analysisData: Analysis = {
         summary: relevantAnswer.summary || "No summary available",
         behavioral_scores: behavioralScores,
         communication_analysis: communicationAnalysis,
-        emotion_results: emotionResults,
         behavioral_insights: behavioralInsights
       };
 
@@ -148,14 +144,12 @@ export const useVideoAnalysis = () => {
         summary: typeof answer.summary,
         behavioral_scores: typeof answer.behavioral_scores,
         communication_analysis: typeof answer.communication_analysis,
-        emotion_results: typeof answer.emotion_results,
         behavioral_insights: typeof answer.behavioral_insights
       });
 
       // Ensure JSON fields are properly parsed
       const behavioralScores = safeParseJSON(answer.behavioral_scores);
       const communicationAnalysis = safeParseJSON(answer.communication_analysis);
-      const emotionResults = safeParseJSON(answer.emotion_results);
       const behavioralInsights = safeParseJSON(answer.behavioral_insights);
 
       // Use the data from the answer directly since it already contains all analysis information
@@ -163,7 +157,6 @@ export const useVideoAnalysis = () => {
         summary: answer.summary || "No summary available",
         behavioral_scores: behavioralScores,
         communication_analysis: communicationAnalysis,
-        emotion_results: emotionResults,
         behavioral_insights: behavioralInsights
       };
 
