@@ -153,7 +153,6 @@ def analyze_video(video_url: str):
         # Process transcript
         transcript_text = transcript.text
         summary = summarize_text(transcript_text)
-        # behavioral_scores = generate_behavioral_scores(summary)
         communication_analysis = analyze_communication(summary)
         behavioral_insights = generate_behavioral_insights(summary)
 
@@ -167,7 +166,6 @@ def analyze_video(video_url: str):
             "summary": summary,
             "filename": filename,
             "transcript": transcript_text,
-            "behavioral_scores": behavioral_scores,
             "communication_analysis": communication_analysis,
             "enthusiasm_timestamps": [],
             "behavioral_insights": behavioral_insights
@@ -231,7 +229,7 @@ def send_interview_invite_email(invite: InterviewInvite):
         # Plain text content (fallback)
         text_content = f"""
         Interview Invitation
-        
+            
         Hello,
         
         You have been invited to participate in an interview: {invite.interview_title}

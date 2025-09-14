@@ -6,7 +6,7 @@ import { createClient } from "@/utils/auth";
 import NavigationMenu from "./dashboard/components/NavigationMenu";
 import PendingInterviews from "./dashboard/components/PendingInterviews";
 import InterviewDetailsModal from "./dashboard/components/InterviewDetailsModal";
-import { useProfile } from "@/hooks/useProfile";
+import { useProfile } from "@/hooks/useProfile"; 
 import { ProfileForm } from "./components/ProfileForm";
 import { useCandidateOnboardingStep } from '@/hooks/useCandidateOnboardingStep';
 import AddInterviewModal from "./components/AddInterviewModal";
