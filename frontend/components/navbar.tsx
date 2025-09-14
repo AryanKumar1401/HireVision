@@ -266,19 +266,19 @@ const Navbar = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${scrolled
-          ? "h-16 bg-[#0D1321]/70 backdrop-blur-md shadow-sm"
-          : "h-20 bg-transparent"
+          ? "h-25 bg-[#0D1321]/70 backdrop-blur-md shadow-sm"
+          : "h-25 bg-transparent"
           }`}
       >
         <div className="max-w-screen-xl mx-auto h-full px-6 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="relative z-20">
-            <div className="transition-all duration-300 flex items-center">
+            <div className="transition-all duration-300 flex items-center pt-6">
               <Image
-                src="/logo_alt.png"
+                src="/logo.png"
                 alt="HireVision Logo"
-                width={scrolled ? 110 : 130}
-                height={scrolled ? 28 : 33}
+                width={scrolled ? 80 : 90}
+                height={scrolled ? 5 : 7}
                 className="rounded-md"
                 priority
               />
