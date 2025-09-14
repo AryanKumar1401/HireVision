@@ -7,12 +7,12 @@ interface Testimonial {
   quote: string;
   name: string;
   role: string;
-  avatar: string;
 }
 
 const Testimonials = () => {
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [tabValue, setTabValue] = useState(0);
+  const [testimonialType, setTestimonialType] = useState<'recruiters' | 'candidates'>('recruiters');
 
   // Handle tab changes for testimonials
   const handleTabChange = (newValue: number) => {
@@ -20,30 +20,59 @@ const Testimonials = () => {
     setTabValue(newValue);
   };
 
-  // Testimonials
-  const testimonials: Testimonial[] = [
+  // Handle testimonial type toggle
+  const handleTypeToggle = (type: 'recruiters' | 'candidates') => {
+    setTestimonialType(type);
+    setActiveTestimonial(0);
+    setTabValue(0);
+  };
+
+  // Recruiter testimonials
+  const recruiterTestimonials: Testimonial[] = [
     {
       quote:
-        "GalacticHire cut our interview review time in half while improving our hiring decisions. The candidate feedback feature has dramatically improved our employer brand.",
-      name: "Sarah Chen",
-      role: "Head of Talent, TechStartup",
-      avatar: "/avatars/sarah.jpg",
+        "GalacticHire's philosophy is right. Hiring is a two way street, and transparency has never been more important.",
+      name: "Praveen B, PhD",
+      role: "Principial Research Scientist, LinkedIn",
     },
     {
       quote:
-        "The AI insights helped me understand exactly where I needed to improve. I used the feedback to ace my next interview and landed my dream job!",
-      name: "Marcus Johnson",
-      role: "Software Developer",
-      avatar: "/avatars/marcus.jpg",
+        "Understanding perspective is a step a lot of hirers have overlooked. GalacticHire is taking the steps to re-incorporate that perspective.",
+      name: "Eli B, JD",
+      role: "CEO, Launch a Biz",
     },
     {
       quote:
-        "We've seen a 40% increase in candidate satisfaction since implementing HireVision's feedback system. It's transformed our hiring process.",
-      name: "Priya Sharma",
-      role: "HR Director, Enterprise Solutions",
-      avatar: "/avatars/priya.jpg",
+        "The AI-powered analysis offers AI-driven insights that change the game for a lot of companies' hiring processes.",
+      name: "Stephy Liu",
+      role: "VC, HKTP",
     },
   ];
+
+  // Candidate testimonials
+  const candidateTestimonials: Testimonial[] = [
+    {
+      quote:
+        "Getting detailed feedback after each interview was a game-changer. I could see exactly what I was doing well and what to work on.",
+      name: "Goku T",
+      role: "CSE Student | NYU",
+    },
+    {
+      quote:
+        "The personalized questions based on my resume made me feel like the company really understood my background. Much better than generic interviews.",
+      name: "Alex Thompson",
+      role: "Computer Science Student | Cornell University",
+    },
+    {
+      quote:
+        "I love how transparent the process is. I get real insights about my performance and can track my improvement over time.",
+      name: "Sandy Lin",
+      role: "UX Designer",
+    },
+  ];
+
+  // Get current testimonials based on type
+  const currentTestimonials = testimonialType === 'recruiters' ? recruiterTestimonials : candidateTestimonials;
 
   return (
     <section
@@ -52,15 +81,41 @@ const Testimonials = () => {
     >
       <div className="max-w-6xl mx-auto">
         <h2 className="text-4xl font-bold mb-3 text-center">What People Say</h2>
-        <p className="text-xl text-gray-400 text-center mb-16">
+        <p className="text-xl text-gray-400 text-center mb-8">
           Trusted by recruiters and candidates worldwide
         </p>
+
+        {/* Toggle between Recruiters and Candidates */}
+        <div className="flex justify-center mb-12">
+          <div className="bg-[#1A2333] p-1 rounded-lg border border-gray-700">
+            <button
+              onClick={() => handleTypeToggle('recruiters')}
+              className={`px-6 py-3 rounded-md text-sm font-medium transition-all duration-300 ${
+                testimonialType === 'recruiters'
+                  ? "bg-[#F48C06] text-white shadow-lg"
+                  : "text-gray-400 hover:text-white hover:bg-gray-700"
+              }`}
+            >
+              Recruiters
+            </button>
+            <button
+              onClick={() => handleTypeToggle('candidates')}
+              className={`px-6 py-3 rounded-md text-sm font-medium transition-all duration-300 ${
+                testimonialType === 'candidates'
+                  ? "bg-[#F48C06] text-white shadow-lg"
+                  : "text-gray-400 hover:text-white hover:bg-gray-700"
+              }`}
+            >
+              Candidates
+            </button>
+          </div>
+        </div>
 
         <div className="relative">
           {/* Custom tab navigation */}
           <div className="flex justify-center mb-8 border-b border-gray-700">
             <div className="flex space-x-4">
-              {testimonials.map((testimonial, index) => (
+              {currentTestimonials.map((testimonial, index) => (
                 <button
                   key={index}
                   className={`pb-2 px-4 text-base font-medium transition-colors duration-300 ${
@@ -80,7 +135,7 @@ const Testimonials = () => {
             className="relative overflow-hidden"
             style={{ minHeight: "280px" }}
           >
-            {testimonials.map((testimonial, index) => (
+            {currentTestimonials.map((testimonial, index) => (
               <motion.div
                 key={index}
                 initial={{
@@ -97,26 +152,6 @@ const Testimonials = () => {
               >
                 <div className="bg-[#1A2333] p-8 rounded-xl shadow-xl">
                   <div className="flex items-center mb-6">
-                    <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-700 mr-4">
-                      <Image
-                        src={testimonial.avatar}
-                        alt={testimonial.name}
-                        width={56}
-                        height={56}
-                        className="object-cover"
-                        onError={(e) => {
-                          if (e.currentTarget) {
-                            e.currentTarget.style.display = "none";
-                            const parent = e.currentTarget.parentElement;
-                            if (parent) {
-                              parent.innerHTML = `<div class="w-14 h-14 rounded-full bg-[#F48C06] flex items-center justify-center font-bold text-xl">
-                                ${testimonial.name.charAt(0)}
-                              </div>`;
-                            }
-                          }
-                        }}
-                      />
-                    </div>
                     <div>
                       <h4 className="font-semibold text-lg">
                         {testimonial.name}
