@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/auth";
 import { useRecruiterProfile } from "./hooks/useRecruiterProfile";
 import { RecruiterProfileForm } from "./components/RecruiterProfileForm";
+import { useTransition } from "react";
 import Dashboard from "./components/Dashboard";
 import VideoAnalysis from "./components/VideoAnalysis";
 import InterviewQuestions from "./components/InterviewQuestions";
@@ -17,11 +18,18 @@ import {
 import { useVideoAnalysis } from "./hooks/useVideoAnalysis";
 import { getBackendUrl } from "@/utils/env";
 import NewInterview from "./components/NewInterview";
+import StarryBackground from '@/components/landing/starry-background';
 
 const supabase = createClient();
 
 export default function RecruitersPage() {
   const router = useRouter();
+
+  useEffect(() => {
+    router.prefetch("/");
+    router.prefetch("/recruiters/login");
+  }, [router]);
+
   const { isLoading, showProfileForm, profileData, userEmail, updateProfile } =
     useRecruiterProfile();
   const [candidateInterviews, setCandidateInterviews] = useState<
@@ -36,6 +44,7 @@ export default function RecruitersPage() {
   const [selectedAnswer, setSelectedAnswer] = useState<InterviewAnswer | null>(
     null
   );
+  const [isPending, startTransition] = useTransition();
   const [newInterviewOpen, setNewInterviewOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const { analysis, isAnalyzing, analyzeVideo, analyzeAnswer } =
@@ -75,8 +84,10 @@ export default function RecruitersPage() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/recruiters/login");
+    supabase.auth.signOut().catch(() => {});
+    startTransition(() => {
+      router.push("/recruiters/login");
+    });
   };
 
   const handleVideoSelect = async (video: Video) => {

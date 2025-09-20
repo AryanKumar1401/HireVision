@@ -25,7 +25,7 @@ import {
 } from "../constants";
 import FilterPanel from "./FilterPanel";
 import { useJobDescription } from "../hooks/useJobDescription";
-
+import Link from "next/link";
 interface DashboardProps {
   videos: Video[];
   topApplicants: string[];
@@ -279,8 +279,9 @@ const Dashboard: React.FC<DashboardProps> = ({
             New Interview
           </button>
           {/* Removed Invite Candidate button */}
-          <button
-            onClick={onBackClick}
+          <Link
+            href="/"
+            prefetch
             className="px-5 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-all shadow-md hover:shadow-lg font-medium flex items-center"
           >
             <svg
@@ -296,7 +297,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               />
             </svg>
             Back to Home
-          </button>
+          </Link>
         </div>
       </header>
 
