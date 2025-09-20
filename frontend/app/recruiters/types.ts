@@ -72,10 +72,7 @@ export interface Analysis {
 }
 
 export interface JobDescription {
-  title: string;
-  company: string;
-  requirements: string[];
-  responsibilities: string[];
+  job_description: string;
 }
 
 export interface FilterOptions {

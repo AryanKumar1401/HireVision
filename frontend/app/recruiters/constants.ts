@@ -45,23 +45,6 @@ export const performanceData = [
   { date: "Week 4", applications: 31 },
 ] as const;
 
-export const jobDescription = {
-  title: "Junior Full Stack Developer",
-  company: "TechCorp Inc.",
-  requirements: [
-    "20+ years experience with React/Next.js",
-    "Strong knowledge of TypeScript",
-    "Experience with cloud platforms (AWS/GCP)",
-    "Computer Science degree or equivalent",
-  ],
-  responsibilities: [
-    "Lead development of core platform features",
-    "Mentor junior developers",
-    "Architect scalable solutions",
-    "Collaborate with product teams",
-  ],
-} as const;
-
 export const aggregateMetrics = {
   totalApplicants: 0, // This will be computed from videos.length
   averageTechnicalScore: 7.8,

@@ -480,6 +480,7 @@ export default function RecruitersPage() {
             onBackClick={() => router.push("/")}
             recruiterName={profileData?.full_name}
             recruiterEmail={userEmail || undefined}
+            recruiterId={currentUserId || undefined}
           />
           <div className="mt-8 max-w-7xl mx-auto px-4">
             {currentUserId ? (

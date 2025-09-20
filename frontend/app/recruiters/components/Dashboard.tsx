@@ -21,10 +21,10 @@ import {
   skillsData,
   experienceData,
   scoresTrend,
-  jobDescription,
   aggregateMetrics,
 } from "../constants";
 import FilterPanel from "./FilterPanel";
+import { useJobDescription } from "../hooks/useJobDescription";
 
 interface DashboardProps {
   videos: Video[];
@@ -35,6 +35,7 @@ interface DashboardProps {
   onNewInterview: () => void;
   recruiterName?: string;
   recruiterEmail?: string;
+  recruiterId?: string;
 }
 
 // Helper function to check if video matches search query
@@ -131,6 +132,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   onNewInterview,
   recruiterName,
   recruiterEmail,
+  recruiterId,
 }) => {
   // Filter state
   const [filters, setFilters] = useState<FilterOptions>({
@@ -143,12 +145,59 @@ const Dashboard: React.FC<DashboardProps> = ({
     },
   });
 
+  // Job description hook
+  const { jobDescription, isLoading, isSaving, error, updateJobDescription, loadJobDescription } = useJobDescription();
+  const [isEditingJobDesc, setIsEditingJobDesc] = useState(false);
+  const [editedJobDesc, setEditedJobDesc] = useState(jobDescription);
+
+  // Load job description when recruiterId changes (guard against double-invoke in StrictMode)
+  const hasLoadedRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (recruiterId !== undefined && recruiterId !== null) {
+      if (hasLoadedRef.current !== recruiterId) {
+        hasLoadedRef.current = recruiterId;
+        loadJobDescription(recruiterId);
+      }
+    }
+  }, [recruiterId, loadJobDescription]);
+
+  // Update edited job description when jobDescription changes
+  React.useEffect(() => {
+    setEditedJobDesc(jobDescription);
+  }, [jobDescription]);
+
   // Filter change handler
   const handleFilterChange = (filterType: keyof FilterOptions, value: any) => {
     setFilters((prev) => ({
       ...prev,
       [filterType]: value,
     }));
+  };
+
+  // Job description handlers
+  const handleEditJobDesc = () => {
+    setIsEditingJobDesc(true);
+    setEditedJobDesc(jobDescription);
+  };
+
+  const handleSaveJobDesc = async () => {
+    console.log('Save clicked, recruiterId: ', recruiterId);
+    console.log('editedJobDesc: ', editedJobDesc);
+    if (recruiterId !== undefined && recruiterId !== null) {
+      await updateJobDescription(recruiterId, editedJobDesc);
+      setIsEditingJobDesc(false);
+    } else{
+      console.error('No recruiterId found');
+    }
+  };
+
+  const handleCancelEditJobDesc = () => {
+    setEditedJobDesc(jobDescription);
+    setIsEditingJobDesc(false);
+  };
+
+  const handleJobDescChange = (value: string) => {
+    setEditedJobDesc(value);
   };
 
   // Apply filters to videos
@@ -344,7 +393,18 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Left Column - Job Description */}
           <div className="lg:col-span-1 space-y-6">
-            <JobDescriptionCard />
+            <JobDescriptionCard 
+              jobDescription={jobDescription}
+              isEditing={isEditingJobDesc}
+              editedJobDescription={editedJobDesc}
+              onEdit={handleEditJobDesc}
+              onSave={handleSaveJobDesc}
+              onCancel={handleCancelEditJobDesc}
+              onChange={handleJobDescChange}
+              isLoading={isLoading}
+              isSaving={isSaving}
+              error={error}
+            />
 
             {/* New addition: Quick Stats Card */}
             <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg">
@@ -493,84 +553,170 @@ const MetricCard = ({ value, label, color, icon }: MetricCardProps) => {
   );
 };
 
-const JobDescriptionCard = () => (
-  <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg">
-    <div className="flex items-center mb-5">
-      <div className="p-2 bg-blue-400 bg-opacity-20 rounded-lg mr-3">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6 text-blue-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-          />
-        </svg>
-      </div>
-      <div>
-        <h2 className="text-xl font-bold text-white">{jobDescription.title}</h2>
-        <h3 className="text-gray-400">{jobDescription.company}</h3>
-      </div>
-    </div>
+interface JobDescriptionCardProps {
+  jobDescription: string;
+  isEditing: boolean;
+  editedJobDescription: string;
+  onEdit: () => void;
+  onSave: () => void;
+  onCancel: () => void;
+  onChange: (value: string) => void;
+  isLoading?: boolean;
+  isSaving?: boolean;
+  error?: string | null;
+}
 
-    <div className="space-y-5">
-      <div>
-        <h4 className="text-md font-semibold text-white mb-2 flex items-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4 mr-2 text-blue-400"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-              clipRule="evenodd"
-            />
-          </svg>
-          Requirements
-        </h4>
-        <ul className="list-disc list-inside text-gray-300 space-y-1">
-          {jobDescription.requirements.map((req, i) => (
-            <li key={i} className="text-sm">
-              {req}
-            </li>
-          ))}
-        </ul>
+const JobDescriptionCard = ({ 
+  jobDescription, 
+  isEditing, 
+  editedJobDescription, 
+  onEdit, 
+  onSave, 
+  onCancel, 
+  onChange,
+  isLoading = false,
+  isSaving = false,
+  error = null
+}: JobDescriptionCardProps) => {
+  const currentDescription = isEditing ? editedJobDescription : jobDescription;
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+
+  return (
+    <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg">
+      {error && (
+        <div className="mb-4 p-3 bg-red-900/20 border border-red-500/50 rounded-lg text-red-300 text-sm">
+          {error}
+        </div>
+      )}
+      
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center">
+          <div className="p-2 bg-blue-400 bg-opacity-20 rounded-lg mr-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 text-blue-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold text-white">Job Description</h3>
+        </div>
+        
+        <div className="flex space-x-2">
+          {isEditing ? (
+            <>
+              <button
+                onClick={onSave}
+                disabled={isSaving}
+                className="px-3 py-1 bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:cursor-not-allowed text-white text-sm rounded transition-colors flex items-center"
+              >
+                {isSaving ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  'Save'
+                )}
+              </button>
+              <button
+                onClick={onCancel}
+                disabled={isSaving}
+                className="px-3 py-1 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-800 disabled:cursor-not-allowed text-white text-sm rounded transition-colors"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={onEdit}
+              disabled={isLoading}
+              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white text-sm rounded transition-colors flex items-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+              {isLoading ? 'Loading...' : 'Edit'}
+            </button>
+          )}
+        </div>
       </div>
+
       <div>
-        <h4 className="text-md font-semibold text-white mb-2 flex items-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4 mr-2 text-blue-400"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-            <path
-              fillRule="evenodd"
-              d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-              clipRule="evenodd"
-            />
-          </svg>
-          Responsibilities
-        </h4>
-        <ul className="list-disc list-inside text-gray-300 space-y-1">
-          {jobDescription.responsibilities.map((resp, i) => (
-            <li key={i} className="text-sm">
-              {resp}
-            </li>
-          ))}
-        </ul>
+        {isEditing ? (
+          <textarea
+            value={currentDescription}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full text-gray-300 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm min-h-[200px] resize-y"
+            placeholder="Enter job description..."
+          />
+        ) : (
+          <div className="relative">
+            <div className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap h-40 overflow-hidden rounded border border-gray-700 bg-gray-900/30 p-3">
+              {currentDescription || "No job description provided. Click Edit to add one."}
+            </div>
+            {/* Fade overlay */}
+            <div className="pointer-events-none absolute bottom-10 left-0 right-0 h-10 bg-gradient-to-t from-gray-800 to-transparent" />
+            <div className="mt-3 flex justify-end">
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors"
+              >
+                View full
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Fullscreen modal for job description */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-gray-800 w-full max-w-3xl max-h-[85vh] rounded-xl border border-gray-700 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 bg-gray-900 border-b border-gray-700">
+              <h4 className="text-white font-semibold">Job Description</h4>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[75vh]">
+              <div className="whitespace-pre-wrap text-gray-300 text-sm">
+                {jobDescription || "No job description provided."}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 interface SkillsChartProps { }
 

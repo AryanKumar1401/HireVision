@@ -8,9 +8,10 @@ import time
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
+from typing import List, Optional
 import spacy
 import json
-from services.sentiment import summarize_text, generate_behavioral_scores, analyze_communication, generate_behavioral_insights
+from services.sentiment import summarize_text, analyze_communication, generate_behavioral_insights
 # from services.resume_parser import ResumeParser
 import requests
 import subprocess
@@ -525,6 +526,49 @@ async def upload_resume(file: UploadFile = File(...), user_id: str = Form(...)):
         raise HTTPException(status_code=500, detail=f"Failed to upload resume: {str(e)}")
     
     return {"success": True, "file_path": public_url, "filename": filename, "db_record": db_record}
+
+# Job Description Models
+class JobDescriptionUpdate(BaseModel):
+    recruiter_id: str
+    description: str
+
+@app.post("/update-job-description")
+async def update_job_description(job_desc: JobDescriptionUpdate):
+    """Update job description for an interview"""
+    try:
+        from datetime import datetime
+        
+        existing = supabase.table('job_descriptions').select('id').eq('recruiter_id', job_desc.recruiter_id).execute()
+        if existing.data and len(existing.data) > 0:
+            # Update existing job description
+            result = supabase.table('job_descriptions').update({
+                "description": job_desc.description,
+            }).eq('recruiter_id', job_desc.recruiter_id).execute()
+        else:
+            # Create new job description
+            result = supabase.table('job_descriptions').insert({
+                "recruiter_id": job_desc.recruiter_id,
+                "description": job_desc.description,
+                "created_at": datetime.now().isoformat(),
+            }).execute()
+        
+        
+        return {"success": True, "data": result.data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/get-job-description/{recruiter_id}")
+async def get_job_description(recruiter_id: str):
+    """Get job description for an interview"""
+    try:
+        result = supabase.table('job_descriptions').select('description').eq('recruiter_id', recruiter_id).execute()
+        
+        if result.data and len(result.data) > 0:
+            return {"success": True, "description": result.data[0].get('description', '')}
+        else:
+            return {"success": True, "description": ""}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/manage-interview-invite")
 async def manage_interview_invite(invite: InterviewInvite):
