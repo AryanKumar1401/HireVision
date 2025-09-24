@@ -5,7 +5,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import os
 import time
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
@@ -21,6 +21,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import pdfplumber  # Add this import for PDF text extraction
+import requests as httpx
 
 # Load environment variables
 load_dotenv()
@@ -29,6 +30,7 @@ OPEN_AI_API_KEY = os.getenv("OPEN_AI_API_KEY")
 SUPABASE_URL = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
 SUPABASE_KEY = os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")  # Add this to your .env file
+SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
 
 # Initialize services
 aai.settings.api_key = ASSEMBLYAI_API_KEY
@@ -36,6 +38,36 @@ transcriber = aai.Transcriber()
 client = OpenAI(api_key=OPEN_AI_API_KEY)
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 nlp = spacy.load("en_core_web_sm")
+# --- Auth helpers ---
+def get_current_user_id(req: Request) -> str:
+    """Resolve current user id (UUID) via Supabase Auth /auth/v1/user.
+    Requires Authorization: Bearer <access_token> header from the client.
+    """
+    auth = req.headers.get("authorization", "")
+    if not auth.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing Bearer token")
+    token = auth.split(" ", 1)[1]
+
+    try:
+        resp = httpx.get(
+            f"{SUPABASE_URL}/auth/v1/user",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "apikey": SUPABASE_KEY,
+            },
+            timeout=5,
+        )
+    except Exception:
+        raise HTTPException(status_code=401, detail="Auth service unavailable")
+
+    if resp.status_code != 200:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    try:
+        user_json = resp.json()
+        return user_json["id"]
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid auth response")
 
 # FastAPI app setup
 app = FastAPI()
@@ -155,7 +187,7 @@ def analyze_video(video_url: str):
         transcript_text = transcript.text
         summary = summarize_text(transcript_text)
         communication_analysis = analyze_communication(summary)
-        behavioral_insights = generate_behavioral_insights(summary)
+        behavioral_insights = generate_behavioral_insights(summary, recruiter_id)
 
         # Save summary to file
         os.makedirs("txt_files", exist_ok=True)
@@ -563,6 +595,18 @@ async def get_job_description(recruiter_id: str):
     try:
         result = supabase.table('job_descriptions').select('description').eq('recruiter_id', recruiter_id).execute()
         
+        if result.data and len(result.data) > 0:
+            return {"success": True, "description": result.data[0].get('description', '')}
+        else:
+            return {"success": True, "description": ""}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/get-job-description/me")
+async def get_job_description_me(user_id: str = Depends(get_current_user_id)):
+    """Get job description for the authenticated recruiter using Authorization header."""
+    try:
+        result = supabase.table('job_descriptions').select('description').eq('recruiter_id', user_id).execute()
         if result.data and len(result.data) > 0:
             return {"success": True, "description": result.data[0].get('description', '')}
         else:

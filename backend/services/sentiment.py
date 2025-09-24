@@ -6,10 +6,11 @@ import json
 import spacy
 
 load_dotenv()
+
+
 OPEN_AI_API_KEY = os.getenv("OPEN_AI_API_KEY")
 client = OpenAI(api_key=OPEN_AI_API_KEY)
 nlp = spacy.load("en_core_web_sm")
-
 def summarize_text(text):
     response = client.chat.completions.create(
         model="gpt-5-mini",
@@ -73,10 +74,9 @@ def analyze_communication(summary):
             "improvements": ["Unable to parse communication improvements"]
         }
 
-def generate_behavioral_insights(summary):
+def generate_behavioral_insights(summary, recruiter_id):
     prompt = (
-        "You are a talent scout reviewing an interview summary. "
-        "Based on the JD " \
+        "You are a talent scout reviewing an interview summary. " \
         "Your goal is to pull out 2-4 of the most interesting, impressive, or quirky facts about the candidate."
         "These should be unique aspects of their personality or experiences. "
         "Present them as short, punchy statements. Add a relevant emoji at the start of each statement.\n\n"
