@@ -258,6 +258,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [chatInput, setChatInput] = useState("");
   const [chatReply, setChatReply] = useState<string | null>(null);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const sendChat = async () => {
     if (!chatInput.trim()) return;
     setIsChatLoading(true);
@@ -603,6 +604,46 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
           )}
         </section>
+      </div>
+      {/* Floating Chat Widget */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+        {isChatOpen && (
+          <div className="w-80 bg-gray-800 rounded-xl border border-gray-700 shadow-2xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-white font-semibold text-sm">Recruiter Chat</div>
+              <button onClick={() => setIsChatOpen(false)} className="text-gray-400 hover:text-white">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div className="space-y-2">
+              <input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Ask a quick question..."
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+              />
+              <button
+                onClick={sendChat}
+                disabled={isChatLoading || !chatInput.trim()}
+                className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-900/40 text-white rounded-lg text-sm"
+              >
+                {isChatLoading ? "Thinking..." : "Send"}
+              </button>
+              {chatReply && (
+                <div className="text-gray-200 bg-gray-900/40 border border-gray-700 rounded-lg p-2 text-sm whitespace-pre-wrap max-h-40 overflow-auto">
+                  {chatReply}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        <button
+          onClick={() => setIsChatOpen((v: boolean) => !v)}
+          className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg flex items-center justify-center"
+          title="Chat"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l.8-4A7.5 7.5 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+        </button>
       </div>
     </div>
   );
