@@ -102,6 +102,10 @@ class ResumeQuestionsRequest(BaseModel):
 class GetPersonalizedQuestionsRequest(BaseModel):
     user_id: str
 
+class RecruiterChatRequest(BaseModel):
+    prompt: str
+    recruiter_id: str | None = None
+
 def extract_main_themes(transcript: str, num_themes: int = 4) -> list:
     prompt = (
         f"Extract {num_themes} main themes from the following transcript. "
@@ -186,8 +190,9 @@ def analyze_video(video_url: str):
         # Process transcript
         transcript_text = transcript.text
         summary = summarize_text(transcript_text)
-        communication_analysis = analyze_communication(summary)
-        behavioral_insights = generate_behavioral_insights(summary, recruiter_id)
+        communication_analysis = analyze_communication(transcript_text)
+        behavioral_insights = generate_behavioral_insights(transcript_text, supabase.table('job_descriptions').select('description').eq('recruiter_id', video.user_id ).execute().data[0].get('description'))
+        print("Quick recruiter-id check", video.user_id)
 
         # Save summary to file
         os.makedirs("txt_files", exist_ok=True)
@@ -367,36 +372,6 @@ async def analyze_video_endpoint(video: VideoURL):
         print(f"Error in endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# @app.post("/generate-resume-questions")
-# async def generate_resume_questions(resume_data: ResumeText):
-#     """Generate questions from resume text"""
-#     try:
-#         parser = ResumeParser()
-#         result = parser.parse_resume_and_generate_questions(resume_data.resume_text, is_pdf_url=False)
-        
-#         # Store the generated questions in the profiles.questions field if user_id is provided
-#         if resume_data.user_id and result.get('experiences'):
-#             try:
-#                 # Collect all questions from all experiences into a single array
-#                 all_questions = []
-#                 for experience in result['experiences']:
-#                     all_questions.extend(experience['questions'])
-                
-#                 # Update the profiles table with the questions array
-#                 supabase.table('profiles').update({
-#                     'questions': all_questions,
-#                     'updated_at': datetime.now().isoformat()
-#                 }).eq('id', resume_data.user_id).execute()
-                
-#                 print(f"Resume questions stored in profiles for user {resume_data.user_id}")
-#             except Exception as e:
-#                 print(f"Error storing resume questions in profiles: {str(e)}")
-        
-#         return result
-#     except Exception as e:
-#         print(f"Error generating resume questions: {str(e)}")
-#         raise HTTPException(status_code=500, detail=str(e))
-
 def generate_personalized_questions_from_resume(resume_text: str, num_questions: int = 3) -> list:
     """
     Generate a list of personalized interview questions based on the resume text using OpenAI Chat API (gpt-4o).
@@ -412,7 +387,7 @@ def generate_personalized_questions_from_resume(resume_text: str, num_questions:
         f"Return the questions as a JSON array of objects, each with a 'question' field. Example: [{{\"question\": \"...\"}}, ...]"
     )
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-5-mini",
         messages=[
             {"role": "system", "content": "You are an expert technical interviewer."},
             {"role": "user", "content": prompt}
@@ -511,6 +486,25 @@ async def generate_resume_questions_from_db(request: ResumeQuestionsRequest):
     except Exception as e:
         print(f"Error in generate_resume_questions_from_db: {str(e)}")
         return {"error": str(e)}
+
+@app.post("/recruiter-chat")
+async def recruiter_chat(req: RecruiterChatRequest):
+    """Lightweight recruiter chatbot: returns a brief helpful answer."""
+    try:
+        system_prompt = "You are a concise assistant that helps recruiters. Keep replies under 120 words."
+        response = client.chat.completions.create(
+            model="gpt-5-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": req.prompt},
+            ],
+            max_tokens=250,
+            temperature=0.3,
+        )
+        content = response.choices[0].message.content.strip()
+        return {"reply": content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
 async def health_check():

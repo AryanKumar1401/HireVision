@@ -7,7 +7,6 @@ import spacy
 
 load_dotenv()
 
-
 OPEN_AI_API_KEY = os.getenv("OPEN_AI_API_KEY")
 client = OpenAI(api_key=OPEN_AI_API_KEY)
 nlp = spacy.load("en_core_web_sm")
@@ -33,13 +32,15 @@ def summarize_text(text):
     print("Summary:", response.choices[0].message.content)
     return response.choices[0].message.content
 
-def analyze_communication(summary):
+def analyze_communication(transcript):
     prompt = (
-        "As a communication skills analyst, evaluate the following interview summary and provide: "
-        "1. 4 key strengths in communication "
-        "2. 2 areas for improvement "
+        "As a communication skills analyst, evaluate the following interview transcript and provide insights\n" 
+        " about the interviewee’s communication abilities.\n"
+        "Follow these rules carefully:"
+        "1. Identify and describe 2 key strengths in the interviewee’s communication style, each in 9 words or fewer. \n"
+        "2. Identify and describe 2 areas for improvement in the interviewee’s communication style, each in 9 words or fewer.\n"
         "Format as JSON: {'strengths': [...], 'improvements': [...]}\n\n"
-        f"Summary: {summary}"
+        f"Transcript: {transcript}"
     )
     
     response = client.chat.completions.create(
@@ -74,13 +75,14 @@ def analyze_communication(summary):
             "improvements": ["Unable to parse communication improvements"]
         }
 
-def generate_behavioral_insights(summary, recruiter_id):
+def generate_behavioral_insights(transcript, job_description):
     prompt = (
-        "You are a talent scout reviewing an interview summary. " \
-        "Your goal is to pull out 2-4 of the most interesting, impressive, or quirky facts about the candidate."
-        "These should be unique aspects of their personality or experiences. "
-        "Present them as short, punchy statements. Add a relevant emoji at the start of each statement.\n\n"
-        f"Here is the summary:\n{summary}\n\n"
+        "You are a talent scout reviewing a transcript from a video interview. " \
+        "Your primary objective is to identify 2-4 distinctive attributes of the candidate that relate closely to the provided job description." \
+        "Ensure the attributes you select are unique, relevant to the job description, and avoid clichés or generic statements.\n\n"
+        "Output the selected statements as short, punchy insights preceded by a relevant emoji."
+        f"Here is the transcript:\n{transcript}\n\n" 
+        "Here is the job description:\n{job_description}\n\n"
         "Format the output as a JSON object with a single key 'insights' which is an array of strings. For example:\n"
         '{"insights": ["🎤 Presented at a major conference", "🎸 Plays in a band on weekends"]}'
     )

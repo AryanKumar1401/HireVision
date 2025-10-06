@@ -28,6 +28,7 @@ import { useJobDescription } from "../hooks/useJobDescription";
 import Link from "next/link";
 import { createClient } from "@/utils/auth";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 interface DashboardProps {
   videos: Video[];
   topApplicants: string[];
@@ -251,6 +252,34 @@ const Dashboard: React.FC<DashboardProps> = ({
     ...aggregateMetrics,
     totalApplicants: videos.length,
     applicantsInProgress: Math.floor(videos.length * 0.6),
+  };
+
+  // Minimal Chatbot widget state & handlers
+  const [chatInput, setChatInput] = useState("");
+  const [chatReply, setChatReply] = useState<string | null>(null);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const sendChat = async () => {
+    if (!chatInput.trim()) return;
+    setIsChatLoading(true);
+    setChatReply(null);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      const res = await fetch(`${baseUrl}/recruiter-chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: chatInput, recruiter_id: recruiterId || null })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setChatReply(data.reply || "");
+      } else {
+        setChatReply(data.detail || "Something went wrong.");
+      }
+    } catch (e) {
+      setChatReply("Network error. Try again.");
+    } finally {
+      setIsChatLoading(false);
+    }
   };
 
   return (
@@ -485,6 +514,36 @@ const Dashboard: React.FC<DashboardProps> = ({
           onFilterChange={handleFilterChange}
           totalResults={filteredVideos.length}
         />
+
+        {/* Minimal Chatbot */}
+        <section className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg mb-8">
+          <h2 className="text-2xl font-bold text-white mb-4 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l.8-4A7.5 7.5 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            Recruiter Chat (beta)
+          </h2>
+          <div className="flex flex-col md:flex-row gap-3">
+            <input
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Ask something quick (e.g., summarize pipeline)..."
+              className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+            />
+            <button
+              onClick={sendChat}
+              disabled={isChatLoading || !chatInput.trim()}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-900/40 text-white rounded-lg"
+            >
+              {isChatLoading ? "Thinking..." : "Send"}
+            </button>
+          </div>
+          {chatReply && (
+            <div className="mt-3 text-gray-200 bg-gray-900/40 border border-gray-700 rounded-lg p-3 whitespace-pre-wrap">
+              {chatReply}
+            </div>
+          )}
+        </section>
 
         {/* Applications Section */}
         <section className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg">
