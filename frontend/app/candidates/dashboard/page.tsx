@@ -24,6 +24,13 @@ export default function CandidateDashboard() {
   const { loading, step, redirectIfNeeded } = useCandidateOnboardingStep();
   const [pendingInterviews, setPendingInterviews] = useState<any[]>([]);
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch {}
+    router.push("/login");
+  };
+
   // Get interview code from URL if present
   const interviewCode = searchParams.get('code');
 
@@ -232,29 +239,49 @@ export default function CandidateDashboard() {
             >
               Candidate Dashboard
             </motion.h1>
-            <motion.button
-              initial={{ x: 50, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              onClick={() => setAddInterviewOpen(true)}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all shadow-lg hover:shadow-xl font-medium flex items-center space-x-2"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+            <div className="flex items-center gap-3">
+              <motion.button
+                initial={{ x: 50, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                onClick={() => setAddInterviewOpen(true)}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all shadow-lg hover:shadow-xl font-medium flex items-center space-x-2"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              <span>Add Interview</span>
-            </motion.button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                <span>Add Interview</span>
+              </motion.button>
+              <motion.button
+                initial={{ x: 50, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.25 }}
+                onClick={handleLogout}
+                className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all shadow-lg hover:shadow-xl font-medium flex items-center space-x-2"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path fillRule="evenodd" d="M3 4.5A1.5 1.5 0 014.5 3h7a1.5 1.5 0 011.5 1.5v3a.75.75 0 01-1.5 0v-3h-7v15h7v-3a.75.75 0 011.5 0v3A1.5 1.5 0 0111.5 21h-7A1.5 1.5 0 013 19.5v-15z" clipRule="evenodd" />
+                  <path d="M16.28 8.22a.75.75 0 10-1.06 1.06L17.94 12l-2.72 2.72a.75.75 0 101.06 1.06l3.25-3.25a.75.75 0 000-1.06l-3.25-3.25z" />
+                </svg>
+                <span>Logout</span>
+              </motion.button>
+            </div>
           </div>
 
           {/* Navigation Menu */}

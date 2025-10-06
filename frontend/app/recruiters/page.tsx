@@ -409,16 +409,6 @@ export default function RecruitersPage() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {userEmail && !selectedVideo && (
-        <div className="absolute top-4 right-4 z-50 flex flex-col items-end gap-1">
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
-          >
-            Logout
-          </button>
-        </div>
-      )}
 
       {inviteOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">

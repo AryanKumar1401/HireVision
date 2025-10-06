@@ -26,6 +26,8 @@ import {
 import FilterPanel from "./FilterPanel";
 import { useJobDescription } from "../hooks/useJobDescription";
 import Link from "next/link";
+import { createClient } from "@/utils/auth";
+import { useRouter } from "next/navigation";
 interface DashboardProps {
   videos: Video[];
   topApplicants: string[];
@@ -134,7 +136,15 @@ const Dashboard: React.FC<DashboardProps> = ({
   recruiterEmail,
   recruiterId,
 }) => {
+  const router = useRouter();
   // Filter state
+  const handleLogout = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch {}
+    router.push("/recruiters/login");
+  };
   const [filters, setFilters] = useState<FilterOptions>({
     experienceLevel: ["all"],
     searchQuery: "",
@@ -245,22 +255,31 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 p-6 md:p-8">
-      {/* Header with title */}
-      <header className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-gray-700 pb-4">
-        <h1 className="text-3xl md:text-4xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
-          Recruitment Dashboard
-        </h1>
-        <div className="flex items-center space-x-4">
-          {recruiterName && recruiterEmail && (
-            <div className="text-right">
-              <div className="text-white font-semibold">{recruiterName}</div>
-              <div className="text-gray-400 text-sm">{recruiterEmail}</div>
-            </div>
-          )}
-          {/* 🔹 New Interview button */}
+      {/* Top menu bar with actions */}
+      <div className="w-full bg-gradient-to-r from-gray-900/60 to-gray-800/40 backdrop-blur border border-gray-700/60 rounded-xl mb-6 shadow-lg">
+        <div className="max-w-7xl mx-auto h-16 px-4 md:px-6 flex items-center justify-end gap-5">
+          <Link
+            href="/"
+            prefetch
+            className="px-6 py-2.5 bg-gray-800/70 hover:bg-gray-700/80 text-white rounded-full transition-transform duration-200 transform hover:-translate-y-0.5 shadow-sm hover:shadow-md text-base flex items-center min-w-48 ring-1 ring-gray-500/20 hover:ring-gray-400/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Back to Home
+          </Link>
           <button
             onClick={onNewInterview}
-            className="px-5 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 rounded-lg transition-all shadow-md hover:shadow-lg font-medium flex items-center"
+            className="px-6 py-2.5 bg-gradient-to-r from-blue-600/25 to-indigo-600/25 hover:from-blue-600/35 hover:to-indigo-600/35 text-blue-200 rounded-full transition-transform duration-200 transform hover:-translate-y-0.5 shadow-sm hover:shadow-md text-base flex items-center min-w-48 ring-1 ring-blue-400/20 hover:ring-blue-400/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -278,26 +297,35 @@ const Dashboard: React.FC<DashboardProps> = ({
             </svg>
             New Interview
           </button>
-          {/* Removed Invite Candidate button */}
-          <Link
-            href="/"
-            prefetch
-            className="px-5 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-all shadow-md hover:shadow-lg font-medium flex items-center"
+          <button
+            onClick={handleLogout}
+            className="px-6 py-2.5 bg-gradient-to-r from-rose-600/25 to-red-600/25 hover:from-rose-600/35 hover:to-red-600/35 text-red-200 rounded-full transition-transform duration-200 transform hover:-translate-y-0.5 shadow-sm hover:shadow-md text-base flex items-center min-w-48 ring-1 ring-rose-400/20 hover:ring-rose-400/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5 mr-2"
-              viewBox="0 0 20 20"
+              viewBox="0 0 24 24"
               fill="currentColor"
             >
-              <path
-                fillRule="evenodd"
-                d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-                clipRule="evenodd"
-              />
+              <path fillRule="evenodd" d="M3 4.5A1.5 1.5 0 014.5 3h7a1.5 1.5 0 011.5 1.5v3a.75.75 0 01-1.5 0v-3h-7v15h7v-3a.75.75 0 011.5 0v3A1.5 1.5 0 0111.5 21h-7A1.5 1.5 0 013 19.5v-15z" clipRule="evenodd" />
+              <path d="M16.28 8.22a.75.75 0 10-1.06 1.06L17.94 12l-2.72 2.72a.75.75 0 101.06 1.06l3.25-3.25a.75.75 0 000-1.06l-3.25-3.25z" />
             </svg>
-            Back to Home
-          </Link>
+            Logout
+          </button>
+        </div>
+      </div>
+      {/* Header with title */}
+      <header className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-gray-700 pb-4">
+        <h1 className="text-3xl md:text-4xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+          Recruitment Dashboard
+        </h1>
+        <div className="flex items-center space-x-4">
+          {recruiterName && recruiterEmail && (
+            <div className="text-right">
+              <div className="text-white font-semibold">{recruiterName}</div>
+              <div className="text-gray-400 text-sm">{recruiterEmail}</div>
+            </div>
+          )}
         </div>
       </header>
 
