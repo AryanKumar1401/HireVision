@@ -35,14 +35,22 @@ export const useJobDescription = (): UseJobDescriptionReturn => {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to update job description: ${response.statusText}`);
+        // Try to surface backend error details
+        try {
+          const errBody = await response.json();
+          const detail = errBody?.detail || errBody?.message || JSON.stringify(errBody);
+          throw new Error(`Failed to update job description: ${detail}`);
+        } catch (_) {
+          throw new Error(`Failed to update job description: ${response.status} ${response.statusText}`);
+        }
       }
 
       const result = await response.json();
       if (result.success) {
         setJobDescription(description);
       } else {
-        throw new Error('Failed to update job description');
+        const reason = result?.message || result?.error || 'Unknown error';
+        throw new Error(`Failed to update job description: ${reason}`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while saving');
@@ -61,7 +69,13 @@ export const useJobDescription = (): UseJobDescriptionReturn => {
       const response = await fetch(`${API_BASE_URL}/get-job-description/${recruiterId}`);
       
       if (!response.ok) {
-        throw new Error(`Failed to load job description: ${response.statusText}`);
+        try {
+          const errBody = await response.json();
+          const detail = errBody?.detail || errBody?.message || JSON.stringify(errBody);
+          throw new Error(`Failed to load job description: ${detail}`);
+        } catch (_) {
+          throw new Error(`Failed to load job description: ${response.status} ${response.statusText}`);
+        }
       }
 
       const result = await response.json();

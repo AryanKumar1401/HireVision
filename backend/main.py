@@ -588,13 +588,12 @@ async def get_job_description(recruiter_id: str):
     """Get job description for an interview"""
     try:
         result = supabase.table('job_descriptions').select('description').eq('recruiter_id', recruiter_id).execute()
-        
-        if result.data and len(result.data) > 0:
+        if result and hasattr(result, 'data') and result.data and len(result.data) > 0:
             return {"success": True, "description": result.data[0].get('description', '')}
-        else:
-            return {"success": True, "description": ""}
+        return {"success": True, "description": ""}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Provide clearer context in error for faster debugging on the client
+        raise HTTPException(status_code=500, detail=f"Failed to fetch job description for {recruiter_id}: {str(e)}")
 
 @app.get("/get-job-description/me")
 async def get_job_description_me(user_id: str = Depends(get_current_user_id)):
