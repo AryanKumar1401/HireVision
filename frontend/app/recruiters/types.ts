@@ -89,3 +89,19 @@ export type FilterChangeHandler = (
   filterType: keyof FilterOptions,
   value: any
 ) => void;
+
+// Emotion analysis types
+export interface EmotionScores {
+  happy: number;
+  sad: number;
+  angry: number;
+  neutral: number;
+  surprise: number;
+  fear?: number;
+  disgust?: number;
+}
+
+export interface EmotionFrame {
+  timestamp: number;
+  emotions: EmotionScores;
+}

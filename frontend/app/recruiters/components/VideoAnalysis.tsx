@@ -1,35 +1,5 @@
 import React, { useState } from "react";
-
-// Mock types for demonstration
-interface Video {
-  title: string;
-  url: string;
-  candidate_details?: {
-    full_name: string;
-    email: string;
-    phone: string;
-    experience: string;
-    linkedin: string;
-  };
-}
-
-interface InterviewAnswer {
-  id: string;
-  question_index: number;
-  question_text: string;
-  video_url?: string;
-}
-
-interface Analysis {
-  summary: string;
-  behavioral_insights?: {
-    insights: string[];
-  };
-  communication_analysis?: {
-    strengths: string[];
-    improvements: string[];
-  };
-}
+import { Video, InterviewAnswer, Analysis } from "../types";
 
 interface VideoAnalysisProps {
   video: Video;
@@ -107,11 +77,10 @@ const VideoAnalysis: React.FC<VideoAnalysisProps> = ({
                 <button
                   key={answer.id}
                   onClick={() => handleAnswerChange(index)}
-                  className={`relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
-                    index === selectedAnswerIndex
+                  className={`relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${index === selectedAnswerIndex
                       ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25 scale-105"
                       : "bg-slate-800/50 text-slate-300 border border-slate-700/50 hover:bg-slate-800 hover:border-slate-600 hover:scale-105"
-                  }`}
+                    }`}
                 >
                   Question {answer.question_index + 1}
                 </button>
@@ -191,7 +160,7 @@ const CandidateInfoColumn: React.FC<{
                 <InfoRow icon="briefcase" label="Experience" value={video.candidate_details.experience} />
                 <div className="flex items-start gap-3 pt-3 border-t border-slate-700/50">
                   <svg className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
                   </svg>
                   <div className="flex-1 min-w-0">
                     <div className="text-xs text-slate-400 mb-1">LinkedIn</div>
@@ -308,7 +277,7 @@ const AnalysisColumn: React.FC<{
 
 const BehavioralAnalysis: React.FC<{ analysis: Analysis | null }> = ({ analysis }) => {
   const insights = analysis?.behavioral_insights?.insights || [];
-  
+
   return (
     <div className="group relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-900/50 to-slate-800/30 border border-slate-700/50 backdrop-blur-sm hover:border-slate-600/50 transition-all duration-300">
       <div className="absolute inset-0 bg-gradient-to-br from-orange-600/5 to-red-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -412,73 +381,4 @@ const CommunicationAssessment: React.FC<{
   );
 };
 
-// Demo Component
-export default function App() {
-  const mockVideo: Video = {
-    title: "Senior Software Engineer Interview",
-    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    candidate_details: {
-      full_name: "Sarah Anderson",
-      email: "sarah.anderson@email.com",
-      phone: "+1 (555) 123-4567",
-      experience: "8 years",
-      linkedin: "https://linkedin.com/in/sarahanderson"
-    }
-  };
-
-  const mockAnswers: InterviewAnswer[] = [
-    {
-      id: "1",
-      question_index: 0,
-      question_text: "Tell me about a challenging project you worked on and how you overcame obstacles.",
-      video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-    },
-    {
-      id: "2",
-      question_index: 1,
-      question_text: "Describe your approach to mentoring junior developers.",
-      video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
-    },
-    {
-      id: "3",
-      question_index: 2,
-      question_text: "How do you handle technical disagreements with team members?",
-      video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
-    }
-  ];
-
-  const mockAnalysis: Analysis = {
-    summary: "The candidate demonstrated strong technical knowledge and excellent problem-solving skills. They provided concrete examples from past experiences and showed a deep understanding of software engineering principles. Their communication was clear and structured throughout the interview.",
-    behavioral_insights: {
-      insights: [
-        "Shows strong leadership qualities and takes initiative in challenging situations",
-        "Demonstrates excellent collaboration skills and values team input",
-        "Exhibits growth mindset with focus on continuous learning and improvement",
-        "Handles pressure well and maintains composure during technical discussions"
-      ]
-    },
-    communication_analysis: {
-      strengths: [
-        "Clear and concise explanations of technical concepts",
-        "Active listening and thoughtful responses to questions",
-        "Good use of examples to illustrate points",
-        "Professional demeanor and confident body language"
-      ],
-      improvements: [
-        "Could provide more specific metrics when discussing achievements",
-        "Occasionally rushes through complex explanations"
-      ]
-    }
-  };
-
-  return (
-    <VideoAnalysis
-      video={mockVideo}
-      candidateAnswers={mockAnswers}
-      analysis={mockAnalysis}
-      isAnalyzing={false}
-      onClose={() => console.log("Close clicked")}
-      onAnswerSelect={(answer) => console.log("Answer selected:", answer)}
-    />
-  );
-}
+export default VideoAnalysis;
