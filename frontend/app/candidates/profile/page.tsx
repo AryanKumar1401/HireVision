@@ -2,12 +2,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-// import { createClient } from "@supabase/supabase-js";
 import { createClient } from "@/utils/auth";
 
-// Initialize Supabase client - replace with your actual credentials
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient();
 
 export default function ProfilePage() {
@@ -16,9 +12,7 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [checkingSession, setCheckingSession] = useState(true);
 
-  // Profile data state
   const [profileData, setProfileData] = useState({
     full_name: "",
     phone: "",
@@ -28,7 +22,6 @@ export default function ProfilePage() {
     email: "",
   });
 
-  // Form data state (for editing)
   const [formData, setFormData] = useState({
     full_name: "",
     phone: "",
@@ -37,17 +30,11 @@ export default function ProfilePage() {
     email: "",
   });
 
-  // Fetch user profile data on component mount
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
         setIsLoading(true);
-
-        // Get the current user
-        const {
-          data: { session },
-          error: sessionErr,
-        } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
 
         if (sessionErr || !session) {
           router.push("/login");
@@ -55,11 +42,8 @@ export default function ProfilePage() {
         }
         const user = session.user;
 
-        setCheckingSession(false);
-
-        // Fetch the profile data
         const { data, error } = await supabase
-          .from("profiles") // Assuming your table is named 'profiles'
+          .from("profiles")
           .select("*")
           .eq("id", user.id)
           .single();
@@ -77,10 +61,7 @@ export default function ProfilePage() {
           });
         }
       } catch (error: any) {
-        console.error(
-          "Error fetching profile:",
-          error instanceof Error ? error.message : "Unknown error"
-        );
+        console.error("Error fetching profile:", error instanceof Error ? error.message : "Unknown error");
       } finally {
         setIsLoading(false);
       }
@@ -89,62 +70,36 @@ export default function ProfilePage() {
     fetchProfileData();
   }, [router]);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSaveProfile = async () => {
     try {
       setIsSaving(true);
-
-      // Get the current user
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
         router.push("/login");
         return;
       }
 
-      // Current timestamp for updated_at
       const now = new Date().toISOString();
-
-      // Update the profile in the database
       const { error } = await supabase
         .from("profiles")
-        .update({
-          ...formData,
-          updated_at: now,
-        })
+        .update({ ...formData, updated_at: now })
         .eq("id", user.id);
 
       if (error) throw error;
 
-      // Update local state
-      setProfileData({
-        ...formData,
-        updated_at: now,
-      });
-
+      setProfileData({ ...formData, updated_at: now });
       setSuccessMessage("Profile updated successfully!");
       setTimeout(() => setSuccessMessage(""), 3000);
       setIsEditing(false);
-
-      // On successful profile save, redirect to /candidates/upload-resume
-      // Show progress UI: Step 1 of 3
       router.push("/candidates/upload-resume");
     } catch (error) {
-      console.error(
-        "Error updating profile:",
-        error instanceof Error ? error.message : "Unknown error"
-      );
+      console.error("Error updating profile:", error instanceof Error ? error.message : "Unknown error");
     } finally {
       setIsSaving(false);
     }
@@ -163,7 +118,6 @@ export default function ProfilePage() {
   };
 
   const handleCancel = () => {
-    // Reset form data to current profile data
     setFormData({
       full_name: profileData.full_name || "",
       phone: profileData.phone || "",
@@ -179,11 +133,17 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <div className="max-w-md w-full p-8 bg-gray-800 rounded-xl shadow-lg">
-        {/* Progress UI: Step 1 of 3 */}
+    <div className="min-h-screen bg-[var(--surface-dark)] relative overflow-hidden py-12 px-4">
+      {/* Background effects */}
+      <div className="fixed inset-0 mesh-gradient pointer-events-none" />
+      <div className="fixed inset-0 grid-pattern pointer-events-none opacity-40" />
+      
+      {/* Decorative elements */}
+      <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-[var(--accent-primary)]/8 to-transparent rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-[var(--accent-tertiary)]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
-        {/* Header with back button */}
+      <div className="relative z-10 max-w-2xl mx-auto">
+        {/* Header */}
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -192,136 +152,106 @@ export default function ProfilePage() {
         >
           <button
             onClick={handleBack}
-            className="flex items-center text-gray-400 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-1"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-                clipRule="evenodd"
-              />
+            <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
             </svg>
-            Back to Dashboard
+            <span className="text-sm">Back to Dashboard</span>
           </button>
-
-          <h1 className="text-3xl font-bold text-white ml-auto mr-auto">
-            My Profile
-          </h1>
         </motion.div>
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-10 h-10 border-2 border-[var(--accent-primary)] border-t-transparent rounded-full"
+            />
           </div>
         ) : (
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.7 }}
-            className="max-w-3xl mx-auto"
           >
-            {/* Profile Card */}
-            <div className="bg-gray-800/40 backdrop-blur-md border border-gray-700/50 rounded-2xl shadow-xl overflow-hidden">
+            <div className="glass-card rounded-2xl overflow-hidden shadow-2xl">
               {/* Profile Header */}
-              <div className="bg-gradient-to-r from-blue-600/40 to-purple-600/40 p-8 text-center relative">
-                <div className="h-24 w-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">
-                  {profileData.full_name
-                    ? profileData.full_name.charAt(0).toUpperCase()
-                    : "?"}
+              <div className="relative p-8 text-center bg-gradient-to-r from-[var(--accent-primary)]/10 via-[var(--surface-card)] to-[var(--accent-tertiary)]/10">
+                <div className="absolute inset-0 overflow-hidden">
+                  <div className="absolute -top-20 -right-20 w-40 h-40 bg-[var(--accent-primary)]/10 rounded-full blur-3xl" />
+                  <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-[var(--accent-tertiary)]/10 rounded-full blur-3xl" />
                 </div>
-                <h2 className="text-2xl font-bold text-white">
+
+                <motion.div 
+                  className="relative h-24 w-24 rounded-2xl bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-[var(--surface-dark)] text-3xl font-bold mx-auto mb-4 shadow-lg shadow-[var(--accent-primary)]/30"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  {profileData.full_name ? profileData.full_name.charAt(0).toUpperCase() : "?"}
+                </motion.div>
+                
+                <h2 className="text-2xl font-bold text-[var(--text-primary)]">
                   {profileData.full_name || "Your Name"}
                 </h2>
-                <p className="text-blue-300 mt-1">
+                <p className="text-[var(--accent-primary)] mt-1">
                   {profileData.experience || "Your Experience"}
                 </p>
 
-                {/* Last updated info */}
-                <div className="text-gray-400 text-sm mt-2 flex items-center justify-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 mr-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
+                <div className="flex items-center justify-center gap-2 text-[var(--text-muted)] text-sm mt-3">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Last updated: {formatDate(profileData.updated_at)}
+                  <span>Last updated: {formatDate(profileData.updated_at)}</span>
                 </div>
 
-                {/* Edit/Save Button */}
+                {/* Edit Button */}
                 <div className="absolute top-4 right-4">
                   {!isEditing ? (
-                    <button
+                    <motion.button
                       onClick={() => setIsEditing(true)}
-                      className="bg-blue-600/70 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm flex items-center transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 bg-[var(--surface-elevated)] hover:bg-white/5 border border-[var(--border-subtle)] rounded-xl text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 mr-1"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                        />
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>
                       Edit
-                    </button>
+                    </motion.button>
                   ) : (
-                    <div className="flex space-x-2">
-                      <button
+                    <div className="flex gap-2">
+                      <motion.button
                         onClick={handleCancel}
-                        className="bg-gray-600/70 hover:bg-gray-700 text-white px-3 py-1 rounded-lg text-sm transition-colors"
+                        className="px-4 py-2 bg-[var(--surface-elevated)] hover:bg-white/5 border border-[var(--border-subtle)] rounded-xl text-sm text-[var(--text-secondary)] transition-all"
+                        whileTap={{ scale: 0.98 }}
                       >
                         Cancel
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
                         onClick={handleSaveProfile}
                         disabled={isSaving}
-                        className={`bg-green-600/70 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm flex items-center transition-colors ${isSaving ? "opacity-50 cursor-not-allowed" : ""
-                          }`}
+                        className="flex items-center gap-2 px-4 py-2 btn-accent rounded-xl text-sm disabled:opacity-50"
+                        whileTap={{ scale: 0.98 }}
                       >
                         {isSaving ? (
                           <>
-                            <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-1"></div>
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                              className="w-3 h-3 border-2 border-[var(--surface-dark)] border-t-transparent rounded-full"
+                            />
                             Saving
                           </>
                         ) : (
                           <>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4 mr-1"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 13l4 4L19 7"
-                              />
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             Save
                           </>
                         )}
-                      </button>
+                      </motion.button>
                     </div>
                   )}
                 </div>
@@ -329,81 +259,48 @@ export default function ProfilePage() {
 
               {/* Success Message */}
               {successMessage && (
-                <div className="bg-green-600/20 border border-green-600/30 text-green-400 px-4 py-2 text-center">
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-[var(--status-success)]/10 border-b border-[var(--status-success)]/20 text-[var(--status-success)] px-6 py-3 text-center text-sm"
+                >
                   {successMessage}
-                </div>
+                </motion.div>
               )}
 
               {/* Profile Content */}
-              <div className="p-6">
-                {/* Profile fields */}
-                <div className="space-y-6">
-                  {/* Full Name */}
-                  <div>
-                    <label className="block text-gray-400 text-sm mb-2">
-                      Full Name
+              <div className="p-8 space-y-6">
+                {[
+                  { label: "Full Name", name: "full_name", type: "text", placeholder: "Enter your full name" },
+                  { label: "Email Address", name: "email", type: "email", placeholder: "Enter your email address" },
+                  { label: "Phone Number", name: "phone", type: "tel", placeholder: "Enter your phone number" },
+                ].map((field) => (
+                  <div key={field.name}>
+                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                      {field.label}
                     </label>
                     {isEditing ? (
                       <input
-                        type="text"
-                        name="full_name"
-                        value={formData.full_name}
+                        type={field.type}
+                        name={field.name}
+                        value={formData[field.name as keyof typeof formData]}
                         onChange={handleInputChange}
-                        className="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter your full name"
+                        className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-primary)] px-4 py-3 focus:outline-none focus:border-[var(--accent-primary)]/50 focus:ring-1 focus:ring-[var(--accent-primary)]/30 transition-all placeholder:text-[var(--text-muted)]"
+                        placeholder={field.placeholder}
                       />
                     ) : (
-                      <div className="bg-gray-700/30 border border-gray-700 rounded-lg px-4 py-3 text-white">
-                        {profileData.full_name || "Not provided"}
+                      <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-4 py-3 text-[var(--text-primary)]">
+                        {profileData[field.name as keyof typeof profileData] || (
+                          <span className="text-[var(--text-muted)]">Not provided</span>
+                        )}
                       </div>
                     )}
                   </div>
-
-                  {/* Email */}
-                  <div>
-                    <label className="block text-gray-400 text-sm mb-2">
-                      Email Address
-                    </label>
-                    {isEditing ? (
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        className="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter your email address"
-                      />
-                    ) : (
-                      <div className="bg-gray-700/30 border border-gray-700 rounded-lg px-4 py-3 text-white">
-                        {profileData.email || "Not provided"}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Phone Number */}
-                  <div>
-                    <label className="block text-gray-400 text-sm mb-2">
-                      Phone Number
-                    </label>
-                    {isEditing ? (
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        className="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter your phone number"
-                      />
-                    ) : (
-                      <div className="bg-gray-700/30 border border-gray-700 rounded-lg px-4 py-3 text-white">
-                        {profileData.phone || "Not provided"}
-                      </div>
-                    )}
-                  </div>
+                ))}
 
                   {/* Experience */}
                   <div>
-                    <label className="block text-gray-400 text-sm mb-2">
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                       Experience
                     </label>
                     {isEditing ? (
@@ -411,19 +308,21 @@ export default function ProfilePage() {
                         name="experience"
                         value={formData.experience}
                         onChange={handleInputChange}
-                        className="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-24"
+                      className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-primary)] px-4 py-3 focus:outline-none focus:border-[var(--accent-primary)]/50 focus:ring-1 focus:ring-[var(--accent-primary)]/30 transition-all placeholder:text-[var(--text-muted)] min-h-[100px] resize-none"
                         placeholder="Describe your professional experience"
                       />
                     ) : (
-                      <div className="bg-gray-700/30 border border-gray-700 rounded-lg px-4 py-3 text-white min-h-16 whitespace-pre-wrap">
-                        {profileData.experience || "Not provided"}
+                    <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-4 py-3 text-[var(--text-primary)] min-h-[80px] whitespace-pre-wrap">
+                      {profileData.experience || (
+                        <span className="text-[var(--text-muted)]">Not provided</span>
+                      )}
                       </div>
                     )}
                   </div>
 
                   {/* LinkedIn */}
                   <div>
-                    <label className="block text-gray-400 text-sm mb-2">
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                       LinkedIn Profile
                     </label>
                     {isEditing ? (
@@ -432,62 +331,60 @@ export default function ProfilePage() {
                         name="linkedin"
                         value={formData.linkedin}
                         onChange={handleInputChange}
-                        className="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-primary)] px-4 py-3 focus:outline-none focus:border-[var(--accent-primary)]/50 focus:ring-1 focus:ring-[var(--accent-primary)]/30 transition-all placeholder:text-[var(--text-muted)]"
                         placeholder="Enter your LinkedIn URL"
                       />
                     ) : (
-                      <div className="bg-gray-700/30 border border-gray-700 rounded-lg px-4 py-3 text-white">
+                    <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-4 py-3 text-[var(--text-primary)]">
                         {profileData.linkedin ? (
                           <a
-                            href={
-                              profileData.linkedin.startsWith("http")
-                                ? profileData.linkedin
-                                : `https://${profileData.linkedin}`
-                            }
+                          href={profileData.linkedin.startsWith("http") ? profileData.linkedin : `https://${profileData.linkedin}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-400 hover:text-blue-300 transition-colors"
+                          className="text-[var(--accent-primary)] hover:text-[var(--accent-secondary)] transition-colors flex items-center gap-2"
                           >
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                          </svg>
                             {profileData.linkedin}
                           </a>
                         ) : (
-                          "Not provided"
+                        <span className="text-[var(--text-muted)]">Not provided</span>
                         )}
                       </div>
                     )}
-                  </div>
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="border-t border-gray-700 p-4 flex justify-between items-center">
-                <div className="text-gray-400 text-sm">
-                  <span>Need help? </span>
-                  <a
-                    href="/help"
-                    className="text-blue-400 hover:text-blue-300 transition-colors"
-                  >
+              <div className="border-t border-[var(--border-subtle)] p-6 flex justify-between items-center">
+                <div className="text-[var(--text-muted)] text-sm">
+                  Need help?{" "}
+                  <a href="/help" className="text-[var(--accent-primary)] hover:text-[var(--accent-secondary)] transition-colors">
                     Contact support
                   </a>
                 </div>
 
                 {isEditing && (
-                  <div className="flex space-x-2">
+                  <div className="flex gap-3">
                     <button
                       onClick={handleCancel}
-                      className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                      className="px-5 py-2.5 bg-[var(--surface-elevated)] hover:bg-white/5 border border-[var(--border-subtle)] rounded-xl text-sm text-[var(--text-secondary)] transition-all"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSaveProfile}
                       disabled={isSaving}
-                      className={`bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center transition-colors ${isSaving ? "opacity-50 cursor-not-allowed" : ""
-                        }`}
+                      className="px-5 py-2.5 btn-accent rounded-xl text-sm disabled:opacity-50 flex items-center gap-2"
                     >
                       {isSaving ? (
                         <>
-                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="w-3 h-3 border-2 border-[var(--surface-dark)] border-t-transparent rounded-full"
+                          />
                           Saving...
                         </>
                       ) : (

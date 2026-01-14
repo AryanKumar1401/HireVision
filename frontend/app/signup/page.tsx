@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createClient } from "@/utils/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function SignUpPage() {
   const supabase = createClient();
@@ -13,7 +14,6 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Get interview code from URL if present
   const interviewCode = searchParams.get('code');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -45,10 +45,8 @@ export default function SignUpPage() {
     if (error) {
       setError(error.message);
     } else {
-      // After successful signup, update user metadata to include the 'candidate' role
       try {
-        const { data: userResponse, error: userError } =
-          await supabase.auth.getUser();
+        const { data: userResponse, error: userError } = await supabase.auth.getUser();
         if (userError) {
           console.error("Error getting user after signup:", userError);
           setError(userError.message);
@@ -73,14 +71,11 @@ export default function SignUpPage() {
           }
         }
 
-        // Check user roles and redirect accordingly
         const roles = user?.app_metadata?.roles || ["candidate"];
 
         if (roles.includes("recruiter")) {
-          console.log("Redirecting to recruiter dashboard");
           router.push("/recruiters");
         } else {
-          // If there's an interview code, redirect to dashboard with code
           if (interviewCode) {
             router.push(`/candidates/dashboard?code=${interviewCode}`);
           } else {
@@ -95,50 +90,101 @@ export default function SignUpPage() {
     setLoading(false);
   };
 
+  const PasswordToggle = ({ show, onClick }: { show: boolean; onClick: () => void }) => (
+    <button
+      type="button"
+      className="absolute inset-y-0 right-0 pr-4 flex items-center text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+      onClick={onClick}
+    >
+      {show ? (
+        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+        </svg>
+      ) : (
+        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+          <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+        </svg>
+      )}
+    </button>
+  );
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <div className="max-w-md w-full p-8 bg-gray-800 rounded-xl shadow-lg">
-        <div className="flex items-center mb-6">
-          <Link href="/" className="text-gray-300 hover:text-white">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
+    <div className="min-h-screen flex items-center justify-center bg-[var(--surface-dark)] relative overflow-hidden py-12">
+      {/* Background effects */}
+      <div className="fixed inset-0 mesh-gradient pointer-events-none" />
+      <div className="fixed inset-0 grid-pattern pointer-events-none opacity-40" />
+      
+      {/* Decorative elements */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-gradient-to-b from-[var(--accent-primary)]/6 to-transparent rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed bottom-0 right-0 w-[400px] h-[400px] bg-gradient-to-tl from-[var(--accent-tertiary)]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
+
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative z-10 w-full max-w-md mx-4"
+      >
+        <div className="glass-card rounded-2xl p-8 shadow-2xl">
+          {/* Header */}
+          <div className="flex items-center mb-8">
+            <Link 
+              href="/" 
+              className="w-10 h-10 rounded-xl bg-[var(--surface-elevated)] hover:bg-white/5 flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all border border-[var(--border-subtle)]"
             >
-              <path
-                fillRule="evenodd"
-                d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-                clipRule="evenodd"
-              />
+              <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
             </svg>
           </Link>
-          <h2 className="text-2xl font-bold text-center text-white flex-1 pr-5">
-            Create Account
-          </h2>
+            <div className="flex-1 text-center pr-10">
+              <span className="text-[var(--text-muted)] text-xs font-mono tracking-wider uppercase">Get started</span>
+              <h2 className="text-2xl font-semibold text-[var(--text-primary)]">Create Account</h2>
         </div>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-900/50 text-red-200 rounded">
-            {error}
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+          {interviewCode && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 rounded-xl text-sm"
+            >
+              <div className="flex items-center gap-2 text-[var(--accent-primary)]">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-medium">Interview code detected</span>
+              </div>
+              <p className="text-[var(--text-muted)] mt-1">You'll be redirected to your interview after signup.</p>
+            </motion.div>
+          )}
+
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm"
+            >
+              {error}
+            </motion.div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-300">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Email
             </label>
             <input
               name="email"
               type="email"
               required
-              className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 text-white px-3 py-2"
+                className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-primary)] px-4 py-3 focus:outline-none focus:border-[var(--accent-primary)]/50 focus:ring-1 focus:ring-[var(--accent-primary)]/30 transition-all placeholder:text-[var(--text-muted)]"
+                placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Password
             </label>
             <div className="relative">
@@ -146,48 +192,15 @@ export default function SignUpPage() {
                 name="password"
                 type={showPassword ? "text" : "password"}
                 required
-                className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 text-white px-3 py-2 pr-10"
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-800"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                    <path
-                      fillRule="evenodd"
-                      d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
-                      clipRule="evenodd"
-                    />
-                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
-                  </svg>
-                )}
-              </button>
+                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-primary)] px-4 py-3 pr-12 focus:outline-none focus:border-[var(--accent-primary)]/50 focus:ring-1 focus:ring-[var(--accent-primary)]/30 transition-all placeholder:text-[var(--text-muted)]"
+                  placeholder="••••••••"
+                />
+                <PasswordToggle show={showPassword} onClick={() => setShowPassword(!showPassword)} />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Confirm Password
             </label>
             <div className="relative">
@@ -195,74 +208,55 @@ export default function SignUpPage() {
                 name="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
                 required
-                className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 text-white px-3 py-2 pr-10"
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-800"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                    <path
-                      fillRule="evenodd"
-                      d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
-                      clipRule="evenodd"
-                    />
-                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
-                  </svg>
-                )}
-              </button>
+                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-primary)] px-4 py-3 pr-12 focus:outline-none focus:border-[var(--accent-primary)]/50 focus:ring-1 focus:ring-[var(--accent-primary)]/30 transition-all placeholder:text-[var(--text-muted)]"
+                  placeholder="••••••••"
+                />
+                <PasswordToggle show={showConfirmPassword} onClick={() => setShowConfirmPassword(!showConfirmPassword)} />
             </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="w-full btn-accent py-3.5 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {loading ? "Creating Account..." : "Create Account"}
+              {loading ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="w-4 h-4 border-2 border-[var(--surface-dark)] border-t-transparent rounded-full"
+                  />
+                  Creating Account...
+                </>
+              ) : (
+                "Create Account"
+              )}
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-gray-400">
+          <p className="mt-6 text-center text-sm text-[var(--text-muted)]">
           Already have an account?{" "}
-          <Link href="/login" className="text-blue-400 hover:underline">
+            <Link href="/login" className="text-[var(--accent-primary)] hover:text-[var(--accent-secondary)] font-medium transition-colors">
             Sign in
           </Link>
         </p>
 
-        <div className="mt-6 pt-6 border-t border-gray-700">
-          <p className="text-center text-sm text-gray-400">
+          <div className="mt-8 pt-6 border-t border-[var(--border-subtle)]">
+            <p className="text-center text-sm text-[var(--text-muted)]">
             Are you a recruiter?{" "}
-            <Link
-              href="/recruiters/signup"
-              className="text-blue-400 hover:underline"
-            >
+              <Link href="/recruiters/signup" className="text-[var(--accent-primary)] hover:text-[var(--accent-secondary)] font-medium transition-colors">
               Sign up as Recruiter
             </Link>
           </p>
         </div>
       </div>
+
+        {/* Branding */}
+        <p className="mt-6 text-center text-xs text-[var(--text-muted)]">
+          Powered by <span className="text-[var(--accent-primary)]">HireVision</span>
+        </p>
+      </motion.div>
     </div>
   );
 }

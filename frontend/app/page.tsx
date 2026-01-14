@@ -15,9 +15,13 @@ import Error from "./error";
 
 export default async function Home() {
   return (
-    <div className="min-h-screen text-white overflow-hidden relative">
+    <div className="min-h-screen text-[var(--text-primary)] overflow-hidden relative bg-[var(--surface-dark)]">
       {/* Starry Background */}
       <StarryBackground />
+      
+      {/* Animated mesh gradient */}
+      <div className="fixed inset-0 mesh-gradient pointer-events-none" />
+      <div className="fixed inset-0 grid-pattern pointer-events-none opacity-30" />
 
       {/* Navbar */}
       <Navbar />
