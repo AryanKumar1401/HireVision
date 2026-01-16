@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/utils/auth";
 import { getBackendUrl } from "@/utils/env";
 import { ProfileForm } from "../components/ProfileForm";
@@ -112,7 +112,6 @@ export default function InterviewSession() {
     if (!isInterviewStarted) {
       initializeCamera();
     }
-    // Optionally, clean up camera on unmount
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
@@ -227,7 +226,6 @@ export default function InterviewSession() {
     }
     setIsAnalysisComplete(true);
     setProcessingStatus("All responses have been uploaded and sent for analysis!");
-    // Mark interview as completed in Supabase
     if (interviewId && userId) {
       try {
         const { error: updateError } = await supabase
@@ -269,13 +267,20 @@ export default function InterviewSession() {
   };
 
   if (!interviewId) {
-    return <div>Missing interview ID in URL.</div>;
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="text-neutral-400">Missing interview ID in URL.</div>
+      </div>
+    );
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+          <p className="text-neutral-400 text-sm">Loading interview...</p>
+        </div>
       </div>
     );
   }
@@ -287,156 +292,342 @@ export default function InterviewSession() {
   }
 
   return (
-    <Suspense fallback={<div>Loading interview...</div>}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex flex-col items-center justify-center p-6">
-        <div className="w-full max-w-2xl bg-gray-900/80 rounded-2xl shadow-2xl p-8">
-          {!isInterviewStarted ? (
-            <div>
-              <h2 className="text-2xl text-white/90 font-medium mb-4 text-center">
-                You're about to start your interview
-              </h2>
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-8">
-                <h3 className="text-blue-300 font-medium flex items-center text-lg mb-2">
-                  <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Important Tips:
-                </h3>
-                <ul className="text-white/70 space-y-2 pl-7 list-disc">
-                  <li>Find a quiet place with good lighting.</li>
-                  <li>Test your camera and microphone.</li>
-                  <li>Speak clearly and maintain good posture.</li>
-                  <li>You'll answer {questions.length} questions one at a time.</li>
-                  <li>You can review each recording before moving to the next question.</li>
-                </ul>
-              </div>
-              {/* Device/camera/mic check only before interview starts */}
-              <div className="mb-6">
-                <DeviceSelector
-                  selectedVideoDeviceId={selectedVideoDeviceId}
-                  selectedAudioDeviceId={selectedAudioDeviceId}
-                  onVideoDeviceChange={handleVideoDeviceChange}
-                  onAudioDeviceChange={handleAudioDeviceChange}
-                />
-              </div>
-              <div className="mb-6">
-                <VideoPreview
-                  stream={streamRef.current}
-                  recordedUrl={signedUrl}
-                  isLoading={cameraLoading}
-                  error={cameraError}
-                />
-                {streamRef.current && !cameraError && !cameraLoading && (
-                  <AudioLevelMeter stream={streamRef.current} />
-                )}
-              </div>
-              {/* Only show Begin Interview button if not finished/confirmed */}
-              {(!hasConfirmedFinish && !isInterviewFinished) && (
-                <button
-                  onClick={startInterview}
-                  className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all"
-                >
-                  Begin Interview
-                </button>
-              )}
-            </div>
-          ) : (
-            <div>
-              {isQuestionsLoading ? (
-                <div className="text-gray-400 text-center py-8">Loading questions...</div>
-              ) : (
-                <div className="mb-6">
-                  {usedPersonalized && (
-                    <div className="mb-2 text-green-400 text-sm text-center">These questions are personalized based on your resume.</div>
-                  )}
-                  <div className="text-lg font-semibold text-white mb-2">
-                    Question {currentQuestionIndex + 1} of {questions.length}
-                  </div>
-                  <div className="text-xl text-blue-300 font-bold mb-4">
-                    {questions[currentQuestionIndex]}
-                  </div>
-                </div>
-              )}
-              {/* Camera preview and toggle during interview */}
-              <div className="mb-4 flex flex-col items-end">
-                {showCameraDuringInterview && (
-                  <VideoPreview
-                    stream={streamRef.current}
-                    recordedUrl={null}
-                    isLoading={cameraLoading}
-                    error={cameraError}
-                  />
-                )}
-                <button
-                  className="mt-2 px-4 py-1 text-xs rounded bg-gray-700 text-white hover:bg-gray-600 focus:outline-none"
-                  onClick={() => setShowCameraDuringInterview((prev) => !prev)}
-                >
-                  {showCameraDuringInterview ? "Hide Camera" : "Show Camera"}
-                </button>
-              </div>
-              {/* Only show RecordingControls and Back button if not finished/confirmed */}
-              {(!hasConfirmedFinish && !isInterviewFinished) && (
-                <>
-                  <RecordingControls
-                    isRecording={isRecording}
-                    recordingTime={recordingTime}
-                    isUploading={isUploading}
-                    uploadProgress={uploadProgress}
-                    onStartRecording={startRecording}
-                    onStopRecording={handleStopAnswerRecording}
-                    onGoBack={() => router.push("/candidates")}
-                  />
-                </>
-              )}
-              {isAnswerRecorded && !isRecording && !isUploading && !hasConfirmedFinish && !isInterviewFinished && (
-                <div className="flex justify-end mt-6">
-                  {currentQuestionIndex < questions.length - 1 ? (
-                    <button
-                      onClick={handleNextQuestion}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition-all"
-                    >
-                      Next Question
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleFinishClick}
-                      className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold shadow hover:bg-green-700 transition-all"
-                    >
-                      Finish Interview
-                    </button>
-                  )}
-                </div>
-              )}
-              {showConfirmFinishModal && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
-                  <div className="bg-gray-900 rounded-xl p-8 shadow-xl text-center">
-                    <div className="text-white text-lg mb-4">Are you sure you want to finish and submit your interview? You won't be able to make changes after this.</div>
-                    <div className="flex justify-center gap-4">
-                      <button
-                        onClick={handleConfirmFinish}
-                        className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold shadow hover:bg-green-700 transition-all"
-                      >
-                        Yes, Submit
-                      </button>
-                      <button
-                        onClick={handleCancelFinish}
-                        className="px-6 py-2 bg-gray-600 text-white rounded-lg font-semibold shadow hover:bg-gray-700 transition-all"
-                      >
-                        Cancel
-                      </button>
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="text-neutral-400">Loading interview...</div>
+      </div>
+    }>
+      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-3xl"
+        >
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-white mb-2">Interview Session</h1>
+            <p className="text-neutral-400">Take your time and answer thoughtfully</p>
+          </div>
+
+          {/* Main Content Card */}
+          <div className="bg-[#0f0f0f]/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-black/50 border border-white/[0.06] p-8 md:p-10">
+            {!isInterviewStarted ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <h2 className="text-2xl text-white font-semibold mb-6 text-center">
+                  Prepare for Your Interview
+                </h2>
+
+                {/* Tips Card */}
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 mb-8">
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-amber-300 font-semibold text-lg mb-3">
+                        Important Tips
+                      </h3>
+                      <ul className="text-neutral-300 space-y-2 list-none">
+                        <li className="flex items-start gap-2">
+                          <span className="text-amber-400 mt-0.5">•</span>
+                          <span>Find a quiet place with good lighting</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-amber-400 mt-0.5">•</span>
+                          <span>Test your camera and microphone below</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-amber-400 mt-0.5">•</span>
+                          <span>Speak clearly and maintain good posture</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-amber-400 mt-0.5">•</span>
+                          <span>You&apos;ll answer {questions.length} questions one at a time</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-amber-400 mt-0.5">•</span>
+                          <span>You can review each recording before moving forward</span>
+                        </li>
+                      </ul>
                     </div>
                   </div>
                 </div>
-              )}
-              {(hasConfirmedFinish || isInterviewFinished) && (
-                <div className="mt-8 text-center text-blue-300 font-medium animate-pulse">
-                  {processingStatus || "Processing your interview. Please wait..."}
+
+                {/* Device Selector */}
+                <div className="mb-6">
+                  <DeviceSelector
+                    selectedVideoDeviceId={selectedVideoDeviceId}
+                    selectedAudioDeviceId={selectedAudioDeviceId}
+                    onVideoDeviceChange={handleVideoDeviceChange}
+                    onAudioDeviceChange={handleAudioDeviceChange}
+                  />
                 </div>
-              )}
-            </div>
+
+                {/* Camera Preview */}
+                <div className="mb-6">
+                  <VideoPreview
+                    stream={streamRef.current}
+                    recordedUrl={signedUrl}
+                    isLoading={cameraLoading}
+                    error={cameraError}
+                  />
+                  {streamRef.current && !cameraError && !cameraLoading && (
+                    <div className="mt-4">
+                      <AudioLevelMeter stream={streamRef.current} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Begin Interview Button */}
+                {(!hasConfirmedFinish && !isInterviewFinished) && (
+                  <motion.button
+                    onClick={startInterview}
+                    className="w-full py-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-lg font-semibold rounded-2xl transition-all shadow-lg shadow-amber-500/25"
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Begin Interview
+                    </span>
+                  </motion.button>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                {isQuestionsLoading ? (
+                  <div className="text-neutral-400 text-center py-12">
+                    <div className="w-12 h-12 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin mx-auto mb-4" />
+                    Loading questions...
+                  </div>
+                ) : (
+                  <>
+                    {/* Question Header */}
+                    <div className="mb-8">
+                      {usedPersonalized && (
+                        <div className="mb-4 flex items-center justify-center gap-2 text-emerald-400 text-sm">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Questions personalized based on your resume
+                        </div>
+                      )}
+                      
+                      {/* Progress Bar */}
+                      <div className="mb-6">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-neutral-400">Progress</span>
+                          <span className="text-sm font-medium text-amber-400">
+                            {currentQuestionIndex + 1} of {questions.length}
+                          </span>
+                        </div>
+                        <div className="h-2 bg-white/[0.04] rounded-full overflow-hidden">
+                          <motion.div
+                            className="h-full bg-gradient-to-r from-amber-600 to-amber-500"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+                            transition={{ duration: 0.5, ease: "easeOut" }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Question Card */}
+                      <div className="bg-white/[0.02] rounded-2xl p-6 border border-white/[0.04]">
+                        <div className="flex items-start gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">
+                            <span className="text-amber-400 font-bold text-lg">
+                              Q{currentQuestionIndex + 1}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-2xl text-white font-semibold leading-relaxed">
+                              {questions[currentQuestionIndex]}
+                            </h3>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Camera Preview Toggle */}
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm text-neutral-400">Camera Preview</span>
+                        <button
+                          className="px-3 py-1.5 text-xs rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/[0.06] transition-all"
+                          onClick={() => setShowCameraDuringInterview((prev) => !prev)}
+                        >
+                          {showCameraDuringInterview ? "Hide Camera" : "Show Camera"}
+                        </button>
+                      </div>
+                      
+                      <AnimatePresence>
+                        {showCameraDuringInterview && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <VideoPreview
+                              stream={streamRef.current}
+                              recordedUrl={null}
+                              isLoading={cameraLoading}
+                              error={cameraError}
+                            />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Recording Controls */}
+                    {(!hasConfirmedFinish && !isInterviewFinished) && (
+                      <RecordingControls
+                        isRecording={isRecording}
+                        recordingTime={recordingTime}
+                        isUploading={isUploading}
+                        uploadProgress={uploadProgress}
+                        onStartRecording={startRecording}
+                        onStopRecording={handleStopAnswerRecording}
+                        onGoBack={() => router.push("/candidates")}
+                      />
+                    )}
+
+                    {/* Next/Finish Buttons */}
+                    {isAnswerRecorded && !isRecording && !isUploading && !hasConfirmedFinish && !isInterviewFinished && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex justify-end mt-8 gap-3"
+                      >
+                        {currentQuestionIndex < questions.length - 1 ? (
+                          <motion.button
+                            onClick={handleNextQuestion}
+                            className="px-8 py-3 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white rounded-xl font-semibold shadow-lg shadow-amber-500/25 transition-all"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <span className="flex items-center gap-2">
+                              Next Question
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </span>
+                          </motion.button>
+                        ) : (
+                          <motion.button
+                            onClick={handleFinishClick}
+                            className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white rounded-xl font-semibold shadow-lg shadow-emerald-500/25 transition-all"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <span className="flex items-center gap-2">
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              Finish Interview
+                            </span>
+                          </motion.button>
+                        )}
+                      </motion.div>
+                    )}
+
+                    {/* Processing Status */}
+                    {(hasConfirmedFinish || isInterviewFinished) && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="mt-8 text-center"
+                      >
+                        <div className="flex flex-col items-center gap-4">
+                          <div className="w-16 h-16 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                          <p className="text-amber-400 font-medium">
+                            {processingStatus || "Processing your interview. Please wait..."}
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </>
+                )}
+              </motion.div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Confirm Finish Modal */}
+        <AnimatePresence>
+          {showConfirmFinishModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4"
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                transition={{ type: "spring", bounce: 0.25 }}
+                className="bg-[#0f0f0f]/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-black/50 max-w-md w-full mx-auto overflow-hidden border border-white/[0.06]"
+              >
+                {/* Modal Header */}
+                <div className="px-6 py-5 border-b border-white/[0.04] bg-gradient-to-r from-emerald-500/10 to-transparent">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                      <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-semibold text-white tracking-tight">
+                      Finish Interview?
+                    </h3>
+                  </div>
+                </div>
+
+                {/* Modal Content */}
+                <div className="p-6">
+                  <p className="text-neutral-300 leading-relaxed mb-6">
+                    Are you sure you want to finish and submit your interview? You won&apos;t be able to make changes after this.
+                  </p>
+
+                  <div className="flex gap-3">
+                    <motion.button
+                      onClick={handleConfirmFinish}
+                      className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-center text-sm font-medium rounded-xl transition-all shadow-lg shadow-emerald-500/25"
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                    >
+                      Yes, Submit
+                    </motion.button>
+
+                    <motion.button
+                      onClick={handleCancelFinish}
+                      className="flex-1 py-3 bg-white/[0.04] hover:bg-white/[0.08] text-white text-center text-sm font-medium rounded-xl border border-white/[0.06] transition-all"
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                    >
+                      Cancel
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
       </div>
     </Suspense>
   );
-} 
+}
